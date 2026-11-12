@@ -43,4 +43,7 @@ export const tex = stylex.defineVars({
   paper: 'url(/tex/paper.png)',
   screen: 'url(/tex/screen.png)',
   streaks: 'url(/tex/streaks.png)',
+  /** A shape's ink, as Iris's PrintedInk: pale inks, and dark ones with a lighter touch. */
+  ink: 'url(/tex/ink.png)',
+  inkDark: 'url(/tex/ink-dark.png)',
 });

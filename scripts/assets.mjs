@@ -100,6 +100,50 @@ await tile('screen.png', 192, (d, n) => {
     }
   }
 });
+// Ink printed through the screen, as Iris prints a shape's ink (`RisoArt.screen` in Zine.swift,
+// used by `PrintedInk`): nearly solid, a faint grid every third dot, the ink drifting a few per
+// cent, and rare specks gathering where the drum ran dry. A speck only thins the ink toward the
+// paper (45%), it never leaves bare paper. Dark ink shows the screen far more, so it gets
+// Iris's lighter touch: grid 0.22 and specks 0.35, against 0.55 and 0.6 for pale inks.
+// Laid over the ink in paper colour, one tile pixel to a CSS pixel (Iris's points). 210 is a
+// multiple of the grid (3) and of both noise cells, so the tile repeats without a seam.
+function screenTile(name, { grid, specks, seed }) {
+  const n = 210;
+  const r = rng(seed);
+  const noise = (cell) => {
+    const g = n / cell;
+    const lattice = Array.from({ length: g * g }, () => r());
+    const smooth = (t) => t * t * (3 - 2 * t);
+    return (x, y) => {
+      const gx = Math.floor(x / cell), gy = Math.floor(y / cell);
+      const fx = smooth((x % cell) / cell), fy = smooth((y % cell) / cell);
+      const at = (i, j) => lattice[((j + g) % g) * g + ((i + g) % g)];
+      const top = at(gx, gy) + (at(gx + 1, gy) - at(gx, gy)) * fx;
+      const bottom = at(gx, gy + 1) + (at(gx + 1, gy + 1) - at(gx, gy + 1)) * fx;
+      return top + (bottom - top) * fy;
+    };
+  };
+  const dry = noise(70), tone = noise(42);
+  return tile(name, n, (d) => {
+    const speck = new Uint8Array(n * n);
+    for (let y = 0; y < n; y++) {
+      for (let x = 0; x < n; x++) {
+        const i = y * n + x;
+        const chance = (0.004 + 0.085 * Math.max(0, dry(x, y) - 0.58)) * specks;
+        if (r() < chance || (x > 0 && speck[i - 1] && r() < 0.35 * specks)) {
+          speck[i] = 1;
+          d.set([255, 252, 249, Math.round(0.45 * 255)], i * 4);
+          continue;
+        }
+        let lift = ((y % 3 === 0 ? 0.1 : 0) + (x % 3 === 0 ? 0.07 : 0)) * grid + (tone(x, y) - 0.5) * 0.1;
+        lift = Math.max(0, Math.min(0.3, lift));
+        d.set([255, 252, 249, Math.round(lift * 255)], i * 4);
+      }
+    }
+  });
+}
+await screenTile('ink.png', { grid: 0.55, specks: 0.6, seed: 7 });
+await screenTile('ink-dark.png', { grid: 0.22, specks: 0.35, seed: 7 });
 // Streaks: specks dragged sideways, the way the plates in Iris show the paper.
 await tile('streaks.png', 256, (d, n) => {
   const r = rng(19);
@@ -113,7 +157,7 @@ await tile('streaks.png', 256, (d, n) => {
 // ── Cutouts ───────────────────────────────────────────────────────────────────────────
 // Lift a drawing off its paper: everything the paper colour that the outside can reach turns
 // transparent, the pen's soft edge fades out, and white inside a petal stays white.
-async function cutout(file, box, name, { tol = 20, widths = [], bg: plate, minSpot = 0, clear } = {}) {
+async function cutout(file, box, name, { tol = 20, widths = [], bg: plate, minSpot = 0, clear, holes = [] } = {}) {
   const img = sharp(src(file)).extract(box).ensureAlpha();
   const { data, info } = await img.raw().toBuffer({ resolveWithObject: true });
   const { width: w, height: h } = info;
@@ -125,6 +169,9 @@ async function cutout(file, box, name, { tol = 20, widths = [], bg: plate, minSp
   const stack = [];
   for (let x = 0; x < w; x++) stack.push(x, (h - 1) * w + x);
   for (let y = 0; y < h; y++) stack.push(y * w, y * w + w - 1);
+  // Paper the outside can't reach but that isn't the drawing (sky shut in between a leaf and
+  // its stem): start the fill there too.
+  for (const [x, y] of holes) stack.push(y * w + x);
   while (stack.length) {
     const p = stack.pop();
     if (seen[p]) continue;
@@ -169,8 +216,10 @@ async function cutout(file, box, name, { tol = 20, widths = [], bg: plate, minSp
     data[i + 3] = Math.round(a * 255);
   }
   const lifted = sharp(data, { raw: { width: w, height: h, channels: 4 } }).trim({ threshold: 1 });
-  const buf = await lifted.png().toBuffer();
+  const { data: buf, info: trimmed } = await lifted.png().toBuffer({ resolveWithObject: true });
   await emit(buf, name, widths);
+  // Where the trimmed drawing sat in the render, for pages that lay layers over it.
+  manifest[name].at = [box.left - (trimmed.trimOffsetLeft ?? 0), box.top - (trimmed.trimOffsetTop ?? 0)];
 }
 
 // Writes AVIF and WebP at each width (every browser this page supports reads WebP).
@@ -195,9 +244,11 @@ async function emit(input, name, widths = []) {
     await cutout('snap/after-garden-light.png', { left: i * cell, top: 0, width: cell, height: 430 }, `garden-${stage}`, { widths: [240] });
   }
 }
-// The hero's garden, from the README banner: bigger than the storyboard's, lifted off its sky.
-await cutout('readme/readme-hero-light.png', { left: 1660, top: 110, width: 700, height: 720 }, 'hero-garden',
-  { bg: [120, 162, 220], tol: 34, minSpot: 90, widths: [360, 520], clear: { x: 0, y: 520, w: 150, h: 200 } });
+// The cover's flower, from the README banner (bigger than the storyboard's), lifted off its
+// sky alone: the sun, butterflies and petals around it are printed apart (scripts/sprites.mjs)
+// so each can move on its own.
+await cutout('readme/readme-hero-light.png', { left: 1860, top: 340, width: 380, height: 480 }, 'hero-flower',
+  { bg: [120, 162, 220], tol: 34, minSpot: 90, widths: [240, 320], clear: { x: 0, y: 0, w: 34, h: 44 }, holes: [[130, 300], [140, 380]] });
 
 // Iris's riso icons, the big row.
 {

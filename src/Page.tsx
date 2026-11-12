@@ -17,6 +17,7 @@ import {
   Tape,
   Wordmark,
 } from './parts';
+import { Garden } from './Garden';
 import { diff, draft, issues, links, month, tones } from './content';
 import { font, ink, tex } from './tokens.stylex';
 
@@ -24,11 +25,6 @@ const MOBILE = '@media (max-width: 760px)';
 const NARROW = '@media (max-width: 1000px)';
 const STILL = '@media (prefers-reduced-motion: reduce)';
 
-const sway = stylex.keyframes({
-  '0%': { transform: 'rotate(-1deg)' },
-  '50%': { transform: 'rotate(1.2deg)' },
-  '100%': { transform: 'rotate(-1deg)' },
-});
 const swipeIn = stylex.keyframes({
   from: { clipPath: 'inset(0 100% 0 0)' },
   to: { clipPath: 'inset(0 0 0 0)' },
@@ -82,21 +78,10 @@ const s = stylex.create({
   ctaMeta: { fontSize: 12.5, lineHeight: 1.5, color: ink.i12 },
   keysNote: { display: 'flex', alignItems: 'flex-end', gap: 14, flexWrap: 'wrap' },
   keysWords: { fontFamily: font.brush, fontSize: 22, lineHeight: 1, color: ink.i12, paddingBottom: 6 },
-  garden: {
-    position: 'absolute',
-    right: 'clamp(-20px, 2vw, 40px)',
-    bottom: -64,
-    width: 'clamp(250px, 27vw, 420px)',
-    zIndex: 1,
-    transformOrigin: '58% 100%',
-    animationName: sway,
-    animationDuration: '7s',
-    animationIterationCount: 'infinite',
-    animationTimingFunction: 'ease-in-out',
-    [STILL]: { animationName: 'none' },
-    [MOBILE]: { width: 220, right: 0, bottom: -34 },
-  },
   coverHead: { paddingTop: 28 },
+  // Butterflies may loop past the plate's right edge: cut them there, never widen the page.
+  // Only sideways, so the garden still stands below the plate.
+  coverClip: { overflowX: 'clip' },
 
   // Moment
   print: { position: 'relative', transform: 'rotate(-1.2deg)', padding: 10, [MOBILE]: { transform: 'none', padding: 6 } },
@@ -298,12 +283,11 @@ const s = stylex.create({
   edgeBack: { position: 'absolute', right: 'clamp(8px, 2vw, 28px)', top: 'clamp(64px, 8vw, 112px)', writingMode: 'vertical-rl', fontSize: 10.5, letterSpacing: '0.34em', textTransform: 'uppercase', color: ink.i10, [MOBILE]: { display: 'none' } },
 });
 
-export const heroSizes = '(max-width: 760px) 220px, (max-width: 1000px) 270px, min(27vw, 420px)';
 
 // ── Cover ─────────────────────────────────────────────────────────────────────────────
 function Cover() {
   return (
-    <header>
+    <header {...stylex.props(s.coverClip)}>
       <div {...stylex.props(s.plate)}>
         <span {...stylex.props(s.ghostClip)}>
           <GhostWord lines={['WRI', 'TE']} tone="sky" style={{ left: '-2vw', top: 220, fontSize: 'clamp(180px, 30vw, 440px)' }} />
@@ -342,9 +326,7 @@ function Cover() {
             </div>
           </div>
         </div>
-        <div {...stylex.props(s.garden)} aria-hidden>
-          <Picture name="hero-garden" alt="" eager scale={1.4} sizes={heroSizes} />
-        </div>
+        <Garden />
       </div>
       <div {...stylex.props(s.wrap, s.coverHead)}>
         <RunningHead seed={11} cols={['A zine about writing on your Mac', 'Free and open source, MIT license', 'For Macs with Apple silicon']} folio="/01" />

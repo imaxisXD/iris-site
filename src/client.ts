@@ -94,3 +94,16 @@ if (video) {
     }, { threshold: 0.35 }).observe(video);
   }
 }
+
+// ── The cover's garden plays only while it's on screen ────────────────────────────────
+// It all runs in CSS (Garden.tsx); this only holds it still while the cover is scrolled away,
+// and lets it carry on from there when it comes back. Finished parts (the arrivals) stay put.
+const garden = document.querySelector<HTMLElement>('[data-garden]');
+if (garden && !still && 'getAnimations' in garden) {
+  new IntersectionObserver(([e]) => {
+    for (const a of garden.getAnimations({ subtree: true })) {
+      if (e.isIntersecting && a.playState === 'paused') a.play();
+      else if (!e.isIntersecting && a.playState === 'running') a.pause();
+    }
+  }).observe(garden);
+}

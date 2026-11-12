@@ -1,7 +1,8 @@
 // Renders the whole page to HTML at build time. React never reaches the browser.
 import { renderToStaticMarkup } from 'react-dom/server';
 import assets from './assets.json';
-import { heroSizes, Page } from './Page';
+import { flowerSizes } from './Garden';
+import { Page } from './Page';
 
 const title = 'Iris: fix your grammar, keep your voice';
 const description =
@@ -13,8 +14,8 @@ export function render({ css, script, origin = '' }: { css: string; script: stri
   const body = renderToStaticMarkup(<Page />);
   // Only the faces the first screen sets big; the rest swap in as they arrive.
   const fonts = ['martian', 'londrina', 'knewave'];
-  const hero = assets['hero-garden'];
-  const heroSet = hero.sizes.map((w) => `/img/hero-garden-${w}.avif ${w}w`).join(', ');
+  const hero = assets['hero-flower'];
+  const heroSet = hero.sizes.map((w) => `/img/hero-flower-${w}.avif ${w}w`).join(', ');
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -35,7 +36,7 @@ ${origin ? `<link rel="canonical" href="${origin}/">` : ''}
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 ${fonts.map((f) => `<link rel="preload" href="/fonts/${f}.woff2" as="font" type="font/woff2" crossorigin>`).join('\n')}
-<link rel="preload" as="image" type="image/avif" imagesrcset="${heroSet}" imagesizes="${heroSizes}" fetchpriority="high">
+<link rel="preload" as="image" type="image/avif" imagesrcset="${heroSet}" imagesizes="${flowerSizes}" fetchpriority="high">
 <link rel="preload" href="/tex/screen.png" as="image">
 <style>${css}</style>
 <script type="application/ld+json">${JSON.stringify({

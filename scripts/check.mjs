@@ -65,6 +65,36 @@ for (const reduce of [false, true]) {
   await page.waitForTimeout(500);
   if (!reduce) ok(await video.evaluate((v) => v.paused), 'and pauses when scrolled away');
 
+  // The cover's garden: plays on screen, holds still scrolled away, never moves under Reduce Motion.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(400);
+  const gardenState = () =>
+    page.locator('[data-garden]').evaluate((g) => {
+      const all = g.getAnimations({ subtree: true });
+      return { running: all.filter((a) => a.playState === 'running').length, paused: all.filter((a) => a.playState === 'paused').length };
+    });
+  const butterflies = await page.locator('[data-garden] img[src*="-wings"]').count();
+  ok(butterflies === 4, `the garden has ${butterflies} butterflies`);
+  const onScreen = await gardenState();
+  if (reduce) {
+    ok(onScreen.running === 0, 'under Reduce Motion nothing in the garden moves');
+    const shown = await page.locator('[data-garden] img[src*="-wings"]').evaluateAll((els) =>
+      els.every((el) => { const r = el.getBoundingClientRect(); return r.width > 0 && Number(getComputedStyle(el.closest('[style*="--px"]')).opacity) === 1; }));
+    ok(shown, 'and every butterfly rests in view');
+  } else {
+    ok(onScreen.running > 20, `the garden plays (${onScreen.running} parts moving)`);
+    await page.evaluate(() => window.scrollTo(0, 2400));
+    await page.waitForTimeout(400);
+    const away = await gardenState();
+    ok(away.running === 0 && away.paused > 0, 'and holds still when scrolled away');
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(400);
+    // The arrivals may have finished by now; the loops must all be going again.
+    const back = await gardenState();
+    ok(back.paused === 0 && back.running > 20, 'and carries on when it comes back');
+  }
+  ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'the page never scrolls sideways');
+
   // Links.
   const download = await page.getByRole('link', { name: 'Download Iris' }).first().getAttribute('href');
   ok(download?.endsWith('/Iris.zip'), 'Download Iris points at the latest release');

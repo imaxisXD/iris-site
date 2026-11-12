@@ -8,6 +8,8 @@
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
     "shoot": "node scripts/shoot.mjs",
+    "garden": "node scripts/garden.mjs",
+    "sprites": "node scripts/sprites.mjs",
     "typecheck": "tsc --noEmit",
     "deploy": "node scripts/build.mjs && wrangler deploy"
   },

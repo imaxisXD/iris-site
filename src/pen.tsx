@@ -54,15 +54,19 @@ export const svgUrl = (viewBox: string, body: string) =>
 const maskStyle = (url: string): CSSProperties => ({ maskImage: url, WebkitMaskImage: url });
 
 // ── Printed ink ───────────────────────────────────────────────────────────────────────
+// Ink printed through the screen the way Iris's `PrintedInk` does: nearly solid, a faint grid,
+// a few soft specks. Dark inks (ink, espresso) get Iris's lighter touch, or the specks read as
+// noise on them. The dots stay square, as Iris draws them (interpolation none).
 export const printed = stylex.create({
   base: {
-    backgroundImage: `${tex.screen}, ${tex.streaks}`,
-    backgroundSize: '96px 96px, 128px 128px',
+    backgroundImage: tex.ink,
+    backgroundSize: '210px 210px',
+    imageRendering: 'pixelated',
     maskSize: '100% 100%',
     maskRepeat: 'no-repeat',
   },
-  ink: { backgroundColor: ink.i12 },
-  espresso: { backgroundColor: ink.espresso },
+  ink: { backgroundColor: ink.i12, backgroundImage: tex.inkDark },
+  espresso: { backgroundColor: ink.espresso, backgroundImage: tex.inkDark },
   pink: { backgroundColor: ink.pink },
   platePink: { backgroundColor: ink.platePink },
   rose: { backgroundColor: ink.rose },
