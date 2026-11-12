@@ -1,0 +1,43 @@
+/* The paper and the faces. StyleX's layers come after this one, so its rules always win. */
+@layer base, priority1, priority2, priority3, priority4, priority5, priority6, priority7, priority8, priority9;
+
+@font-face { font-family: 'Martian Mono'; src: url(/fonts/martian.woff2) format('woff2'); font-weight: 300 600; font-stretch: 75% 87.5%; font-display: swap; }
+/* Menlo stretched to Martian Mono's width, so the page doesn't jump when the real face arrives. */
+@font-face { font-family: 'Martian Fallback'; src: local('Menlo'), local('Courier New'); size-adjust: 108%; }
+@font-face { font-family: 'Caveat Brush'; src: url(/fonts/caveat-brush.woff2) format('woff2'); font-display: swap; }
+@font-face { font-family: 'Londrina Solid'; src: url(/fonts/londrina.woff2) format('woff2'); font-weight: 900; font-display: block; }
+@font-face { font-family: 'Knewave'; src: url(/fonts/knewave.woff2) format('woff2'); font-display: block; }
+@font-face { font-family: 'Mansalva'; src: url(/fonts/mansalva.woff2) format('woff2'); font-display: swap; }
+@font-face { font-family: 'Rubik Doodle Shadow'; src: url(/fonts/rubik-doodle.woff2) format('woff2'); font-display: block; }
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0;
+    /* The paper, with its grain. */
+    background: url(/tex/paper.png) 0 0 / 64px 64px, rgb(255 252 249);
+    color: rgb(42 26 22);
+    font-family: 'Martian Mono', 'Martian Fallback', ui-monospace, monospace;
+    font-variation-settings: 'wght' 450, 'wdth' 87.5;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: clip;
+  }
+  h1, h2, h3, p, ol, ul, figure { margin: 0; }
+  img, video, svg { max-width: 100%; }
+  kbd { font-family: inherit; }
+  ::selection { background: rgb(240 134 176 / 0.55); color: rgb(42 26 22); }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 2px solid rgb(107 95 88); outline-offset: 4px; border-radius: 0; }
+  a { color: inherit; }
+  /* The primary button: on hover the stroke runs drier and the rose comes up through it. */
+  [data-brush]:hover [data-rose] { opacity: 1; filter: saturate(1.6) brightness(1.15); }
+  [data-brush]:hover [data-inkpass] > span > span { background-size: 96px 96px, 64px 64px; }
+  @media (prefers-reduced-motion: reduce) {
+    [data-brush]:active [data-rose] { filter: saturate(1.8) brightness(1.25); }
+  }
+}

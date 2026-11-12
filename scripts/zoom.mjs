@@ -1,0 +1,11 @@
+import { chromium } from 'playwright-core';
+import { readdirSync } from 'node:fs'; import path from 'node:path'; import { homedir } from 'node:os';
+const cache = path.join(homedir(), 'Library/Caches/ms-playwright');
+const shell = readdirSync(cache).filter((d) => d.startsWith('chromium_headless_shell')).sort().pop();
+const b = await chromium.launch({ executablePath: path.join(cache, shell, 'chrome-headless-shell-mac-arm64/chrome-headless-shell') });
+const p = await b.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
+await p.goto('http://127.0.0.1:8788/', { waitUntil: 'networkidle' });
+const [sel, out] = process.argv.slice(2);
+const el = p.locator(sel).first(); await el.scrollIntoViewIfNeeded(); await p.waitForTimeout(300);
+await el.screenshot({ path: out });
+await b.close();

@@ -1,0 +1,11 @@
+{
+  // The Iris site: static assets only, served by Cloudflare from dist/ (scripts/build.mjs).
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "iris-site",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "none",
+    "html_handling": "auto-trailing-slash"
+  }
+}

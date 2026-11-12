@@ -1,0 +1,198 @@
+{
+  "garden-bud": {
+    "width": 138,
+    "height": 205,
+    "sizes": [
+      138
+    ]
+  },
+  "garden-allowed": {
+    "width": 160,
+    "height": 260,
+    "sizes": [
+      160
+    ]
+  },
+  "garden-downloading": {
+    "width": 160,
+    "height": 345,
+    "sizes": [
+      160
+    ]
+  },
+  "garden-loading": {
+    "width": 246,
+    "height": 280,
+    "sizes": [
+      240,
+      246
+    ]
+  },
+  "garden-ready": {
+    "width": 246,
+    "height": 322,
+    "sizes": [
+      240,
+      246
+    ]
+  },
+  "garden-tried": {
+    "width": 295,
+    "height": 322,
+    "sizes": [
+      240,
+      295
+    ]
+  },
+  "hero-garden": {
+    "width": 616,
+    "height": 665,
+    "sizes": [
+      360,
+      520,
+      616
+    ]
+  },
+  "icon-general": {
+    "width": 121,
+    "height": 119,
+    "sizes": [
+      121
+    ]
+  },
+  "icon-shortcuts": {
+    "width": 120,
+    "height": 116,
+    "sizes": [
+      120
+    ]
+  },
+  "icon-tones": {
+    "width": 123,
+    "height": 111,
+    "sizes": [
+      123
+    ]
+  },
+  "icon-words": {
+    "width": 128,
+    "height": 113,
+    "sizes": [
+      128
+    ]
+  },
+  "icon-apps": {
+    "width": 117,
+    "height": 116,
+    "sizes": [
+      117
+    ]
+  },
+  "icon-model": {
+    "width": 115,
+    "height": 115,
+    "sizes": [
+      115
+    ]
+  },
+  "icon-privacy": {
+    "width": 107,
+    "height": 126,
+    "sizes": [
+      107
+    ]
+  },
+  "icon-updates": {
+    "width": 110,
+    "height": 123,
+    "sizes": [
+      110
+    ]
+  },
+  "icon-about": {
+    "width": 84,
+    "height": 121,
+    "sizes": [
+      84
+    ]
+  },
+  "icon-clock": {
+    "width": 122,
+    "height": 128,
+    "sizes": [
+      122
+    ]
+  },
+  "icon-hand": {
+    "width": 87,
+    "height": 113,
+    "sizes": [
+      87
+    ]
+  },
+  "icon-plane": {
+    "width": 118,
+    "height": 123,
+    "sizes": [
+      118
+    ]
+  },
+  "icon-tray": {
+    "width": 121,
+    "height": 155,
+    "sizes": [
+      121
+    ]
+  },
+  "menu": {
+    "width": 577,
+    "height": 785,
+    "sizes": [
+      400,
+      577
+    ]
+  },
+  "quick-fix": {
+    "width": 1040,
+    "height": 212,
+    "sizes": [
+      520,
+      1040
+    ]
+  },
+  "open-anyway": {
+    "width": 2480,
+    "height": 776,
+    "sizes": [
+      800,
+      1240,
+      2480
+    ]
+  },
+  "words": {
+    "width": 1880,
+    "height": 1494,
+    "sizes": [
+      560,
+      940,
+      1880
+    ]
+  },
+  "setup": {
+    "width": 1440,
+    "height": 1240,
+    "sizes": [
+      560,
+      720,
+      1440
+    ]
+  },
+  "shelf": {
+    "width": 1400,
+    "height": 880,
+    "sizes": [
+      700,
+      1400
+    ]
+  }
+}
