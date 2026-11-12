@@ -44,7 +44,12 @@ const js = await esbuild({
   target: ['safari16', 'chrome111', 'firefox113'],
   write: false,
 });
-const script = js.outputFiles[0].text.trim();
+// Under `pnpm dev`, the page reloads itself after each rebuild (scripts/dev.mjs). Never in a
+// real build.
+const reload = process.env.IRIS_RELOAD
+  ? `;new EventSource('http://127.0.0.1:${process.env.IRIS_RELOAD}/').onmessage=()=>location.reload();`
+  : '';
+const script = js.outputFiles[0].text.trim() + reload;
 
 // 4. The HTML.
 const { render } = await import(pathToFileURL(path.join(ssr, 'render.js')).href);

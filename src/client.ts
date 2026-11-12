@@ -107,3 +107,23 @@ if (garden && !still && 'getAnimations' in garden) {
     }
   }).observe(garden);
 }
+
+// ── The foot's sign-off, fixed as you arrive ──────────────────────────────────────────
+// The marks are CSS animations (Footer.tsx, its storyboard): held at their start here, played
+// once the line is on screen, and again from the start on "fix it again".
+const fixline = document.querySelector<HTMLElement>('[data-fixline]');
+if (fixline && !still && 'getAnimations' in fixline) {
+  const marks = () => fixline.getAnimations({ subtree: true }).filter((a) => (a as CSSAnimation).animationName !== undefined && a.effect?.getComputedTiming().iterations !== Infinity);
+  const from = (play: boolean) =>
+    marks().forEach((a) => {
+      a.currentTime = 0;
+      play ? a.play() : a.pause();
+    });
+  from(false);
+  new IntersectionObserver(([e], io) => {
+    if (!e.isIntersecting) return;
+    io.disconnect();
+    from(true);
+  }, { threshold: 0.6 }).observe(fixline.querySelector('p') ?? fixline);
+  fixline.querySelector('[data-fixline-again]')?.addEventListener('click', () => from(true));
+}

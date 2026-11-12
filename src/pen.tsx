@@ -74,6 +74,7 @@ export const printed = stylex.create({
   sky: { backgroundColor: ink.sky },
   tan: { backgroundColor: ink.tan },
   crema: { backgroundColor: ink.crema },
+  paper: { backgroundColor: ink.paper },
   tape: { backgroundColor: ink.tape },
   green: { backgroundColor: ink.green },
 });

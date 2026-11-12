@@ -5,7 +5,6 @@
 //
 // renders-dir holds what the Iris app draws off screen (nothing is shown, nothing is read):
 //   Iris --readme-images <dir>/readme
-//   Iris --rig-frames    <dir>/rig
 //   Iris --snapshot      <dir>/snap
 // With no argument it renders them itself from the Iris checkout in $IRIS (default
 // ../grammly-alt), which must have been built with `swift build`.
@@ -20,7 +19,7 @@ import subsetFont from 'subset-font';
 const root = path.resolve(import.meta.dirname, '..');
 const iris = path.resolve(process.env.IRIS ?? path.join(root, '../grammly-alt'));
 const out = (...p) => path.join(root, 'public', ...p);
-for (const d of ['fonts', 'img', 'video', 'tex']) rmSync(out(d), { recursive: true, force: true }), mkdirSync(out(d), { recursive: true });
+for (const d of ['fonts', 'img', 'tex']) rmSync(out(d), { recursive: true, force: true }), mkdirSync(out(d), { recursive: true });
 
 let renders = process.argv[2];
 if (!renders) {
@@ -28,7 +27,7 @@ if (!renders) {
   rmSync(renders, { recursive: true, force: true });
   const bin = path.join(iris, '.build/debug/Iris');
   if (!existsSync(bin)) throw new Error(`Build Iris first: (cd ${iris} && swift build)`);
-  for (const [flag, dir] of [['--readme-images', 'readme'], ['--rig-frames', 'rig'], ['--snapshot', 'snap']]) {
+  for (const [flag, dir] of [['--readme-images', 'readme'], ['--snapshot', 'snap']]) {
     mkdirSync(path.join(renders, dir), { recursive: true });
     execFileSync(bin, [flag, path.join(renders, dir)], { stdio: 'ignore' });
   }
@@ -108,7 +107,7 @@ await tile('screen.png', 192, (d, n) => {
 // Laid over the ink in paper colour, one tile pixel to a CSS pixel (Iris's points). 210 is a
 // multiple of the grid (3) and of both noise cells, so the tile repeats without a seam.
 function screenTile(name, { grid, specks, seed }) {
-  const n = 210;
+  const n = 210, drift = 0.1;
   const r = rng(seed);
   const noise = (cell) => {
     const g = n / cell;
@@ -135,7 +134,7 @@ function screenTile(name, { grid, specks, seed }) {
           d.set([255, 252, 249, Math.round(0.45 * 255)], i * 4);
           continue;
         }
-        let lift = ((y % 3 === 0 ? 0.1 : 0) + (x % 3 === 0 ? 0.07 : 0)) * grid + (tone(x, y) - 0.5) * 0.1;
+        let lift = ((y % 3 === 0 ? 0.1 : 0) + (x % 3 === 0 ? 0.07 : 0)) * grid + (tone(x, y) - 0.5) * drift;
         lift = Math.max(0, Math.min(0.3, lift));
         d.set([255, 252, 249, Math.round(lift * 255)], i * 4);
       }
@@ -291,24 +290,7 @@ await sharp(src('readme/readme-hero-light.png'))
 
 writeFileSync(path.join(root, 'src/assets.json'), JSON.stringify(manifest, null, 2) + '\n');
 
-// ── The ⌃⌥G moment as a video ─────────────────────────────────────────────────────────
-// Iris renders it frame by frame at 25 fps over a stand-in chat. The scene's grey is turned
-// to Iris's paper (a white balance, so the panel's shadow stays smooth), then cropped to the
-// part that moves. H.264 (smaller than AV1 here, for flat drawings) and a poster frame.
-{
-  const frames = src('rig/full/%03d.png');
-  const count = readdirSync(src('rig/full')).filter((f) => f.endsWith('.png')).length;
-  const balance = 'colorchannelmixer=rr=1.0366:gg=1.0286:bb=1.0081';
-  const crop = 'crop=1640:700:80:150';
-  const vf = `${balance},${crop},scale=1312:-2:flags=lanczos,format=yuv420p`;
-  const ff = (...args) => execFileSync('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', ...args]);
-  // Hold the last frame a beat so the loop doesn't snap straight back.
-  const hold = `tpad=stop_mode=clone:stop_duration=1.2,`;
-  ff('-framerate', '25', '-i', frames, '-vf', hold + vf, '-c:v', 'libx264', '-crf', '26', '-preset', 'slow', '-profile:v', 'high', '-an', '-movflags', '+faststart', out('video', 'moment-h264.mp4'));
-  const poster = path.join(tmpdir(), 'iris-poster.png');
-  ff('-i', src('rig/full', String(Math.min(count - 1, 70)).padStart(3, '0') + '.png'), '-vf', `${balance},${crop},scale=1312:-2:flags=lanczos`, poster);
-  await sharp(poster).avif({ quality: 60 }).toFile(out('video', 'moment-poster.avif'));
-  await sharp(poster).webp({ quality: 80 }).toFile(out('video', 'moment-poster.webp'));
-}
+// The /02 video is a real recording of Iris in TextEdit now: scripts/record-demo.py, then
+// scripts/demo-video.mjs, into public/demo.
 
 console.log('assets done:', Object.keys(manifest).length, 'images');

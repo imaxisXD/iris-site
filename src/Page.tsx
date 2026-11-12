@@ -17,6 +17,8 @@ import {
   Tape,
   Wordmark,
 } from './parts';
+import demo from './demo.json';
+import { Footer } from './Footer';
 import { Garden } from './Garden';
 import { diff, draft, issues, links, month, tones } from './content';
 import { font, ink, tex } from './tokens.stylex';
@@ -85,7 +87,7 @@ const s = stylex.create({
 
   // Moment
   print: { position: 'relative', transform: 'rotate(-1.2deg)', padding: 10, [MOBILE]: { transform: 'none', padding: 6 } },
-  video: { display: 'block', width: '100%', height: 'auto', aspectRatio: '1312 / 560', backgroundColor: ink.paper },
+  video: { display: 'block', width: '100%', height: 'auto', backgroundColor: ink.paper },
   steps: { listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 30 },
   step: { display: 'grid', gridTemplateColumns: '36px 1fr', gap: '6px 14px', alignItems: 'baseline' },
   stepNo: { fontSize: 13, color: ink.pinkText },
@@ -264,23 +266,6 @@ const s = stylex.create({
   changes: { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 },
   change: { display: 'grid', gridTemplateColumns: '18px 1fr', gap: 10, fontSize: 13.5, lineHeight: 1.55, color: ink.i11 },
   changeTitle: { color: ink.i12, display: 'block' },
-
-  // Back page
-  back: { paddingBlock: 'clamp(64px, 8vw, 112px) 0', position: 'relative' },
-  backGrid: { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 40, alignItems: 'end', [MOBILE]: { gridTemplateColumns: '1fr' } },
-  maker: { display: 'flex', alignItems: 'center', gap: 22, flexWrap: 'wrap' },
-  linksRow: { display: 'flex', flexWrap: 'wrap', gap: '14px 30px', marginTop: 34 },
-  credits: { fontSize: 12, lineHeight: 1.7, color: ink.i10, maxWidth: '76ch', marginTop: 26, marginBottom: 0 },
-  footBand: {
-    position: 'relative',
-    marginTop: 'clamp(48px, 6vw, 80px)',
-    backgroundColor: ink.platePink,
-    backgroundImage: `${tex.screen}, ${tex.streaks}`,
-    backgroundSize: '96px 96px, 128px 128px',
-    color: ink.paper,
-  },
-  footInner: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingBlock: '32px 26px' },
-  edgeBack: { position: 'absolute', right: 'clamp(8px, 2vw, 28px)', top: 'clamp(64px, 8vw, 112px)', writingMode: 'vertical-rl', fontSize: 10.5, letterSpacing: '0.34em', textTransform: 'uppercase', color: ink.i10, [MOBILE]: { display: 'none' } },
 });
 
 
@@ -378,18 +363,18 @@ function Moment() {
                 loop
                 playsInline
                 preload="none"
-                poster="/video/moment-poster.webp"
-                width={1312}
-                height={560}
-                aria-label="A flower grows beside a chat box, the Iris panel unrolls with three fixes marked in pink, Replace is pressed and the message in the box is corrected."
+                poster="/demo/iris-in-textedit.webp"
+                width={demo.width}
+                height={demo.height}
+                aria-label={`In TextEdit, a reply reads “${demo.draft}”. The shortcut is pressed: Iris’s flower comes up beside it and its panel marks three fixes. Return replaces the text, which now reads “${demo.fixed}”.`}
               >
-                <source src="/video/moment-h264.mp4" type="video/mp4" />
+                <source src="/demo/iris-in-textedit.mp4" type="video/mp4" />
               </video>
               <Tape style={{ left: -18, top: -14, width: 96, height: 26, transform: 'rotate(-14deg)' }} />
               <Tape style={{ right: -16, bottom: -12, width: 92, height: 26, transform: 'rotate(-10deg)' }} />
             </div>
             <figcaption {...stylex.props(s.caption)}>
-              <span aria-hidden>↑</span> Drawn by Iris itself, frame by frame, as it runs on your Mac.
+              <span aria-hidden>↑</span> Recorded on a Mac: Iris in TextEdit, fixing a reply and putting it back.
             </figcaption>
           </figure>
         </div>
@@ -869,56 +854,6 @@ function WhatsNew() {
   );
 }
 
-// ── Back page ─────────────────────────────────────────────────────────────────────────
-function Back() {
-  return (
-    <footer {...stylex.props(s.back)}>
-      <span aria-hidden {...stylex.props(s.edgeBack)}>Iris · grammar and tone</span>
-      <div {...stylex.props(s.wrap)}>
-        <PenRule seed={101} strong />
-        <div {...stylex.props(s.backGrid)} style={{ paddingTop: 40 }}>
-          <div>
-            <div {...stylex.props(s.maker)}>
-              <Picture name="garden-allowed" alt="" scale={2} />
-              <span {...stylex.props(s.stack)} style={{ gap: 10 }}>
-                <Wordmark size="40px" />
-                <span {...stylex.props(s.brush)} style={{ fontSize: 24, lineHeight: 1.15, maxWidth: '22ch' }}>
-                  Named after Iris, who writes down what people mean to say.
-                </span>
-              </span>
-            </div>
-            <div {...stylex.props(s.maker)} style={{ marginTop: 36 }}>
-              <span {...stylex.props(s.signOff)} style={{ color: 'rgb(42 26 22)' }} aria-hidden>
-                <span>made</span>
-                <span style={{ paddingLeft: '1em' }}>— by</span>
-              </span>
-              <HandWord word="ABHISHEK" size="clamp(44px, 6vw, 72px)" label="Iris is made by Abhishek." />
-            </div>
-            <div {...stylex.props(s.linksRow)}>
-              <PenLink href={links.code}>The code</PenLink>
-              <PenLink href={links.problem}>Report a problem</PenLink>
-              <PenLink href={links.download}>Download Iris</PenLink>
-            </div>
-            <p {...stylex.props(s.credits)}>
-              Iris uses Gemma 4 (Gemma Terms of Use) and Apple MLX (MIT). Set in Martian Mono, Caveat Brush, Rubik Doodle Shadow, Londrina Solid, Knewave and Mansalva (SIL OFL).
-            </p>
-          </div>
-        </div>
-      </div>
-      <div {...stylex.props(s.footBand)}>
-        <div {...stylex.props(s.wrap, s.footInner)}>
-          <span {...stylex.props(s.signOff)} aria-hidden>
-            <span>thanks for</span>
-            <span style={{ paddingLeft: '1.2em' }}>— reading</span>
-          </span>
-          <span aria-hidden {...stylex.props(s.folio)} style={{ color: 'rgb(255 252 249)' }}>
-            /10
-          </span>
-        </div>
-      </div>
-    </footer>
-  );
-}
 
 export function Page() {
   return (
@@ -937,7 +872,7 @@ export function Page() {
         <Install />
         <WhatsNew />
       </main>
-      <Back />
+      <Footer />
     </>
   );
 }

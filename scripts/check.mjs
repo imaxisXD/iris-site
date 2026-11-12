@@ -95,6 +95,24 @@ for (const reduce of [false, true]) {
   }
   ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'the page never scrolls sideways');
 
+  // The foot: Iris fixes the sign-off once it's on screen, and again on "fix it again".
+  const line = page.locator('#foot-line');
+  // Struck words take no room once they're replaced (the flower's box aside).
+  const struckWidth = () => line.evaluate((p) => [...p.querySelectorAll(':scope > span[aria-hidden="true"]')].filter((s) => !s.querySelector('picture')).reduce((w, s) => w + s.getBoundingClientRect().width, 0));
+  await line.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(reduce ? 300 : 4200);
+  ok((await line.getAttribute('aria-label')) === 'Thanks for reading. Now go write something in your own voice.', 'the foot line reads fixed to a screen reader');
+  ok((await struckWidth()) < 1, reduce ? 'under Reduce Motion the foot line is simply fixed' : 'Iris fixes the foot line once it is on screen');
+  if (!reduce) {
+    await page.getByRole('button', { name: /fix it again/ }).click();
+    await page.waitForTimeout(1600);
+    ok((await struckWidth()) > 20, '"fix it again" marks the slips again');
+    await page.waitForTimeout(3000);
+    ok((await struckWidth()) < 1, 'and replaces them');
+  } else {
+    ok(!(await page.getByRole('button', { name: /fix it again/ }).isVisible()), 'and offers no replay');
+  }
+
   // Links.
   const download = await page.getByRole('link', { name: 'Download Iris' }).first().getAttribute('href');
   ok(download?.endsWith('/Iris.zip'), 'Download Iris points at the latest release');

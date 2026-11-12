@@ -2,7 +2,7 @@
 import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
 import assets from './assets.json';
-import { HandRect, PenArrow, PenRule, Printed, markerMask, ribbonMask, rng, seedOf, slabMasks } from './pen';
+import { HandRect, PenArrow, PenRule, Printed, markerMask, ribbonMask, rng, seedOf, slabMasks, type InkName } from './pen';
 import { font, ink, tex } from './tokens.stylex';
 
 const MOBILE = '@media (max-width: 760px)';
@@ -351,14 +351,15 @@ const pl = stylex.create({
   ribbon: { position: 'absolute', left: 0, right: 0, bottom: -3, height: 6, opacity: { default: 1, ':hover': 1 } },
   arrow: { display: 'inline-flex', transform: 'translateY(-2px)' },
 });
-/** Words with a printed pink pen stroke under them, and the turned-up arrow when they leave. */
-export function PenLink({ href, children, out = true }: { href: string; children: string; out?: boolean }) {
+/** Words with a printed pink pen stroke under them, and the turned-up arrow when they leave.
+ *  On a pink plate the stroke is printed in another ink (`ribbon`), or it would vanish. */
+export function PenLink({ href, children, out = true, ribbon = 'pink' }: { href: string; children: string; out?: boolean; ribbon?: InkName }) {
   return (
     <a href={href} {...stylex.props(pl.link)} {...(out ? { rel: 'noopener' } : {})} data-penlink>
       <span {...stylex.props(pl.words)}>
         {children}
         <span aria-hidden {...stylex.props(pl.ribbon)}>
-          <Printed mask={ribbonMask(seedOf(children))} color="pink" />
+          <Printed mask={ribbonMask(seedOf(children))} color={ribbon} />
         </span>
       </span>
       {out && (
@@ -402,7 +403,7 @@ const bt = stylex.create({
 });
 /** The next step: one loaded stroke of a dry brush in espresso, rose printed off register. */
 export function BrushButton({ href, children, hint, id, download, data }: { href?: string; children: ReactNode; hint?: ReactNode; id?: string; download?: boolean; data?: Record<string, string> }) {
-  const pass = (color: 'ink' | 'rose') => (
+  const pass = (color: InkName) => (
     <>
       <span {...stylex.props(bt.cap)} style={{ width: 18 }}>
         <Printed mask={slabMasks.left} color={color} />
