@@ -22,18 +22,32 @@ const BRUSH: Record<PatternKind, { width: number; rough: number; grain: number }
 
 const f2 = (n: number) => n.toFixed(1);
 
+/** One stroke through these points, in whole units, each step from the one before: the brush is
+ *  wider than a unit and roughened by several, and it keeps the page's HTML small. */
+function stroke(pts: [number, number][]) {
+  let px = Math.round(pts[0][0]), py = Math.round(pts[0][1]);
+  let d = `M${px},${py}l`;
+  for (let i = 1; i < pts.length; i++) {
+    const x = Math.round(pts[i][0]), y = Math.round(pts[i][1]);
+    d += `${i > 1 ? ' ' : ''}${x - px},${y - py}`;
+    px = x; py = y;
+  }
+  return d;
+}
+
 /** Loose flower doodles: rose curves (petal loops), each a little lopsided, scattered big. */
 function loops(seed: number, count = 7) {
   const r = rng(seed);
   let d = '';
   for (let k = 0; k < count; k++) {
     const cx = r() * W, cy = r() * H, R = 150 + r() * 170, petals = [2.5, 3, 2.5, 3.5][Math.floor(r() * 4)], turn = r() * Math.PI * 2;
-    const n = 220, wob = [r() * 6, r() * 6];
+    const n = 220, wob = [r() * 6, r() * 6], pts: [number, number][] = [];
     for (let i = 0; i <= n; i++) {
       const t = (i / n) * Math.PI * (petals % 1 ? 4 : 2);
       const rad = R * (0.25 + 0.75 * Math.abs(Math.cos(petals * t * 0.5))) * (1 + 0.06 * Math.sin(t * 3 + wob[0]) + 0.04 * Math.sin(t * 7 + wob[1]));
-      d += `${i ? 'L' : 'M'}${f2(cx + Math.cos(t + turn) * rad)},${f2(cy + Math.sin(t + turn) * rad)}`;
+      pts.push([cx + Math.cos(t + turn) * rad, cy + Math.sin(t + turn) * rad]);
     }
+    d += stroke(pts);
   }
   return d;
 }
@@ -44,12 +58,13 @@ function ripples(seed: number, at: [number, number] = [0.5, 0.5], count = 14) {
   const cx = at[0] * W, cy = at[1] * H;
   let d = '';
   for (let k = 0; k < count; k++) {
-    const base = 70 + k * 78, n = 90, start = r() * Math.PI * 2, ph = [r() * 6, r() * 6, r() * 6];
+    const base = 70 + k * 78, n = 90, start = r() * Math.PI * 2, ph = [r() * 6, r() * 6, r() * 6], pts: [number, number][] = [];
     for (let i = 0; i <= n + 4; i++) {
       const t = start + (i / n) * Math.PI * 2;
       const rad = base + 12 * (Math.sin(t * 3 + ph[0]) * 0.6 + Math.sin(t * 5 + ph[1]) * 0.3 + Math.sin(t * 2 + ph[2]) * 0.5) + (i > n ? 8 : 0);
-      d += `${i ? 'L' : 'M'}${f2(cx + Math.cos(t) * rad)},${f2(cy + Math.sin(t) * rad)}`;
+      pts.push([cx + Math.cos(t) * rad, cy + Math.sin(t) * rad]);
     }
+    d += stroke(pts);
   }
   return d;
 }
@@ -59,11 +74,9 @@ function waves(seed: number, rows = 11) {
   const r = rng(seed);
   let d = '';
   for (let k = 0; k < rows; k++) {
-    const y0 = (k + 0.5) * (H / rows), amp = 16 + r() * 18, len = 170 + r() * 80, ph = r() * 6;
-    for (let x = -40, i = 0; x <= W + 40; x += 12, i++) {
-      const y = y0 + Math.sin(x / len * Math.PI * 2 + ph) * amp + Math.sin(x / 61 + ph * 2) * 4;
-      d += `${i ? 'L' : 'M'}${f2(x)},${f2(y)}`;
-    }
+    const y0 = (k + 0.5) * (H / rows), amp = 16 + r() * 18, len = 170 + r() * 80, ph = r() * 6, pts: [number, number][] = [];
+    for (let x = -40; x <= W + 40; x += 12) pts.push([x, y0 + Math.sin(x / len * Math.PI * 2 + ph) * amp + Math.sin(x / 61 + ph * 2) * 4]);
+    d += stroke(pts);
   }
   return d;
 }
@@ -79,7 +92,7 @@ function stars(seed: number, cols = 9) {
       for (let k = 0; k < 4; k++) {
         const a = turn + (k * Math.PI) / 4;
         const jx = (r() - 0.5) * 4, jy = (r() - 0.5) * 4;
-        d += `M${f2(cx - Math.cos(a) * R + jx)},${f2(cy - Math.sin(a) * R + jy)}L${f2(cx + Math.cos(a) * R - jy)},${f2(cy + Math.sin(a) * R + jx)}`;
+        d += stroke([[cx - Math.cos(a) * R + jx, cy - Math.sin(a) * R + jy], [cx + Math.cos(a) * R - jy, cy + Math.sin(a) * R + jx]]);
       }
     }
   return d;

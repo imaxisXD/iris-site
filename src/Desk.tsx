@@ -418,7 +418,7 @@ function Screen({ app }: { app: App }) {
 /* The desktop picture: a green plate with loops drawn over it in a paler green, and Iris's
  * flower as a fat, rough brush stroke in red, half off the screen, as a poster would crop it
  * (after the DESSN reel's fuzzy flower on its scribbled plate, in Iris's inks). */
-const WALL = {
+export const WALL = {
   plate: 'rgb(48 146 88)',
   loops: 'rgb(86 172 116)',
   flowers: [

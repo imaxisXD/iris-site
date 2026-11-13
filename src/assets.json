@@ -255,7 +255,7 @@
   },
   "words": {
     "width": 1880,
-    "height": 1494,
+    "height": 1250,
     "sizes": [
       560,
       940,
@@ -277,6 +277,33 @@
     "sizes": [
       700,
       1400
+    ]
+  },
+  "settings-tones": {
+    "width": 1880,
+    "height": 1978,
+    "sizes": [
+      560,
+      940,
+      1880
+    ]
+  },
+  "settings-apps": {
+    "width": 1880,
+    "height": 1414,
+    "sizes": [
+      560,
+      940,
+      1880
+    ]
+  },
+  "settings-shortcuts": {
+    "width": 1880,
+    "height": 1628,
+    "sizes": [
+      560,
+      940,
+      1880
     ]
   }
 }

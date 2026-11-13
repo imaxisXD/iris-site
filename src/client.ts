@@ -5,8 +5,11 @@ import { diff } from './diff';
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $$ = <T extends Element>(sel: string, root: ParentNode = document) => [...root.querySelectorAll<T>(sel)];
 
-/** A row of tabs: click, or arrow keys, chooses one and shows its panel. */
+/** A row of tabs: click, or arrow keys, chooses one and shows its panel. A list going down
+ *  (aria-orientation="vertical") takes ↑ and ↓ instead. */
 function tabs(list: HTMLElement[], show: (i: number) => void) {
+  const vertical = list[0]?.closest('[role="tablist"]')?.getAttribute('aria-orientation') === 'vertical';
+  const [next, back] = vertical ? ['ArrowDown', 'ArrowUp'] : ['ArrowRight', 'ArrowLeft'];
   const choose = (i: number, focus = false) => {
     list.forEach((t, k) => {
       const on = k === i;
@@ -19,7 +22,7 @@ function tabs(list: HTMLElement[], show: (i: number) => void) {
   list.forEach((t, i) => {
     t.addEventListener('click', () => choose(i));
     t.addEventListener('keydown', (e) => {
-      const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      const step = e.key === next ? 1 : e.key === back ? -1 : 0;
       if (!step) return;
       e.preventDefault();
       choose((i + step + list.length) % list.length, true);
@@ -250,6 +253,79 @@ if (books.length) {
     const no = books[i].dataset.issue;
     facts.forEach((f) => f.toggleAttribute('hidden', f.dataset.facts !== no));
   });
+}
+
+// ── Make it yours: Iris's Settings window turns through its pages (Page.tsx, Yours) ───────
+/* ─────────────────────────────────────────────────────────
+ * ANIMATION STORYBOARD
+ *
+ * Read top-to-bottom. Each `at` value is ms after a page is chosen
+ * (by the clock, or by picking its name or its words on the list).
+ *
+ *     0ms   the old page sinks away: fades, drifts up 6px, blurs 4px
+ *    90ms   the new page rises in: 10px → 0, blur 6px → 0, scale 0.985 → 1
+ *   650ms   settled; the item's line starts filling
+ *  5600ms   line full: the clock picks the next page, round and round
+ *
+ * The clock runs only while the window is on screen, holds while the pointer
+ * is over the window or the list, and never runs under Reduce Motion (the
+ * pages then just cross-fade when picked).
+ * ───────────────────────────────────────────────────────── */
+const YOURS_TIMING = {
+  out:   240,   // the old page sinking away
+  lag:    90,   // the new page starts after the old one has begun to go
+  in:    560,   // the new page rising in
+  dwell: 5600,  // each page's turn, from being chosen to the next one
+};
+{
+  const list = document.querySelector<HTMLElement>('[data-yours]');
+  const win = document.querySelector<HTMLElement>('[data-yours-window]');
+  if (list && win) {
+    const steps = $$<HTMLElement>('[data-yours-step]', list);
+    const bars = $$<HTMLElement>('[data-yours-bar]', list);
+    const pages = $$<HTMLElement>('[data-yours-page]', win);
+    for (const [k, v] of Object.entries(YOURS_TIMING)) win.style.setProperty(`--yours-${k}`, `${v}ms`);
+
+    let shown = 0, began = 0, held = false, seen = false, raf = 0;
+    const show = (i: number) => {
+      if (i !== shown) {
+        pages[shown].dataset.was = 'true';
+        const gone = pages[shown];
+        setTimeout(() => delete gone.dataset.was, YOURS_TIMING.out + 40);
+      }
+      pages.forEach((p, k) => ((p.dataset.shown = String(k === i)), (p.inert = k !== i)));
+      steps.forEach((st, k) => (st.dataset.active = String(k === i)));
+      shown = i;
+      began = performance.now();
+      bars.forEach((b) => b.style.setProperty('--p', '0'));
+    };
+    const choose = tabs($$<HTMLElement>('[role="tab"]', list), show);
+    // The item's words pick it too, not only its name.
+    steps.forEach((st, k) => st.addEventListener('click', (e) => {
+      if (!(e.target as HTMLElement).closest('button')) choose(k);
+    }));
+
+    if (!still) {
+      const tick = (now: number) => {
+        if (held) began = now - (Number(bars[shown].style.getPropertyValue('--p')) || 0) * YOURS_TIMING.dwell;
+        const p = Math.min(1, (now - began) / YOURS_TIMING.dwell);
+        bars[shown].style.setProperty('--p', p.toFixed(3));
+        if (p >= 1) choose((shown + 1) % pages.length);
+        raf = requestAnimationFrame(tick);
+      };
+      const run = () => {
+        if (seen && !raf) {
+          began = performance.now() - (Number(bars[shown].style.getPropertyValue('--p')) || 0) * YOURS_TIMING.dwell;
+          raf = requestAnimationFrame(tick);
+        } else if (!seen && raf) (cancelAnimationFrame(raf), (raf = 0));
+      };
+      for (const el of [win, list]) {
+        el.addEventListener('pointerenter', () => (held = true));
+        el.addEventListener('pointerleave', () => (held = false));
+      }
+      new IntersectionObserver(([e]) => ((seen = e.isIntersecting), run()), { threshold: 0.35 }).observe(win);
+    }
+  }
 }
 
 // ── How it works: the desk (Desk.tsx), and its steps as chapters (Page.tsx, Moment) ─────────

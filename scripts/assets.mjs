@@ -223,13 +223,13 @@ async function cutout(file, box, name, { tol = 20, widths = [], bg: plate, minSp
 
 // Writes AVIF and WebP at each width (every browser this page supports reads WebP).
 const manifest = {};
-async function emit(input, name, widths = []) {
+async function emit(input, name, widths = [], q = { avif: 62, webp: 82 }) {
   const meta = await sharp(input).metadata();
   const sizes = [...new Set([...widths.filter((x) => x < meta.width), meta.width])];
   for (const width of sizes) {
     const base = sharp(input).resize({ width });
-    await base.clone().avif({ quality: 62, effort: 6 }).toFile(out('img', `${name}-${width}.avif`));
-    await base.clone().webp({ quality: 82, alphaQuality: 90, effort: 6 }).toFile(out('img', `${name}-${width}.webp`));
+    await base.clone().avif({ quality: q.avif, effort: 6 }).toFile(out('img', `${name}-${width}.avif`));
+    await base.clone().webp({ quality: q.webp, alphaQuality: 90, effort: 6 }).toFile(out('img', `${name}-${width}.webp`));
   }
   manifest[name] = { width: meta.width, height: meta.height, sizes };
 }
@@ -263,16 +263,27 @@ await cutout('readme/readme-hero-light.png', { left: 1860, top: 340, width: 380,
 }
 
 // Iris's own screens, as it draws them.
-async function screen(file, name, widths, box) {
+async function screen(file, name, widths, box, q) {
   let img = sharp(src(file));
   if (box) img = img.extract(box);
-  await emit(await img.png().toBuffer(), name, widths);
+  await emit(await img.png().toBuffer(), name, widths, q);
 }
 // The menu as it opens under the menu bar, lifted off the grey it was drawn on.
 await cutout('readme/readme-menu-light.png', { left: 0, top: 0, width: 800, height: 866 }, 'menu', { bg: [209, 209, 209], tol: 24, widths: [400, 800] });
 await screen('readme/readme-quick-fix-light.png', 'quick-fix', [520]);
 await screen('readme/readme-open-anyway-light.png', 'open-anyway', [800, 1240]);
-await screen('readme/readme-words-light.png', 'words', [560, 940]);
+// Settings pages for Make it yours, shown small, so pressed lightly to keep their small type sharp,
+// and without their pink foot (the bottom 228px, cut a little above its rough edge): the window
+// they sit in runs on in paper below them, whatever its height. Words is the README's, which has
+// words in its list.
+{
+  const sharpText = { avif: 84, webp: 92 }, foot = 244;
+  const pages = [['readme/readme-words-light.png', 'words'], ...['tones', 'apps', 'shortcuts'].map((p) => [`snap/screen-settings-${p}-light.png`, `settings-${p}`])];
+  for (const [file, name] of pages) {
+    const { width, height } = await sharp(src(file)).metadata();
+    await screen(file, name, [560, 940], { left: 0, top: 0, width, height: height - foot }, sharpText);
+  }
+}
 await screen('readme/readme-setup-light.png', 'setup', [560, 720]);
 await screen('snap/after-book-shelf-many-light.png', 'shelf', [700]);
 

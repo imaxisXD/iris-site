@@ -1,7 +1,7 @@
 // The Iris zine, issue for the web: one page per spread, printed like the app.
 import * as stylex from '@stylexjs/stylex';
 import type React from 'react';
-import { crossMask, HandArrow, HandRect, HandTick, markerMask, penLine, PenRule, Printed, rng, seedOf } from './pen';
+import { crossMask, HandArrow, HandRect, HandTick, markerMask, PenArrow, penLine, PenRule, Printed, ringMask, rng, seedOf, svgUrl } from './pen';
 import {
   AppName,
   BrushButton,
@@ -21,7 +21,7 @@ import {
 } from './parts';
 import { Footer } from './Footer';
 import { FactStage, type FactLook, MacCorner, PanelScene } from './Backdrop';
-import { CHAPTERS, Desk } from './Desk';
+import { CHAPTERS, Desk, WALL } from './Desk';
 import { Pattern } from './Patterns';
 import { Garden } from './Garden';
 import { draft, issues, links, month, pageTones, pressTones, tones } from './content';
@@ -62,24 +62,13 @@ const s = stylex.create({
   spread: { position: 'relative', paddingBlock: 'clamp(56px, 7vw, 96px)', overflow: 'clip' },
   stack: { display: 'flex', flexDirection: 'column' },
   row: { display: 'flex', alignItems: 'center', flexWrap: 'wrap' },
-  two: {
-    display: 'grid',
-    gridTemplateColumns: 'minmax(0, 5fr) minmax(0, 7fr)',
-    gap: 'clamp(32px, 6vw, 96px)',
-    alignItems: 'start',
-    [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' },
-  },
   body: { fontSize: 15, lineHeight: 1.7, color: ink.i11, margin: 0, maxWidth: '52ch' },
   meta: { fontSize: 12.5, lineHeight: 1.6, color: ink.i10, margin: 0 },
-  brush: { fontFamily: font.brush, fontWeight: 400 },
   srOnly: { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)', whiteSpace: 'nowrap' },
   // Hidden until the first Tab lands on it, then a paper slip over the cover's corner.
   skip: {
     ':focus': { position: 'fixed', zIndex: 10, top: 12, left: 12, width: 'auto', height: 'auto', overflow: 'visible', clipPath: 'none', paddingBlock: 10, paddingInline: 14, backgroundColor: ink.paper, color: ink.i12, fontSize: 13, boxShadow: '0 6px 16px -6px rgb(42 26 22 / 0.35)' },
   },
-  sheet: { position: 'relative', backgroundColor: ink.paper, boxShadow: '0 1px 1px rgb(42 26 22 / 0.06), 0 14px 30px -12px rgb(42 26 22 / 0.28), 0 40px 60px -40px rgb(42 26 22 / 0.3)' },
-  grain: { position: 'absolute', inset: 0, backgroundImage: tex.paper, backgroundSize: '64px 64px', pointerEvents: 'none' },
-
   // Cover
   plate: {
     position: 'relative',
@@ -155,7 +144,7 @@ const s = stylex.create({
   winBar: { position: 'relative', display: 'flex', alignItems: 'center', paddingBlock: 8, paddingInline: 12, borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'rgb(42 26 22 / 0.1)' },
   lights: { display: 'flex', gap: 6 },
   light: { width: 9, height: 9, borderRadius: '50%', borderWidth: 1.3, borderStyle: 'solid', borderColor: ink.i8 },
-  winTitle: { flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginRight: 39, fontSize: 11, color: ink.i10 },
+  winTitle: { flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'safe center', gap: 6, marginLeft: 8, marginRight: 31, fontSize: 11, color: ink.i10, whiteSpace: 'nowrap' },
   winBody: { position: 'relative', padding: '12px 14px 14px', display: 'grid', gap: 10 },
   chatPrev: { margin: 0, fontSize: 12, color: ink.i10 },
   chatWho: { color: ink.i12, fontWeight: 600, marginRight: 6 },
@@ -227,19 +216,29 @@ const s = stylex.create({
   stickerWord: { fontFamily: font.brush, fontSize: 'clamp(18px, 1.6vw, 21px)', lineHeight: 1.05, color: ink.i12 },
   pinkBody: { fontSize: 16, lineHeight: 1.75, margin: 0, maxWidth: '44ch', color: ink.i12 },
 
-  // Yours
-  methods: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
-    gap: 'clamp(20px, 3vw, 40px)',
-    marginTop: 'clamp(40px, 6vw, 72px)',
-    [NARROW]: { gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' },
-    [MOBILE]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' },
-  },
-  method: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 14 },
-  drawing: { position: 'relative', width: 'clamp(84px, 9vw, 112px)', aspectRatio: '1', display: 'grid', placeItems: 'center' },
-  drawingImg: { width: '100%', height: 'auto' },
-  cross: { position: 'absolute', inset: '-12%' },
+  // Make it yours: the list beside a torn sheet of How it works' green, Iris's Settings window
+  // lying on it. On wide pages the sheet is as tall as the list and the window fills it to its foot.
+  // On narrow pages the window comes between the title and the list, so a tap shows its page in view.
+  yoursGrid: { display: 'grid', gridTemplateColumns: { default: 'minmax(0, 0.72fr) minmax(0, 1.28fr)', [NARROW]: 'minmax(0, 1fr)' }, gridTemplateRows: { default: 'auto 1fr', [NARROW]: 'auto' },
+    gridTemplateAreas: { default: '"title stage" "list stage"', [NARROW]: '"title" "stage" "list"' }, columnGap: 'clamp(32px, 4vw, 64px)', rowGap: 40, alignItems: 'start' },
+  yoursStage: { gridArea: 'stage', position: 'relative', isolation: 'isolate', alignSelf: { default: 'stretch', [NARROW]: 'start' }, containerType: 'inline-size',
+    display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', backgroundImage: `${tex.screen}, ${tex.streaks}`, backgroundSize: '96px 96px, 128px 128px',
+    // No room below: the window runs to the sheet's foot and fades out into it.
+    padding: 'clamp(56px, 5.4vw, 76px) clamp(16px, 4.5%, 44px) 0',
+    clipPath: 'polygon(0.6% 1%, 27% 0%, 55% 1.4%, 81% 0.2%, 99.4% 1.2%, 100% 31%, 99.2% 66%, 100% 99%, 70% 99.8%, 41% 98.8%, 16% 100%, 0.4% 99%, 1.2% 62%, 0% 28%)' },
+  yoursNote: { position: 'absolute', zIndex: 1, left: 'clamp(28px, 5vw, 64px)', top: 'clamp(14px, 1.6vw, 22px)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'flex-start', gap: 4, fontFamily: font.brush, fontSize: 22, lineHeight: 1, color: ink.paper, transform: 'rotate(-3deg)' },
+  yoursStep: { cursor: 'pointer' },
+  // At least 62% as tall as it's wide (on narrow pages, just that). The pages have no foot, so
+  // below a short one the window runs on in the same paper. Its lower part fades out into the
+  // sheet; the shadow is a filter on the frame, so it fades with it.
+  yoursFrame: { flex: '1 1 auto', display: 'flex', minHeight: '62cqw', filter: 'drop-shadow(0 14px 22px rgb(0 0 0 / 0.3)) drop-shadow(0 0 0.5px rgb(0 0 0 / 0.5))' },
+  yoursWindow: { position: 'relative', flex: 1, borderRadius: 12, overflow: 'hidden', backgroundColor: 'rgb(250 247 244)',
+    // Solid for most of its height; only the foot thins, gently, so the sheet just shows through.
+    maskImage: 'linear-gradient(to bottom, #000 0%, #000 70%, rgb(0 0 0 / 0.94) 79%, rgb(0 0 0 / 0.8) 88%, rgb(0 0 0 / 0.55) 95%, rgb(0 0 0 / 0.3) 100%)' },
+  yoursPage: { position: 'absolute', insetInline: 0, top: 0 },
+  yoursLights: { position: 'absolute', zIndex: 2, left: '2.4%', top: '2.2%', display: 'flex', gap: '1.1%', width: '100%' },
+  yoursLight: { width: '1.9%', aspectRatio: '1', borderRadius: '50%', backgroundColor: 'rgb(42 26 22 / 0.16)', boxShadow: 'inset 0 0 0 1px rgb(42 26 22 / 0.12)' },
+  yoursShot: { display: 'block', width: '100%', height: 'auto' },
   methodText: { fontSize: 13.5, lineHeight: 1.6, color: ink.i11, margin: 0 },
 
   // How it works: the steps, and the desk beside them as tall as they are.
@@ -271,16 +270,33 @@ const s = stylex.create({
   setupTitle: { fontFamily: font.brush, fontSize: 24, lineHeight: 1.1, color: ink.i12 },
 
   // Install
-  installSteps: { listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 'clamp(28px, 4vw, 48px)', [MOBILE]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
-  installStep: { display: 'flex', flexDirection: 'column', gap: 10 },
-  bigNo: { fontStretch: '75%', fontWeight: 300, fontSize: 52, lineHeight: 0.9, color: ink.pinkText },
-  anyway: { marginTop: 'clamp(40px, 6vw, 64px)', [MOBILE]: { overflowX: 'auto', marginInline: -20, paddingInline: 20, scrollbarWidth: 'thin' } },
-  anywayInner: { [MOBILE]: { width: 760 } },
+  installHead: { display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '28px 48px', flexWrap: 'wrap' },
+  installSteps: { listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 'clamp(36px, 4vw, 56px) clamp(24px, 3vw, 48px)', [NARROW]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }, [MOBILE]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
+  installFoot: { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 'clamp(40px, 6vw, 96px)', alignItems: 'start', [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
   specs: { margin: 0, display: 'flex', flexDirection: 'column', fontSize: 13.5 },
   specRow: { display: 'grid', gridTemplateColumns: 'auto 1fr', backgroundRepeat: 'no-repeat', backgroundPosition: 'bottom', backgroundSize: '100% 6px' },
   specTerm: { fontSize: 11.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: ink.i10, paddingBlock: 12, paddingRight: 24 },
   specDef: { margin: 0, paddingBlock: 12, textAlign: 'right', color: ink.i12, lineHeight: 1.5 },
-  why: { padding: 'clamp(20px, 3vw, 32px)', display: 'flex', flexDirection: 'column', gap: 12, transform: 'rotate(0.6deg)' },
+  why: { padding: 'clamp(22px, 3vw, 32px)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 12, rotate: '0.8deg' },
+  whyTitle: { position: 'relative', fontFamily: font.brush, fontSize: 28, lineHeight: 1, color: ink.i12 },
+  whyText: { position: 'relative', margin: 0, fontSize: 14, lineHeight: 1.7, color: ink.i11, maxWidth: '52ch' },
+  // The drawings on the steps' collages.
+  finderRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-around', gap: 10, paddingBlock: '14px 6px' },
+  finderItem: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 },
+  finderIcon: { height: 60, display: 'grid', placeItems: 'center' },
+  finderName: { fontSize: 11, color: ink.i12 },
+  dragNote: { display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: font.brush, fontSize: 20, lineHeight: 1, color: ink.i12, rotate: '-4deg', marginTop: -18 },
+  macBtn: { position: 'relative', display: 'inline-flex', alignItems: 'center', paddingBlock: 4, paddingInline: 10, fontSize: 11, color: ink.i12, whiteSpace: 'nowrap', isolation: 'isolate' },
+  macRing: { position: 'absolute', inset: '-55% -22%', zIndex: -1, opacity: 0.9 },
+  // The dialog, and System Settings behind it, lower down and to the right.
+  askStack: { display: 'grid', width: '100%', justifyItems: 'start' },
+  dialog: { width: '64%', minWidth: 210, display: 'grid', justifyItems: 'center', gap: 6, padding: '14px 14px 16px', borderRadius: 10, textAlign: 'center', rotate: '-1.5deg', zIndex: 1 },
+  dialogTitle: { position: 'relative', fontSize: 12.5, fontWeight: 600, color: ink.i12 },
+  dialogLine: { position: 'relative', fontSize: 10.5, lineHeight: 1.45, color: ink.i10 },
+  dialogButtons: { position: 'relative', display: 'flex', gap: 12, marginTop: 8 },
+  askSettings: { width: '86%', justifySelf: 'end', marginTop: -8 },
+  secLabel: { fontSize: 11.5, fontWeight: 600, color: ink.i12, paddingTop: 10 },
+  secRow: { display: 'grid', justifyItems: 'start', gap: 10, paddingBottom: 6 },
 
   // New
   shelfGrid: { display: 'grid', gridTemplateColumns: 'minmax(0, 7fr) minmax(0, 5fr)', gap: 'clamp(32px, 5vw, 72px)', alignItems: 'end', marginTop: 'clamp(40px, 6vw, 64px)', [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
@@ -556,7 +572,7 @@ const tapeLabel = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns='htt
 
 // Each fact shown with the app's own pieces, drawn on the page so the words are ours to choose.
 /** A Mac window, small: three lights, the app's name, and a body. */
-function MacWindow({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
+function MacWindow({ title, icon, children }: { title: string; icon?: string; children: React.ReactNode }) {
   return (
     <div {...stylex.props(panel.sheet, s.win)}>
       <span {...stylex.props(panel.grain)} />
@@ -567,7 +583,7 @@ function MacWindow({ title, icon, children }: { title: string; icon: string; chi
           ))}
         </span>
         <span {...stylex.props(s.winTitle)}>
-          <img src={`/app/${icon}.png`} alt="" width={14} height={14} loading="lazy" decoding="async" />
+          {icon && <img src={`/app/${icon}.png`} alt="" width={14} height={14} loading="lazy" decoding="async" />}
           {title}
         </span>
       </div>
@@ -768,46 +784,78 @@ function Sticker({ label, picture, crossed, tilt, seed }: (typeof STICKERS)[numb
 }
 
 // ── 06 Make it yours ──────────────────────────────────────────────────────────────────
-const methods = [
-  { icon: 'icon-tones', name: 'Tones', text: 'Your style in your own words (“never use exclamation marks”), and tones of your own.' },
-  { icon: 'icon-words', name: 'Words', text: 'Product names, people’s names and jargon, kept exactly as written.' },
-  { icon: 'icon-apps', name: 'Apps', text: 'A starting tone per app, like Professional in Mail. Turn Iris off where it should never read.' },
-  { icon: 'icon-shortcuts', name: 'Shortcuts', text: 'Your own keys, for both the panel and Quick Fix.' },
-] as const;
+// Iris's own Settings window, as the app draws it, lying on a sheet beside the list. The window
+// turns through the pages by itself, the item it's on lighting up and its line filling; picking
+// an item (its name or its words) turns to it. The motion's storyboard is in client.ts.
+const YOURS: { name: string; page: Parameters<typeof Picture>[0]['name']; text: string; alt: string }[] = [
+  {
+    name: 'Tones',
+    page: 'settings-tones',
+    text: 'Your style in your own words (“never use exclamation marks”), and tones of your own.',
+    alt: 'Iris’s Settings at Tones: which tones the panel shows and in what order, a box to add a tone of your own, and your style.',
+  },
+  {
+    name: 'Words',
+    page: 'words',
+    text: 'Product names, people’s names and jargon, kept exactly as written.',
+    alt: 'Iris’s Settings at Words: Northwind, OKR, Kubernetes and ACME-2041 on the list of words Iris never changes.',
+  },
+  {
+    name: 'Apps',
+    page: 'settings-apps',
+    text: 'A starting tone per app, like Professional in Mail. Password managers are off from the start.',
+    alt: 'Iris’s Settings at Apps: Iris turned off in 1Password, Keychain Access, Passwords and Bitwarden, and a tone to start in for each app.',
+  },
+  {
+    name: 'Shortcuts',
+    page: 'settings-shortcuts',
+    text: 'Your own keys, for both the panel and Quick Fix.',
+    alt: 'Iris’s Settings at Shortcuts: Control Option G opens Iris, Control Option Shift G is Quick Fix, and the keys that work in the panel.',
+  },
+];
 
 function Yours() {
   return (
     <section id="yours" aria-labelledby="yours-title" {...stylex.props(s.spread)}>
       <div {...stylex.props(s.wrap, s.stack)} style={{ gap: 'clamp(40px, 6vw, 64px)' }}>
-        <RunningHead seed={61} cols={['Settings']} />
-        <div {...stylex.props(s.tonesHead)}>
-          <PageTitle id="yours-title" lines={['Make it', 'yours']} />
-          <div {...stylex.props(s.corner)}>
-            <GhostWord lines={['YOU', 'RS']} tone="tan" style={{ right: -40, top: -36, fontSize: 150 }} />
-            <span style={{ position: 'absolute', right: 20, top: 44 }}>
-              <HandWord word="MINE" size="88px" />
-            </span>
+        <RunningHead seed={61} cols={['Settings', 'Settings… in the menu bar', 'Everything stays on your Mac']} />
+        <div {...stylex.props(s.yoursGrid)}>
+          <div style={{ gridArea: 'title' }}>
+            <PageTitle id="yours-title" lines={['Make it', 'yours']} small />
           </div>
-        </div>
-        <div {...stylex.props(s.methods)}>
-          {methods.map((m) => (
-            <div key={m.name} {...stylex.props(s.method)}>
-              <span {...stylex.props(s.drawing)}>
-                <Picture name={m.icon} alt="" scale={1} width={112} xstyle={s.drawingImg} />
-              </span>
-              <InkLabel>{m.name}</InkLabel>
-              <p {...stylex.props(s.methodText)}>{m.text}</p>
-            </div>
-          ))}
-          <div {...stylex.props(s.method)}>
-            <span {...stylex.props(s.drawing)}>
-              <Picture name="icon-privacy" alt="" scale={1} width={112} xstyle={s.drawingImg} />
-              <span {...stylex.props(s.cross)}>
-                <Printed mask={crossMask(5)} color="ink" />
-              </span>
+          <ol role="tablist" aria-label="Settings" aria-orientation="vertical" data-yours {...stylex.props(s.steps)} style={{ gridArea: 'list' }}>
+            {YOURS.map((y, i) => (
+              <li key={y.name} role="presentation" data-yours-step data-active={i === 0} {...stylex.props(s.step, s.yoursStep)}>
+                <button type="button" role="tab" id={`yours-tab-${i}`} aria-controls={`yours-page-${i}`} aria-selected={i === 0} tabIndex={i === 0 ? 0 : -1} {...stylex.props(s.stepButton)}>
+                  <span {...stylex.props(s.stepTitle)}>{y.name}</span>
+                </button>
+                <span aria-hidden data-yours-track {...stylex.props(s.stepTrack)}>
+                  <span data-yours-bar {...stylex.props(s.stepBar)} />
+                </span>
+                <p {...stylex.props(s.stepText)}>{y.text}</p>
+              </li>
+            ))}
+          </ol>
+          <div {...stylex.props(s.yoursStage)} style={{ backgroundColor: WALL.plate }}>
+            <Pattern kind="loops" color={WALL.loops} seed={57} scale={1.2} count={9} />
+            <span {...stylex.props(s.yoursNote)} aria-hidden>
+              <span style={{ paddingTop: 2 }}>Settings, as Iris draws it</span>
+              <HandArrow width={44} height={40} seed={6} />
             </span>
-            <InkLabel>Password fields</InkLabel>
-            <p {...stylex.props(s.methodText)}>Never read. Password managers are turned off from the start.</p>
+            <div data-yours-window {...stylex.props(s.yoursFrame)}>
+              <div {...stylex.props(s.yoursWindow)}>
+                <span aria-hidden {...stylex.props(s.yoursLights)}>
+                  {[0, 1, 2].map((i) => (
+                    <span key={i} {...stylex.props(s.yoursLight)} />
+                  ))}
+                </span>
+                {YOURS.map((y, i) => (
+                  <div key={y.name} role="tabpanel" id={`yours-page-${i}`} aria-labelledby={`yours-tab-${i}`} data-yours-page data-shown={i === 0} inert={i !== 0} {...stylex.props(s.yoursPage)}>
+                    <Picture name={y.page} alt={y.alt} width={680} sizes="(max-width: 1000px) 92vw, 680px" xstyle={s.yoursShot} />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -883,67 +931,187 @@ function Install() {
     ['Price', 'Free, MIT license'],
   ];
   return (
-    <section id="install" aria-labelledby="install-title" {...stylex.props(s.spread)} style={{ backgroundColor: 'rgb(247 243 240)' }}>
-      <div {...stylex.props(s.wrap, s.stack)} style={{ gap: 'clamp(40px, 6vw, 64px)' }}>
+    <section id="install" aria-labelledby="install-title" {...stylex.props(s.spread)}>
+      <div {...stylex.props(s.wrap, s.stack)} style={{ gap: 'clamp(40px, 6vw, 72px)' }}>
         <RunningHead seed={81} cols={['Install']} />
-        <div {...stylex.props(s.two)}>
-          <div {...stylex.props(s.stack)} style={{ gap: 36 }}>
-            <PageTitle id="install-title" lines={['Get', 'Iris']} />
-            <div {...stylex.props(s.cta)}>
-              <BrushButton href={links.download} download>
-                Download Iris
-              </BrushButton>
-              <PenLink href={links.source}>Build it from source</PenLink>
-            </div>
-            <dl {...stylex.props(s.specs)}>
-              {specs.map(([k, v], i) => (
-                <div key={k} {...stylex.props(s.specRow)} style={{ backgroundImage: penLine(85 + i) }}>
-                  <dt {...stylex.props(s.specTerm)}>{k}</dt>
-                  <dd {...stylex.props(s.specDef)}>{v}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-          <div {...stylex.props(s.stack)} style={{ gap: 36 }}>
-            <ol {...stylex.props(s.installSteps)}>
-              {[
-                ['Download', 'Get Iris.zip and open it.'],
-                ['Drag', 'Move Iris into your Applications folder.'],
-                ['Open', 'The first time, macOS asks you to confirm it. Once.'],
-                ['Set up', 'Allow it, get the model, try it on a practice sentence.'],
-              ].map(([t, d], i) => (
-                <li key={t} {...stylex.props(s.installStep)}>
-                  <span {...stylex.props(s.bigNo)}>{i + 1}</span>
-                  <span {...stylex.props(s.setupTitle)}>{t}</span>
-                  <span {...stylex.props(s.methodText)}>{d}</span>
-                </li>
-              ))}
-            </ol>
-            <div {...stylex.props(s.sheet, s.why)}>
-              <span {...stylex.props(s.grain)} />
-              <span {...stylex.props(s.brush)} style={{ fontSize: '1.625rem', lineHeight: 1, position: 'relative' }}>
-                Why does macOS ask?
-              </span>
-              <p {...stylex.props(s.body)} style={{ fontSize: '0.875rem', position: 'relative' }} data-tones="why">
-                Apple charges a yearly fee to vouch for apps, and Iris is free, so it doesn’t pay it. Every release is signed with the same certificate instead: you confirm Iris once and allow it once, and both stick through updates. The code is all public if you’d rather check it.
-              </p>
-            </div>
+        <div {...stylex.props(s.installHead)}>
+          <PageTitle id="install-title" lines={['Get', 'Iris']} small />
+          <div {...stylex.props(s.cta)}>
+            <BrushButton href={links.download} download>
+              Download Iris
+            </BrushButton>
+            <PenLink href={links.source}>Build it from source</PenLink>
           </div>
         </div>
-        <div {...stylex.props(s.anyway)} data-scrolls>
-          <div {...stylex.props(s.anywayInner)}>
-          <Picture
-            name="open-anyway"
-            scale={2}
-            sizes="(max-width: 1280px) 100vw, 1240px"
-            alt="Three drawn steps: macOS says Iris was not opened, click Done; in System Settings, Privacy and Security, click Open Anyway; confirm with Open Anyway and your password."
-          />
+        {/* Three steps, each on its own small collage with the Mac's own pieces drawn on it, as
+            the Fix facts are. The pictures are drawings: screen readers get one line for each. */}
+        <ol {...stylex.props(s.installSteps)}>
+          {INSTALL_STEPS.map((st, i) => (
+            <li key={st.title} {...stylex.props(s.fact)}>
+              <FactStage look={st.look} seed={86 + i * 7}>
+                <div inert aria-hidden {...stylex.props(s.factArt)}>
+                  {st.art}
+                </div>
+                <p {...stylex.props(s.srOnly)}>{st.alt}</p>
+              </FactStage>
+              <SectionHead title={st.title} seed={96 + i}>
+                {st.text}
+              </SectionHead>
+            </li>
+          ))}
+        </ol>
+        <div {...stylex.props(s.installFoot)}>
+          <dl {...stylex.props(s.specs)}>
+            {specs.map(([k, v], i) => (
+              <div key={k} {...stylex.props(s.specRow)} style={{ backgroundImage: penLine(85 + i) }}>
+                <dt {...stylex.props(s.specTerm)}>{k}</dt>
+                <dd {...stylex.props(s.specDef)}>{v}</dd>
+              </div>
+            ))}
+          </dl>
+          {/* A paper slip taped to the page, like Iris's notes: why step 3 asks. */}
+          <div {...stylex.props(panel.sheet, s.why)}>
+            <span {...stylex.props(panel.grain)} />
+            <Tape style={{ left: '50%', top: -12, width: 96, height: 24, transform: 'translateX(-50%) rotate(-3deg)' }} />
+            <span {...stylex.props(s.whyTitle)}>Why does macOS ask?</span>
+            <p {...stylex.props(s.whyText)} data-tones="why">
+              Apple charges a yearly fee to vouch for apps, and Iris is free, so it doesn’t pay it. Every release is signed with the same certificate instead: you confirm Iris once and allow it once, and both stick through updates. The code is all public if you’d rather check it.
+            </p>
+            <span style={{ position: 'relative' }}>
+              <PenLink href={links.code}>Read the code</PenLink>
+            </span>
           </div>
         </div>
       </div>
     </section>
   );
 }
+
+// The install steps, drawn: a Finder window, Iris dragged into Applications, and the two places
+// macOS asks the first time, each click ringed in pink. The words on them are macOS's own.
+/** Iris's app icon, as Finder and macOS show it. */
+const IrisIcon = ({ size }: { size: number }) => <img src="/apple-touch-icon.png" alt="" width={size} height={size} loading="lazy" decoding="async" style={{ display: 'block' }} />;
+
+/** A file as Finder shows it: its icon, its name under it. */
+function FinderItem({ icon, name }: { icon: React.ReactNode; name: string }) {
+  return (
+    <span {...stylex.props(s.finderItem)}>
+      <span {...stylex.props(s.finderIcon)}>{icon}</span>
+      <span {...stylex.props(s.finderName)}>{name}</span>
+    </span>
+  );
+}
+
+/** A zip, drawn in the pen: a page with its corner folded and a zip down it. */
+function ZipIcon() {
+  return (
+    <svg viewBox="0 0 48 60" width={48} height={60} aria-hidden style={{ overflow: 'visible' }}>
+      <path d="M5,3 C14,2.6 24,2.8 33,3 L44,14 C44.4,29 43.8,44 44.2,57 C31,57.6 18,57.2 4.8,57.4 C5.4,40 4.6,20 5,3 Z" fill="rgb(255 252 249)" stroke="rgb(42 26 22)" strokeWidth={2.2} strokeLinejoin="round" />
+      <path d="M33,3.4 C32.8,7.4 33.2,11 32.8,14.2 C36.6,14 40.4,14.2 43.6,13.8" fill="none" stroke="rgb(42 26 22)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+      {[8, 13, 18, 23, 28, 33].map((y, i) => (
+        <path key={y} d={`M${i % 2 ? 24.6 : 19.4},${y} L${i % 2 ? 28.6 : 23.4},${y + 0.3}`} stroke="rgb(42 26 22)" strokeWidth={2} strokeLinecap="round" />
+      ))}
+      <path d="M19.6,37 C22,36.6 26,36.8 28.4,37 L28.2,45.6 C25.6,46 22.4,45.8 19.8,45.6 Z" fill="rgb(226 200 185)" stroke="rgb(42 26 22)" strokeWidth={2} strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+const folderMask = svgUrl('0 0 60 48', "<path d='M2,8 C2,5.6 3.4,4.4 5.8,4.4 L20,4.2 L24,9 L54,9.2 C56.6,9.2 58,10.6 58,13 L57.8,43 C57.8,45.4 56.4,46.6 54,46.6 L6,46.8 C3.6,46.8 2.2,45.4 2.2,43 Z'/>");
+/** The Applications folder: a printed sky folder with the A drawn on it in the pen. */
+function FolderIcon() {
+  return (
+    <span style={{ position: 'relative', display: 'block', width: 60, height: 48 }}>
+      <Printed mask={folderMask} color="sky" />
+      <svg viewBox="0 0 60 48" width={60} height={48} aria-hidden style={{ position: 'relative', display: 'block', overflow: 'visible' }}>
+        <path d="M2,8 C2,5.6 3.4,4.4 5.8,4.4 L20,4.2 L24,9 L54,9.2 C56.6,9.2 58,10.6 58,13 L57.8,43 C57.8,45.4 56.4,46.6 54,46.6 L6,46.8 C3.6,46.8 2.2,45.4 2.2,43 Z" fill="none" stroke="rgb(42 26 22)" strokeWidth={2} strokeLinejoin="round" />
+        <path d="M2.4,15 C20,14.4 40,14.8 57.8,14.6" fill="none" stroke="rgb(42 26 22)" strokeWidth={1.6} strokeLinecap="round" />
+        <path d="M23.4,39 L30,22 L36.6,39 M25.8,33 L34.2,33" fill="none" stroke="rgb(255 252 249)" strokeWidth={2.8} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+  );
+}
+
+/** A macOS button, drawn in the pen; the one to click ringed with the pink brush. */
+function MacButton({ children, ring, seed }: { children: React.ReactNode; ring?: boolean; seed: number }) {
+  return (
+    <span {...stylex.props(s.macBtn)}>
+      {ring && (
+        <span {...stylex.props(s.macRing)}>
+          <Printed mask={ringMask(seed)} color="pink" />
+        </span>
+      )}
+      <HandRect seed={seed} width={1.3} />
+      <span style={{ position: 'relative' }}>{children}</span>
+    </span>
+  );
+}
+
+const INSTALL_STEPS: { title: string; look: FactLook; art: React.ReactNode; alt: string; text: React.ReactNode }[] = [
+  {
+    title: 'Download',
+    look: 'step1',
+    alt: 'A Finder window, Downloads: Iris.zip, and Iris, the app that came out of it.',
+    text: 'Get Iris.zip and open it. Iris comes out of it.',
+    art: (
+      <MacWindow title="Downloads">
+        <div {...stylex.props(s.finderRow)}>
+          <FinderItem icon={<ZipIcon />} name="Iris.zip" />
+          <PenArrow size={30} />
+          <FinderItem icon={<IrisIcon size={58} />} name="Iris" />
+        </div>
+      </MacWindow>
+    ),
+  },
+  {
+    title: 'Drag it to Applications',
+    look: 'step2',
+    alt: 'Iris dragged across a Finder window onto the Applications folder.',
+    text: 'Move Iris into your Applications folder, where updates find it.',
+    art: (
+      <MacWindow title="Downloads">
+        <div {...stylex.props(s.finderRow)}>
+          <FinderItem icon={<IrisIcon size={58} />} name="Iris" />
+          <span {...stylex.props(s.dragNote)}>
+            <span>drag</span>
+            <HandArrow width={70} height={34} seed={88} />
+          </span>
+          <FinderItem icon={<FolderIcon />} name="Applications" />
+        </div>
+      </MacWindow>
+    ),
+  },
+  {
+    title: 'Open it, once',
+    look: 'step3',
+    alt: 'macOS says “Iris” Not Opened, with Done ringed. Then System Settings, Privacy & Security: “Iris” was blocked to protect your Mac, with Open Anyway ringed.',
+    text: 'macOS stops the first open: click Done. In System Settings › Privacy & Security, click Open Anyway and confirm. After that Iris opens like any app.',
+    art: (
+      <div {...stylex.props(s.askStack)}>
+        <div {...stylex.props(panel.sheet, s.dialog)}>
+          <span {...stylex.props(panel.grain)} />
+          <span style={{ position: 'relative' }}>
+            <IrisIcon size={34} />
+          </span>
+          <span {...stylex.props(s.dialogTitle)}>“Iris” Not Opened</span>
+          <span {...stylex.props(s.dialogLine)}>Apple could not verify “Iris” is free of malware.</span>
+          <span {...stylex.props(s.dialogButtons)}>
+            <MacButton ring seed={101}>Done</MacButton>
+            <MacButton seed={102}>Move to Trash</MacButton>
+          </span>
+        </div>
+        <div {...stylex.props(s.askSettings)}>
+          <MacWindow title="System Settings">
+            <span {...stylex.props(s.secLabel)}>Privacy &amp; Security</span>
+            <span {...stylex.props(s.secRow)}>
+              <span {...stylex.props(s.dialogLine)} style={{ textAlign: 'start' }}>“Iris” was blocked to protect your Mac.</span>
+              <MacButton ring seed={103}>Open Anyway</MacButton>
+            </span>
+          </MacWindow>
+        </div>
+      </div>
+    ),
+  },
+];
 
 // ── 09 What's new ─────────────────────────────────────────────────────────────────────
 const coverInks = ['pink', 'sky', 'tan', 'crema'] as const;

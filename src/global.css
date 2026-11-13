@@ -54,6 +54,34 @@
 /* How it works: the steps not playing step back (client.ts sets data-active). */
 [data-chapter][data-active="false"] { opacity: 0.45; }
 [data-chapter][data-active="false"]:hover { opacity: 0.75; }
+/* Make it yours: the same for the Settings pages not showing, and the window turning between
+   them (storyboard and timings in client.ts). A page waits below, sinks away above. */
+[data-yours-step][data-active="false"] { opacity: 0.45; }
+[data-yours-step][data-active="false"]:hover { opacity: 0.75; }
+[data-yours-page] {
+  opacity: 0;
+  translate: 0 10px;
+  scale: 0.985;
+  filter: blur(6px);
+  transform-origin: 50% 0;
+  transition-property: opacity, translate, scale, filter;
+  transition-duration: var(--yours-out, 240ms);
+  transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
+}
+[data-yours-page][data-was="true"] { translate: 0 -6px; scale: 1; filter: blur(4px); }
+[data-yours-page][data-shown="true"] {
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+  filter: none;
+  transition-duration: var(--yours-in, 560ms);
+  transition-delay: var(--yours-lag, 90ms);
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-yours-page], [data-yours-page][data-was="true"], [data-yours-page][data-shown="true"] { translate: none; scale: none; filter: none; transition-property: opacity; transition-delay: 0ms; }
+  [data-yours-track] { display: none; }
+}
 
 /* What Iris left alone in a fact's example is ringed in the pen. */
 [data-kept] { padding: 0 0.15em; border: 1.5px solid rgb(42 26 22 / 0.75); border-radius: 0.8em; }

@@ -184,6 +184,23 @@ for (const reduce of [false, true]) {
   ok(!(await panelOpen()), 'Esc closes the panel');
   ok(await page.evaluate(() => document.activeElement?.hasAttribute('data-press') || document.activeElement === document.body), 'focus came back after Esc');
 
+  // Make it yours: picking a page on the list turns the Settings window to it; ↓ moves on.
+  const yoursPage = () => page.locator('#yours [data-yours-page][data-shown="true"]').getAttribute('id');
+  ok((await yoursPage()) === 'yours-page-0', 'Make it yours opens at Tones');
+  await page.locator('#yours [role="tab"]').nth(2).click();
+  ok((await yoursPage()) === 'yours-page-2', 'Make it yours shows Apps when picked');
+  await page.keyboard.press('ArrowDown');
+  ok((await yoursPage()) === 'yours-page-3', '↓ moves Make it yours to Shortcuts');
+  await page.locator('#yours [data-yours-step] p').nth(1).click();
+  ok((await yoursPage()) === 'yours-page-1', 'an item’s words pick it too');
+  ok((await page.locator('#yours [data-yours-page][inert]').count()) === 3, 'the pages not shown are out of reach');
+  const loaded = await page
+    .waitForFunction(() => { const img = document.querySelector('#yours [data-yours-page][data-shown="true"] img'); return img?.complete && img.naturalWidth > 0; }, null, { timeout: 5000 })
+    .then(() => true, () => false);
+  ok(loaded, 'the Settings picture loads');
+  // Install: three drawn steps.
+  ok((await page.locator('#install ol > li').count()) === 3, 'Install shows three steps');
+
   // The first Tab shows the skip link.
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.keyboard.press('Tab');

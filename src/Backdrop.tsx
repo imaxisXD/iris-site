@@ -151,6 +151,10 @@ export const FACT_LOOKS = {
   pink: { back: 'rgb(249 214 230)', backInk: 'rgb(244 194 218)', backKind: 'ripples', scrap: 'rgb(200 216 240)', scrapInk: 'rgb(182 202 234)', scrapKind: 'waves', glyph: '¿?', corner: 'bl', torn: 2 },
   // A third of a second: khaki with ✻, a tan scrap with 0.3.
   khaki: { back: 'rgb(230 223 204)', backInk: 'rgb(218 208 182)', backKind: 'stars', scrap: 'rgb(222 196 170)', scrapInk: 'rgb(210 180 150)', scrapKind: 'loops', glyph: '0.3', corner: 'br', torn: 0 },
+  // The install steps (section 08): the step's number on the scrap, as the zine prints a folio.
+  step1: { back: 'rgb(200 216 240)', backInk: 'rgb(182 202 234)', backKind: 'waves', scrap: 'rgb(222 196 170)', scrapInk: 'rgb(210 180 150)', scrapKind: 'loops', glyph: '1', corner: 'tl', torn: 1 },
+  step2: { back: 'rgb(230 223 204)', backInk: 'rgb(218 208 182)', backKind: 'stars', scrap: 'rgb(249 205 226)', scrapInk: 'rgb(244 186 214)', scrapKind: 'ripples', glyph: '2', corner: 'tr', torn: 2 },
+  step3: { back: 'rgb(249 214 230)', backInk: 'rgb(244 194 218)', backKind: 'ripples', scrap: 'rgb(200 216 240)', scrapInk: 'rgb(182 202 234)', scrapKind: 'waves', glyph: '3', corner: 'bl', torn: 0 },
 } as const;
 export type FactLook = keyof typeof FACT_LOOKS;
 

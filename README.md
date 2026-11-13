@@ -38,8 +38,8 @@ the code.
   `scripts/sprites.mjs` prints the garden's sun, butterflies and petals the way Iris prints
   its sprites (`RisoArt.print`). `scripts/art.mjs` prints the backdrops behind the panels
   (flat riso plates with Iris's flower and ghost words) and the menu bar Mac's desktop;
-  `scripts/app-icons.mjs` draws the apps the page names (Slack, Mail, Notes…) in Iris's pen
-  and riso, in their own colours. The results are committed, so a build never needs Iris.
+  `scripts/app-icons.mjs` draws the apps the page names (Slack, Mail, Notes, 1Password…) in
+  Iris's pen and riso, in their own colours. The results are committed, so a build never needs Iris.
 - **How it works is drawn, not recorded** (`src/Desk.tsx`): the top left corner of a Mac on a
   torn pink sheet, its desktop a green plate with loops and brush-stroke flowers. Slack, Mail,
   Messages, Notes, Chrome and Safari take turns, simply drawn, each with a made-up reply in its
@@ -49,6 +49,14 @@ the code.
   screen; Pause holds it), zooms its fixed canvas to the screen, follows the text box on a
   phone, and makes the steps beside it chapters; `global.css` turns the beats into motion.
   Under Reduce Motion it holds Iris's panel open in Slack.
+- **Make it yours** shows Iris's own Settings window, as the app draws it, lying on a torn
+  sheet of How it works' green. The list beside it (Tones, Words, Apps, Shortcuts) turns the window to that page;
+  the pictures are the app's `--snapshot` renders, made by `scripts/assets.mjs` at a higher
+  quality than the rest, since they're shown small and are mostly type.
+- **Install is a collage** like Fix's: small torn sheets, each with a few drawn pieces on it.
+  It shows the zip
+  in Downloads, Iris dragged to Applications, and the first-open dialog over Privacy &
+  Security with Done and Open Anyway ringed. The specs and why macOS asks sit under them.
 - **The foot** (`src/Footer.tsx`) waits under the page, pinned to the bottom of the window;
   at the end the page lifts off it like a sheet, and it comes forward out of the page's
   shade. It's the sky with the IRIS wordmark, big and cut off by the page's edge, drawn as
@@ -90,9 +98,9 @@ pnpm deploy         # build and `wrangler deploy` (needs `wrangler login` first)
 | Fix and tones | The panel on a collage of printed sheets; Tab through the tones |
 | Fix | Fixes, not rewrites: what Iris leaves alone |
 | Privacy | The pink plate: the model runs on your Mac |
-| Settings | Tones, words, apps, shortcuts, password fields |
+| Make it yours | Iris's Settings window on a green sheet; pick Tones, Words, Apps or Shortcuts to turn its page |
 | Menu bar | A Mac's corner with Iris's menu open under its flower; setup in three steps |
-| Install | Four steps, and why macOS asks |
+| Install | Download, drag to Applications, open it once; the specs, and why macOS asks |
 | What's new | Each version an issue on a shelf, from Iris's Changelog.md |
 | Foot | Go write something: download, links, and IRIS with the sun and butterflies on it |
 
