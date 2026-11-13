@@ -27,7 +27,7 @@ for (const reduce of [false, true]) {
   // The tones.
   const shown = () => page.locator('[data-tone]:not([hidden])').innerText();
   const fix = await shown();
-  ok(fix.includes('Hey') && fix.includes('needs'), 'the panel opens on Fix with the fixes marked');
+  ok(fix.includes('I have') && fix.includes('needs'), 'the panel opens on Fix with the fixes marked');
   await page.getByRole('tab', { name: 'Professional' }).click();
   ok((await shown()).includes('reviewed'), 'clicking Professional shows the professional version');
   ok((await page.getByRole('tab', { name: 'Professional' }).getAttribute('aria-selected')) === 'true', 'Professional reads as the chosen tab');
@@ -57,15 +57,31 @@ for (const reduce of [false, true]) {
 
   // The video.
   const video = page.locator('[data-moment]');
+  const toggle = page.locator('[data-moment-toggle]');
   await video.scrollIntoViewIfNeeded();
   await page.waitForTimeout(1200);
   const playing = await video.evaluate((v) => !v.paused && v.currentTime > 0);
   ok(reduce ? !playing : playing, reduce ? 'the video holds still under Reduce Motion' : 'the video plays once it is on screen');
+  ok((await toggle.innerText()).toLowerCase() === (reduce ? 'play' : 'pause'), `its button offers to ${reduce ? 'play' : 'pause'} it`);
+  if (!reduce) {
+    await toggle.click();
+    await page.waitForTimeout(300);
+    ok(await video.evaluate((v) => v.paused), 'Pause stops it');
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await page.waitForTimeout(400);
+    await video.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(800);
+    ok(await video.evaluate((v) => v.paused), 'and scrolling back never starts it again');
+    await toggle.click();
+    await page.waitForTimeout(500);
+  }
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await page.waitForTimeout(500);
   if (!reduce) ok(await video.evaluate((v) => v.paused), 'and pauses when scrolled away');
 
-  // The cover's garden: plays on screen, holds still scrolled away, never moves under Reduce Motion.
+  // The cover's garden: plays on screen, holds still scrolled away, never moves under Reduce
+  // Motion; there's one cover and no switch.
+  ok(!(await page.locator('[data-hero-pick]').count()), 'there is one cover, with no switch');
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(400);
   const gardenState = () =>
@@ -73,14 +89,11 @@ for (const reduce of [false, true]) {
       const all = g.getAnimations({ subtree: true });
       return { running: all.filter((a) => a.playState === 'running').length, paused: all.filter((a) => a.playState === 'paused').length };
     });
-  const butterflies = await page.locator('[data-garden] img[src*="-wings"]').count();
-  ok(butterflies === 4, `the garden has ${butterflies} butterflies`);
+  ok(await page.locator('[data-garden]').isVisible(), 'the cover shows its garden');
+  ok((await page.locator('[data-garden] [data-panel], [data-garden] [role="tablist"]').count()) > 0, 'with Iris\'s panel in it');
   const onScreen = await gardenState();
   if (reduce) {
     ok(onScreen.running === 0, 'under Reduce Motion nothing in the garden moves');
-    const shown = await page.locator('[data-garden] img[src*="-wings"]').evaluateAll((els) =>
-      els.every((el) => { const r = el.getBoundingClientRect(); return r.width > 0 && Number(getComputedStyle(el.closest('[style*="--px"]')).opacity) === 1; }));
-    ok(shown, 'and every butterfly rests in view');
   } else {
     ok(onScreen.running > 20, `the garden plays (${onScreen.running} parts moving)`);
     await page.evaluate(() => window.scrollTo(0, 2400));
@@ -89,34 +102,80 @@ for (const reduce of [false, true]) {
     ok(away.running === 0 && away.paused > 0, 'and holds still when scrolled away');
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(400);
-    // The arrivals may have finished by now; the loops must all be going again.
     const back = await gardenState();
-    ok(back.paused === 0 && back.running > 20, 'and carries on when it comes back');
+    ok(back.running > 20, 'and carries on when it comes back');
   }
   ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'the page never scrolls sideways');
 
   // The foot: Iris fixes the sign-off once it's on screen, and again on "fix it again".
   const line = page.locator('#foot-line');
-  // Struck words take no room once they're replaced (the flower's box aside).
-  const struckWidth = () => line.evaluate((p) => [...p.querySelectorAll(':scope > span[aria-hidden="true"]')].filter((s) => !s.querySelector('picture')).reduce((w, s) => w + s.getBoundingClientRect().width, 0));
+  // Slips showing: how many struck words can be seen. The foot's height never changes.
+  const slipsShown = () => line.evaluate((p) => [...p.querySelectorAll('[data-slip-was]')].filter((s) => Number(getComputedStyle(s).opacity) > 0.5).length);
+  const footHeight = () => page.locator('footer').evaluate((f) => Math.round(f.getBoundingClientRect().height));
   await line.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(reduce ? 300 : 4200);
+  const h0 = await footHeight();
+  await page.waitForTimeout(reduce ? 300 : 4800);
   ok((await line.getAttribute('aria-label')) === 'Thanks for reading. Now go write something in your own voice.', 'the foot line reads fixed to a screen reader');
-  ok((await struckWidth()) < 1, reduce ? 'under Reduce Motion the foot line is simply fixed' : 'Iris fixes the foot line once it is on screen');
+  ok((await slipsShown()) === 0, reduce ? 'under Reduce Motion the foot line is simply fixed' : 'Iris fixes the foot line once it is on screen');
   if (!reduce) {
     await page.getByRole('button', { name: /fix it again/ }).click();
-    await page.waitForTimeout(1600);
-    ok((await struckWidth()) > 20, '"fix it again" marks the slips again');
-    await page.waitForTimeout(3000);
-    ok((await struckWidth()) < 1, 'and replaces them');
+    await page.waitForTimeout(2600);
+    ok((await slipsShown()) >= 3, '"fix it again" marks the slips again');
+    const hMid = await footHeight();
+    await page.waitForTimeout(2600);
+    ok((await slipsShown()) === 0, 'and replaces them');
+    ok(hMid === h0 && (await footHeight()) === h0, `and the foot never changes height (${h0}px)`);
   } else {
     ok(!(await page.getByRole('button', { name: /fix it again/ }).isVisible()), 'and offers no replay');
   }
+
+  // ⌃ ⌥ G on the page: the panel opens on the paragraph you're reading.
+  await page.goto(url, { waitUntil: 'networkidle' });
+  const lede = page.locator('[data-tones="lede"]');
+  const ledeWas = await lede.textContent();
+  await page.keyboard.press('Control+Alt+KeyG');
+  await page.waitForTimeout(400);
+  const panelOpen = () => page.locator('[data-press]').isVisible();
+  ok(await panelOpen(), '⌃⌥G on the page opens Iris\'s panel');
+  ok(await page.locator('[data-press-good]').isVisible(), 'and Fix says "looks good"');
+  for (let i = 0; i < 4; i++) await page.keyboard.press('Tab');
+  ok((await page.locator('[data-press-tab][aria-selected="true"]').textContent()).includes('Funny'), 'Tab moves through the tones to Funny');
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(300);
+  ok((await lede.textContent()) !== ledeWas && !(await panelOpen()), 'Return puts the tone on the page');
+  await page.keyboard.press('Meta+z');
+  ok((await lede.textContent()) === ledeWas, '⌘Z puts it back');
+  await page.keyboard.press('Control+Alt+KeyG');
+  await page.waitForTimeout(200);
+  ok(await page.evaluate(() => document.activeElement?.hasAttribute('data-press')), 'the panel takes focus, not a tab');
+  await page.keyboard.press('Escape');
+  ok(!(await panelOpen()), 'Esc closes the panel');
+  ok(await page.evaluate(() => document.activeElement?.hasAttribute('data-press') || document.activeElement === document.body), 'focus came back after Esc');
+
+  // The first Tab shows the skip link.
+  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.keyboard.press('Tab');
+  const skip = await page.evaluate(() => { const a = document.activeElement; const r = a.getBoundingClientRect(); return { text: a.textContent, w: r.width, h: r.height }; });
+  ok(skip.text.startsWith('Skip') && skip.w > 40 && skip.h > 20, `the first Tab shows the skip link (${Math.round(skip.w)}×${Math.round(skip.h)})`);
 
   // Links.
   const download = await page.getByRole('link', { name: 'Download Iris' }).first().getAttribute('href');
   ok(download?.endsWith('/Iris.zip'), 'Download Iris points at the latest release');
   ok(errors.length === 0, `no errors in the console${errors.length ? ': ' + errors.join(' | ') : ''}`);
+  await page.close();
+}
+
+// At 320px (a phone, or 400% zoom) nothing a person reads or presses runs past the edge.
+// The macOS drawing scrolls sideways on purpose, and tilted tape may hang over.
+{
+  const page = await browser.newPage({ viewport: { width: 320, height: 800 }, reducedMotion: 'reduce' });
+  await page.goto(url, { waitUntil: 'networkidle' });
+  const over = await page.evaluate(() =>
+    [...document.querySelectorAll('main *, header *, footer *')]
+      .filter((el) => el.getBoundingClientRect().right > innerWidth + 1 && el.innerText?.trim() && getComputedStyle(el).position !== 'absolute' && !el.closest('[aria-hidden="true"], [data-scrolls], [data-overhang]'))
+      .map((el) => `${el.tagName.toLowerCase()} “${el.innerText.trim().replace(/\s+/g, ' ').slice(0, 30)}”`),
+  );
+  ok(over.length === 0, `at 320px nothing runs past the edge${over.length ? ': ' + over.slice(0, 3).join(', ') : ''}`);
   await page.close();
 }
 await browser.close();

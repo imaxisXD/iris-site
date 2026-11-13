@@ -20,8 +20,9 @@
     background: url(/tex/paper.png) 0 0 / 64px 64px, rgb(255 252 249);
     color: rgb(42 26 22);
     font-family: 'Martian Mono', 'Martian Fallback', ui-monospace, monospace;
-    font-variation-settings: 'wght' 450, 'wdth' 87.5;
-    font-size: 15px;
+    font-weight: 450;
+    font-stretch: 87.5%;
+    font-size: 0.9375rem;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -32,13 +33,14 @@
   kbd { font-family: inherit; }
   ::selection { background: rgb(240 134 176 / 0.55); color: rgb(42 26 22); }
   [hidden] { display: none !important; }
-  :focus-visible { outline: 2px solid rgb(107 95 88); outline-offset: 4px; border-radius: 0; }
-  /* On the pink foot the grey ring would fade (2.0:1): ink there, 5.9:1. */
-  footer :focus-visible { outline-color: rgb(42 26 22); }
+  /* Ink, so the ring reads on every plate: 16:1 on paper, 6.4:1 on the sky, 5.9:1 on pink. */
+  :focus-visible { outline: 2px solid rgb(42 26 22); outline-offset: 4px; border-radius: 0; }
   a { color: inherit; }
   /* The primary button: on hover the stroke runs drier and the rose comes up through it. */
-  [data-brush]:hover [data-rose] { opacity: 1; filter: saturate(1.6) brightness(1.15); }
-  [data-brush]:hover [data-inkpass] > span > span { background-size: 96px 96px, 64px 64px; }
+  @media (hover: hover) {
+    [data-brush]:hover [data-rose] { opacity: 1; filter: saturate(1.6) brightness(1.15); }
+    [data-brush]:hover [data-inkpass] > span > span { background-size: 96px 96px, 64px 64px; }
+  }
   @media (prefers-reduced-motion: reduce) {
     [data-brush]:active [data-rose] { filter: saturate(1.8) brightness(1.25); }
   }

@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react';
 import stylex from '@stylexjs/unplugin';
 
 export default defineConfig({
-  plugins: [stylex.vite({ useCSSLayers: true, devMode: 'full' }), react()],
+  plugins: [stylex.vite({ useCSSLayers: true, devMode: 'full', enableFontSizePxToRem: true }), react()],
 });

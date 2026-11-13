@@ -148,7 +148,8 @@ export function GhostWord({ lines, tone, style }: { lines: [string, string]; ton
 const pt = stylex.create({
   title: {
     fontFamily: font.mono,
-    fontVariationSettings: '"wdth" 75, "wght" 420',
+    fontStretch: '75%',
+    fontWeight: 420,
     textTransform: 'uppercase',
     fontSize: 'clamp(40px, 6.4vw, 92px)',
     lineHeight: 0.98,
@@ -160,17 +161,25 @@ const pt = stylex.create({
   },
   line: { display: 'block' },
   step: { paddingLeft: '1.1em' },
-  star: { fontVariationSettings: '"wdth" 75, "wght" 560', marginRight: '0.28em' },
+  star: { fontStretch: '75%', fontWeight: 560, marginRight: '0.28em' },
+  // A mono space is wider than the gap after the ✻: pull it back so both sides match.
+  starInline: { marginLeft: '-0.3em' },
   small: { fontSize: 'clamp(34px, 4.4vw, 64px)' },
 });
-/** A stair headline in condensed caps: the second line steps right behind a ✻. */
-export function PageTitle({ lines, small = false, id, level = 2, xstyle }: { lines: [string, string]; small?: boolean; id?: string; level?: 1 | 2; xstyle?: stylex.StyleXStyles }) {
+/** A stair headline in condensed caps: the second line steps right behind a ✻. With `lead`,
+ *  the ✻ stands in the first line instead, after the lead word, where a comma would be:
+ *  "Fix ✻ or change / the tone". */
+export function PageTitle({ lines, lead, small = false, id, level = 2, xstyle }: { lines: [string, string]; lead?: string; small?: boolean; id?: string; level?: 1 | 2; xstyle?: stylex.StyleXStyles }) {
   const H = level === 1 ? 'h1' : 'h2';
+  const star = <span aria-hidden {...stylex.props(pt.star, lead != null && lines[0] !== '' && pt.starInline)}>✻</span>;
   return (
     <H id={id} {...stylex.props(pt.title, small && pt.small, xstyle)}>
-      <span {...stylex.props(pt.line)}>{lines[0]} </span>
+      <span {...stylex.props(pt.line)}>
+        {lead != null && <>{lead}{' '}{star}</>}
+        {lines[0]}{' '}
+      </span>
       <span {...stylex.props(pt.line, pt.step)}>
-        <span aria-hidden {...stylex.props(pt.star)}>✻</span>
+        {lead == null && star}
         {lines[1]}
       </span>
     </H>
@@ -180,7 +189,7 @@ export function PageTitle({ lines, small = false, id, level = 2, xstyle }: { lin
 const rh = stylex.create({
   head: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(3, minmax(0, 1fr)) auto',
+    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
     gap: 'clamp(16px, 4vw, 56px)',
     alignItems: 'start',
     fontSize: 12,
@@ -188,15 +197,15 @@ const rh = stylex.create({
     color: ink.i11,
     position: 'relative',
     zIndex: 1,
-    [MOBILE]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr)) auto' },
+    [MOBILE]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' },
   },
   col: { display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 200 },
   rule: { width: 88 },
   hideSmall: { [MOBILE]: { display: 'none' } },
-  folio: { fontVariationSettings: '"wght" 300', fontSize: 15, color: ink.i12 },
 });
 /** The zine's strip of small columns over a page: where you are, what's on it, one fact. */
-export function RunningHead({ cols, folio, seed }: { cols: [string, string, string]; folio: string; seed: number }) {
+/** Only what helps a reader: the section's name, then at most two facts not said elsewhere. */
+export function RunningHead({ cols, seed }: { cols: string[]; seed: number }) {
   return (
     <div {...stylex.props(rh.head)}>
       {cols.map((c, i) => (
@@ -207,7 +216,6 @@ export function RunningHead({ cols, folio, seed }: { cols: [string, string, stri
           </span>
         </div>
       ))}
-      <span aria-hidden {...stylex.props(rh.folio)}>{folio}</span>
     </div>
   );
 }
@@ -249,7 +257,7 @@ const kc = stylex.create({
     height: '1.9em',
     paddingInline: '0.4em',
     fontSize: 13,
-    fontVariationSettings: '"wght" 560',
+    fontWeight: 560,
     color: ink.i12,
     isolation: 'isolate',
     lineHeight: 1,
@@ -257,7 +265,7 @@ const kc = stylex.create({
   labeled: { width: 82, height: 50, minWidth: 0, placeItems: 'stretch', padding: '6px 8px', fontSize: 13 },
   labeledLetter: { width: 50 },
   sym: { justifySelf: 'end', fontSize: 15, lineHeight: 1 },
-  word: { alignSelf: 'end', fontSize: 12, fontVariationSettings: '"wght" 450' },
+  word: { alignSelf: 'end', fontSize: 12, fontWeight: 450 },
   letter: { placeSelf: 'center', fontSize: 18 },
   face: { position: 'relative', zIndex: 1 },
 });
@@ -301,7 +309,7 @@ export function KeyRow({ keys, labeled = false }: { keys: string[]; labeled?: bo
 
 const sf = stylex.create({
   fig: { display: 'inline-flex', alignItems: 'flex-start', gap: 8, color: 'inherit' },
-  num: { fontVariationSettings: '"wdth" 75, "wght" 400', fontSize: 'clamp(54px, 7vw, 88px)', lineHeight: 0.82, letterSpacing: '-0.03em' },
+  num: { fontStretch: '75%', fontWeight: 400, fontSize: 'clamp(54px, 7vw, 88px)', lineHeight: 0.82, letterSpacing: '-0.03em' },
   unit: { display: 'flex', flexDirection: 'column', fontSize: 12, lineHeight: 1.3, textTransform: 'uppercase', letterSpacing: '0.08em', paddingTop: 4 },
 });
 /** A figure big, its unit stacked small beside it, like the zine's "18G / IN". */
@@ -382,7 +390,7 @@ const bt = stylex.create({
     paddingLeft: 24,
     paddingRight: 40,
     fontSize: 16,
-    fontVariationSettings: '"wght" 560',
+    fontWeight: 560,
     color: ink.paper,
     textDecoration: 'none',
     isolation: 'isolate',
@@ -452,7 +460,7 @@ const sb = stylex.create({
     fontSize: 14,
     color: ink.i12,
     textDecoration: 'none',
-    backgroundColor: { default: 'transparent', ':hover': 'rgb(42 26 22 / 0.05)' },
+    backgroundColor: { default: 'transparent', '@media (hover: hover)': { default: 'transparent', ':hover': 'rgb(42 26 22 / 0.05)' } },
     transitionProperty: 'transform, background-color',
     transitionDuration: '150ms',
     ':active': { transform: 'scale(0.97)' },
@@ -472,16 +480,14 @@ export function PenButton({ href, children }: { href: string; children: ReactNod
 const sh = stylex.create({
   head: { display: 'flex', flexDirection: 'column', gap: 10 },
   top: { display: 'flex', alignItems: 'baseline', gap: 14 },
-  num: { fontSize: 14, color: ink.pinkText, fontVariantNumeric: 'tabular-nums' },
   title: { fontFamily: font.brush, fontSize: 'clamp(26px, 2.6vw, 34px)', lineHeight: 1.1, margin: 0, fontWeight: 400, color: ink.i12 },
   detail: { fontSize: 14, lineHeight: 1.65, color: ink.i11, margin: 0, maxWidth: '46ch' },
 });
-/** A numbered section: pink folio, brush title, a heading rule, then one or two lines. */
-export function SectionHead({ n, title, children, seed }: { n: string; title: ReactNode; children?: ReactNode; seed: number }) {
+/** A small section: brush title, a heading rule, then one or two lines. */
+export function SectionHead({ title, children, seed }: { title: ReactNode; children?: ReactNode; seed: number }) {
   return (
     <div {...stylex.props(sh.head)}>
       <div {...stylex.props(sh.top)}>
-        <span {...stylex.props(sh.num)}>{n}</span>
         <h3 {...stylex.props(sh.title)}>{title}</h3>
       </div>
       <PenRule seed={seed} strong />
@@ -544,6 +550,24 @@ export function Tape({ children, style }: { children?: ReactNode; style: React.C
     <span {...stylex.props(tp.tape)} style={style}>
       <Printed mask={tapeMask} color="tape" style={{ opacity: 0.92 }} />
       {children && <span {...stylex.props(tp.words)}>{children}</span>}
+    </span>
+  );
+}
+
+// ── Apps by name ──────────────────────────────────────────────────────────────────────
+// The apps the page names, each with its icon drawn the way Iris draws (scripts/app-icons.mjs),
+// as the app shows an app's icon before its name. The name is the text; the icon is decoration.
+const APPS = { slack: 'Slack', mail: 'Mail', messages: 'Messages', notes: 'Notes', chrome: 'Chrome', safari: 'Safari', textedit: 'TextEdit' } as const;
+export type AppKey = keyof typeof APPS;
+const an = stylex.create({
+  name: { whiteSpace: 'nowrap' },
+  icon: { display: 'inline-block', verticalAlign: 'middle', marginRight: '0.3em', marginTop: '-0.18em' },
+});
+export function AppName({ app, size = 20 }: { app: AppKey; size?: number }) {
+  return (
+    <span {...stylex.props(an.name)}>
+      <img src={`/app/${app}.png`} alt="" width={size} height={size} loading="lazy" decoding="async" {...stylex.props(an.icon)} />
+      {APPS[app]}
     </span>
   );
 }

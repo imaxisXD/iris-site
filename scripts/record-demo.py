@@ -5,8 +5,9 @@
 Waits until nobody has touched the Mac for a minute (--now skips that; only when the owner
 said go ahead), then takes the screen for about half a minute:
 
-  1. notes how the Mac is (light or dark, which apps are showing, which is in front) in
-     /tmp/iris-demo/restore.json, then hides the other apps and turns on light mode
+  1. notes how the Mac is (light or dark, which apps are showing, which is in front, the
+     desktop picture) in /tmp/iris-demo/restore.json, then hides the other apps, turns on
+     light mode and puts the desk print (scripts/art.mjs) on the desktop
   2. opens a scratch document with the draft in TextEdit (made here, in /tmp: nothing of
      the owner's is on screen), and places its window
   3. a dry run: presses the panel's shortcut, waits for the answer, notes where Iris put its
@@ -15,7 +16,7 @@ said go ahead), then takes the screen for about half a minute:
      shortcut, waits for the fixes, holds so they can be read, presses Return and waits for
      the document to change
   5. puts the Mac back exactly as step 1 found it: quits TextEdit, shows the apps it hid,
-     sets light or dark back, brings back the app that was in front
+     sets light or dark and the desktop picture back, brings back the app that was in front
 
 Step 5 runs however the script ends, Ctrl-C and kill included, and a run that was cut off
 harder than that is put back by the next run before it starts. No AppleScript goes to
@@ -38,6 +39,7 @@ DRAFT = "hey, i have checked the PR and its look fine but one thing need to chan
 OUT = "/tmp/iris-demo"
 DOC = os.path.join(OUT, "Reply to Sam.rtf")
 RESTORE = os.path.join(OUT, "restore.json")
+DESK = "/tmp/iris-art/desk.png"  # the desktop for the take, printed by scripts/art.mjs
 SESSION = f"iris-demo-{os.getpid()}-{int(time.time())}"
 NOW = "--now" in sys.argv
 WINDOW = (820, 300)  # TextEdit's window, in points, centred
@@ -68,6 +70,8 @@ def snapshot():
         "visible": [n for n in osa('tell application "System Events" to get name of every application process whose visible is true').split(", ") if n],
         "front": osa('tell application "System Events" to name of first application process whose frontmost is true'),
         "textedit_was_running": bool(sh("pgrep", "-x", "TextEdit", check=False)),
+        # Each desktop's picture, in order, so the owner's comes back exactly.
+        "wallpapers": [p for p in osa('tell application "System Events" to get picture of every desktop').split(", ") if p],
     }
     os.makedirs(OUT, exist_ok=True)
     with open(RESTORE, "w") as f:
@@ -88,6 +92,8 @@ def restore():
     for name in state["visible"]:
         osa(f'tell application "System Events" to set visible of application process "{name}" to true', check=False)
     osa(f'tell application "System Events" to tell appearance preferences to set dark mode to {"true" if state["dark"] else "false"}', check=False)
+    for i, pic in enumerate(state.get("wallpapers", []), start=1):
+        osa(f'tell application "System Events" to set picture of desktop {i} to POSIX file "{pic}"', check=False)
     if state["front"]:
         osa(f'tell application "System Events" to set frontmost of application process "{state["front"]}" to true', check=False)
     os.remove(RESTORE)
@@ -210,6 +216,8 @@ def write_doc():
 # ── The take ──────────────────────────────────────────────────────────────────────────
 def take():
     shortcut = open_shortcut()
+    if not os.path.exists(DESK):
+        sys.exit("record-demo: print the desk first: node scripts/art.mjs")
     if sh("pgrep", "-x", "TextEdit", check=False):
         sys.exit("record-demo: TextEdit is open; close it first, so only the scratch document is on screen")
     state = snapshot()
@@ -219,6 +227,8 @@ def take():
             osa(f'tell application "System Events" to set visible of application process "{name}" to false', check=False)
     if state["dark"]:
         osa('tell application "System Events" to tell appearance preferences to set dark mode to false')
+    # The desk print behind the windows, so the shot shows Iris's garden, not the owner's desktop.
+    osa(f'tell application "System Events" to tell every desktop to set picture to POSIX file "{DESK}"')
 
     write_doc()
     subprocess.run(["open", "-a", "TextEdit", DOC], check=True)

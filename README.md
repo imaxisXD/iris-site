@@ -1,7 +1,7 @@
 # Iris site
 
 The landing page for [Iris](https://github.com/imaxisXD/iris), printed like the app: a riso
-zine of ten pages on warm paper, a sky plate under the flower, a pink plate for privacy, pen
+zine on warm paper, a sky plate under the flower, a pink plate for privacy, pen
 lines that wobble and brush marks with frayed ends. Iris's own [DESIGN.md](../grammly-alt/DESIGN.md)
 is the rulebook here too; where the web needs something the app doesn't have, it's noted in
 the code.
@@ -12,14 +12,22 @@ the code.
   (`src/render.tsx`). No React, no hydration, no framework in the browser.
 - **StyleX** for every style (`@stylexjs/unplugin` in Vite). Its atomic CSS is inlined into
   the page with `src/global.css` (fonts, the paper, base rules), about 18 KB.
-- **2.5 KB of script** (`src/client.ts`): the tone tabs, the shelf of versions, the video
-  and the cover's garden playing only while they're on screen, and the foot's sign-off
-  fixed as you reach it. Everything still reads without it.
-- **The cover's garden is a storyboard** (`src/Garden.tsx`): the flower stretches up and
-  sways, the sun rises, four butterflies arrive one by one on loops of their own, petals
-  drift. The timings and every value sit at the top of the file in `TIMING` and one config
-  per part; it all runs in CSS on transforms and opacity, and holds still under Reduce
-  Motion. The build fails if a butterfly's loop would cross the sun.
+- **About 10 KB of script** (`src/client.ts`): the tone tabs, the shelf of versions, the
+  video and its Pause button, the cover's garden, the foot's sign-off, and ⌃ ⌥ G on the
+  page. Everything still reads without it.
+- **The cover's garden is a storyboard** (`src/Garden.tsx`, first drawn by a Fable 5.2
+  agent): Iris's flower, built part by part from the app's own rig
+  (`scripts/fable-flower.mjs` ports `IrisRig.swift`), the sun and four butterflies, in depth
+  planes. ⌃ ⌥ G goes down, Iris's panel pops out of the bloom, three butterflies each fly
+  from their own spot to one of its fixes, Return puts the fix in. `TIMING` and one config
+  per part sit at the top, and the build fails if a keyframe drifts from them. It plays
+  three times and settles, pauses while scrolled away, and holds still under Reduce Motion.
+- **One panel for the whole site** (`src/Panel.tsx`): the app's panel (`PanelView.swift`),
+  tone names, the marked message, the keys, "into" an app on tape with its icon, Replace.
+  Section 03, the cover and the ⌃ ⌥ G panel all use it.
+- **⌃ ⌥ G works on the page.** The keys go down and the panel opens on the paragraph you're
+  reading: Fix says "looks good", Tab tries hand-written tones (`content.ts`), Return puts
+  one on the page, ⌘Z takes it back. With Iris installed, Iris takes the keys instead.
 - **Every mark is drawn at build time** (`src/pen.tsx`): pen rules, hand boxes, marker
   swipes, the dry-brush button, the brush X. Each is seeded, so it always looks the same.
   Areas of ink are masks over the riso screen texture, never a flat fill.
@@ -28,19 +36,25 @@ the code.
   their paper, encodes AVIF and WebP, subsets Iris's six fonts to WOFF2 and makes the paper and screen textures (a
   shape's ink is Iris's `PrintedInk` screen, with its lighter touch on dark ink).
   `scripts/sprites.mjs` prints the garden's sun, butterflies and petals the way Iris prints
-  its sprites (`RisoArt.print`). The results are committed, so a build never needs Iris.
-- **The /02 video is a real recording**: the installed Iris, its real model, in TextEdit.
-  `scripts/record-demo.py` takes it (it waits until nobody has touched the Mac for a
-  minute, uses a scratch document, and puts the Mac back as it found it: light or dark,
-  hidden apps, the app in front, however it ends); `scripts/demo-video.mjs` trims, crops
-  and encodes it into `public/demo` (about 340 KB).
-- **The foot** (`src/Footer.tsx`) is Iris's pink foot: the zine's sign-off, written in a
-  hurry, fixed by Iris as you arrive, its marks drawn the way the panel draws them.
+  its sprites (`RisoArt.print`). `scripts/art.mjs` prints the backdrops behind the panels
+  (flat riso plates with Iris's flower and ghost words) and the desktop for the recording;
+  `scripts/app-icons.mjs` draws the apps the page names (Slack, Mail, Notes…) in Iris's pen
+  and riso, in their own colours. The results are committed, so a build never needs Iris.
+- **The How it works video is a real recording**: the installed Iris, its real model, in
+  TextEdit, on the printed desk from `scripts/art.mjs`. `scripts/record-demo.py` takes it
+  (it waits until nobody has touched the Mac for a minute, uses a scratch document, and
+  puts the Mac back as it found it: light or dark, the desktop picture, hidden apps, the app
+  in front, however it ends); `scripts/demo-video.mjs` trims, crops and encodes it into
+  `public/demo` (about 600 KB, with a half-size still for phones).
+- **The foot** (`src/Footer.tsx`) is Iris's pink foot: the sign-off, written in a hurry,
+  proofread by Iris as you arrive (fixes written in above, slips struck, then dropped into
+  place, a tick and a butterfly at the end). Every word sits in a slot as wide as its longer
+  version, so the foot never changes height.
 - **Cloudflare Workers, static assets only** (`wrangler.jsonc`). Caching rules are in
   `public/_headers`, and `/download` and `/code` redirect via `public/_redirects`.
 
-Lighthouse (simulated mobile, slow 4G): performance 97, accessibility, best practices and
-SEO 100. About 255 KB for the first view, 0 ms blocking time.
+Lighthouse (simulated mobile, slow 4G): performance 95, accessibility, best practices and
+SEO 100. About 310 KB for the first view, 0 ms blocking time.
 
 ## Commands
 
@@ -54,6 +68,9 @@ pnpm garden         # the cover's garden at set times, and under Reduce Motion, 
 pnpm typecheck
 pnpm assets         # redo public/ from Iris (needs `swift build` in ../grammly-alt, or IRIS=…)
 pnpm sprites        # reprint the garden's sprites into public/sprite
+node scripts/fable-flower.mjs   # reprint the cover flower's parts from Iris's rig
+node scripts/art.mjs            # reprint the backdrops and the recording's desk
+node scripts/app-icons.mjs      # redraw the app icons
 pnpm demo           # record /02 again: the real Iris in TextEdit (takes the screen for ~30 s)
 pnpm deploy         # build and `wrangler deploy` (needs `wrangler login` first)
 ```
@@ -62,18 +79,18 @@ pnpm deploy         # build and `wrangler deploy` (needs `wrangler login` first)
 
 ## What's on the page
 
-| Folio | Page | From the zine |
-|---|---|---|
-| /01 | Cover: the sky plate, the wordmark, the stair headline, the garden coming to life | the CAFÉ cover's running head and big word |
-| /02 | How it works: a real recording of Iris in TextEdit, taped in | photos taped onto the page |
-| /03 | Fix and tones: the real panel in HTML, Tab through the tones | GRiND over a ghost CRUSH |
-| /04 | Fix: a tan plate with words up its edge, ink labels, a stacked figure | burrs / blades |
-| /05 | Privacy: half a page of pink, a stepped sign-off, the big folio | the back page |
-| /06 | Make it yours: drawings with ink labels, the crossed-out lock | brewing methods and the crossed cup |
-| /07 | The menu bar and setup | |
-| /08 | Install, and why macOS asks | |
-| /09 | What's new: each version an issue on a shelf, from Iris's Changelog.md | the manga changelog |
-| /10 | The foot: the sign-off Iris fixes, download, links, who made it | the back page's sign-off and folio |
+| Section | What's there |
+|---|---|
+| Cover | The sky plate, the stair headline, the garden where Iris fixes a note |
+| How it works | Press, read, replace; a real recording of Iris in TextEdit |
+| Fix and tones | The panel on a collage of printed sheets; Tab through the tones |
+| Fix | Fixes, not rewrites: what Iris leaves alone |
+| Privacy | The pink plate: the model runs on your Mac |
+| Settings | Tones, words, apps, shortcuts, password fields |
+| Menu bar | A Mac's corner with Iris's menu open under its flower; setup in three steps |
+| Install | Four steps, and why macOS asks |
+| What's new | Each version an issue on a shelf, from Iris's Changelog.md |
+| Foot | The sign-off Iris proofreads, download, links, who made it |
 
 The zine itself (`design-reference/` in the Iris checkout) is someone else's work and never
 goes in this repo or on the site.

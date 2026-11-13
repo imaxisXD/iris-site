@@ -48,7 +48,7 @@ ff(
     `fade=t=out:st=${fadeOut.toFixed(2)}:d=${CUT.fade}:color=${CUT.paper}`,
     'format=yuv420p',
   ].join(','),
-  '-c:v', 'libx264', '-crf', '23', '-preset', 'slow', '-profile:v', 'high', '-an', '-movflags', '+faststart',
+  '-c:v', 'libx264', '-crf', '18', '-preset', 'slow', '-tune', 'animation', '-profile:v', 'high', '-an', '-movflags', '+faststart',
   mp4,
 );
 
@@ -57,6 +57,8 @@ const posterPng = path.join(dir, 'poster.png');
 ff('-ss', (answer + 1.2).toFixed(2), '-i', path.join(dir, 'take.mov'), '-frames:v', '1', '-vf', `${crop},scale=${CUT.width}:-2:flags=lanczos`, posterPng);
 await sharp(posterPng).avif({ quality: 60 }).toFile(path.join(out, 'iris-in-textedit.avif'));
 await sharp(posterPng).webp({ quality: 80 }).toFile(path.join(out, 'iris-in-textedit.webp'));
+// A half-size still for phones; client.ts swaps in the full one where the video shows wide.
+await sharp(posterPng).resize(700).webp({ quality: 80 }).toFile(path.join(out, 'iris-in-textedit-700.webp'));
 const { width, height } = await sharp(posterPng).metadata();
 
 writeFileSync(path.join(root, 'src/demo.json'), JSON.stringify({ width, height, seconds: +length.toFixed(2), draft: take.draft, fixed: take.fixed }, null, 2) + '\n');

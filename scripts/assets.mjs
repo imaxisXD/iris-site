@@ -269,7 +269,7 @@ async function screen(file, name, widths, box) {
   await emit(await img.png().toBuffer(), name, widths);
 }
 // The menu as it opens under the menu bar, lifted off the grey it was drawn on.
-await cutout('readme/readme-menu-light.png', { left: 0, top: 0, width: 800, height: 866 }, 'menu', { bg: [209, 209, 209], tol: 24, widths: [400] });
+await cutout('readme/readme-menu-light.png', { left: 0, top: 0, width: 800, height: 866 }, 'menu', { bg: [209, 209, 209], tol: 24, widths: [400, 800] });
 await screen('readme/readme-quick-fix-light.png', 'quick-fix', [520]);
 await screen('readme/readme-open-anyway-light.png', 'open-anyway', [800, 1240]);
 await screen('readme/readme-words-light.png', 'words', [560, 940]);
