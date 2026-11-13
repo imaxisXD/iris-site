@@ -223,18 +223,19 @@ const s = stylex.create({
     gridTemplateAreas: { default: '"title stage" "list stage"', [NARROW]: '"title" "stage" "list"' }, columnGap: 'clamp(32px, 4vw, 64px)', rowGap: 40, alignItems: 'start' },
   yoursStage: { gridArea: 'stage', position: 'relative', isolation: 'isolate', alignSelf: { default: 'stretch', [NARROW]: 'start' }, containerType: 'inline-size',
     display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', backgroundImage: `${tex.screen}, ${tex.streaks}`, backgroundSize: '96px 96px, 128px 128px',
-    // No room below: the window runs to the sheet's foot and fades out into it.
-    padding: 'clamp(56px, 5.4vw, 76px) clamp(16px, 4.5%, 44px) 0',
+    // The window sits on the sheet with the sheet showing round it, below as at the sides.
+    padding: 'clamp(56px, 5.4vw, 76px) clamp(16px, 4.5%, 44px) clamp(16px, 4.5%, 44px)',
     clipPath: 'polygon(0.6% 1%, 27% 0%, 55% 1.4%, 81% 0.2%, 99.4% 1.2%, 100% 31%, 99.2% 66%, 100% 99%, 70% 99.8%, 41% 98.8%, 16% 100%, 0.4% 99%, 1.2% 62%, 0% 28%)' },
   yoursNote: { position: 'absolute', zIndex: 1, left: 'clamp(28px, 5vw, 64px)', top: 'clamp(14px, 1.6vw, 22px)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'flex-start', gap: 4, fontFamily: font.brush, fontSize: 22, lineHeight: 1, color: ink.paper, transform: 'rotate(-3deg)' },
   yoursStep: { cursor: 'pointer' },
   // At least 62% as tall as it's wide (on narrow pages, just that). The pages have no foot, so
-  // below a short one the window runs on in the same paper. Its lower part fades out into the
-  // sheet; the shadow is a filter on the frame, so it fades with it.
+  // below a short one the window runs on in the same paper; a long one fades into that paper
+  // just above the window's foot, which ends cleanly, corners and shadow and all.
   yoursFrame: { flex: '1 1 auto', display: 'flex', minHeight: '62cqw', filter: 'drop-shadow(0 14px 22px rgb(0 0 0 / 0.3)) drop-shadow(0 0 0.5px rgb(0 0 0 / 0.5))' },
   yoursWindow: { position: 'relative', flex: 1, borderRadius: 12, overflow: 'hidden', backgroundColor: 'rgb(250 247 244)',
-    // Solid for most of its height; only the foot thins, gently, so the sheet just shows through.
-    maskImage: 'linear-gradient(to bottom, #000 0%, #000 70%, rgb(0 0 0 / 0.94) 79%, rgb(0 0 0 / 0.8) 88%, rgb(0 0 0 / 0.55) 95%, rgb(0 0 0 / 0.3) 100%)' },
+  },
+  // The paper over a long page's last lines, so it fades out inside the window, not through it.
+  yoursFade: { position: 'absolute', zIndex: 1, insetInline: 0, bottom: 0, height: '16%', pointerEvents: 'none', backgroundImage: 'linear-gradient(to bottom, rgb(250 247 244 / 0), rgb(250 247 244) 85%)' },
   yoursPage: { position: 'absolute', insetInline: 0, top: 0 },
   yoursLights: { position: 'absolute', zIndex: 2, left: '2.4%', top: '2.2%', display: 'flex', gap: '1.1%', width: '100%' },
   yoursLight: { width: '1.9%', aspectRatio: '1', borderRadius: '50%', backgroundColor: 'rgb(42 26 22 / 0.16)', boxShadow: 'inset 0 0 0 1px rgb(42 26 22 / 0.12)' },
@@ -849,6 +850,7 @@ function Yours() {
                     <span key={i} {...stylex.props(s.yoursLight)} />
                   ))}
                 </span>
+                <span aria-hidden {...stylex.props(s.yoursFade)} />
                 {YOURS.map((y, i) => (
                   <div key={y.name} role="tabpanel" id={`yours-page-${i}`} aria-labelledby={`yours-tab-${i}`} data-yours-page data-shown={i === 0} inert={i !== 0} {...stylex.props(s.yoursPage)}>
                     <Picture name={y.page} alt={y.alt} width={680} sizes="(max-width: 1000px) 92vw, 680px" xstyle={s.yoursShot} />

@@ -51,13 +51,14 @@
 [data-fly-cursor] { cursor: none; }
 [data-fly-cursor] a, [data-fly-cursor] button { cursor: pointer; }
 
-/* How it works: the steps not playing step back (client.ts sets data-active). */
-[data-chapter][data-active="false"] { opacity: 0.45; }
-[data-chapter][data-active="false"]:hover { opacity: 0.75; }
+/* How it works: the steps not playing step back (client.ts sets data-active), still easy to
+   read: dimmer than the one playing, never faint. */
+[data-chapter][data-active="false"] { opacity: 0.62; }
+[data-chapter][data-active="false"]:hover { opacity: 0.85; }
 /* Make it yours: the same for the Settings pages not showing, and the window turning between
    them (storyboard and timings in client.ts). A page waits below, sinks away above. */
-[data-yours-step][data-active="false"] { opacity: 0.45; }
-[data-yours-step][data-active="false"]:hover { opacity: 0.75; }
+[data-yours-step][data-active="false"] { opacity: 0.62; }
+[data-yours-step][data-active="false"]:hover { opacity: 0.85; }
 [data-yours-page] {
   opacity: 0;
   translate: 0 10px;
