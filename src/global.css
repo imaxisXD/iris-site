@@ -146,3 +146,20 @@
 /* The ⌃ ⌥ G panel on a narrow window: no key hints (client.ts). */
 [data-press][data-compact] [data-press-keys] { display: none !important; }
 [data-fit-panel][data-compact] [data-panel-notice] { display: none; }
+
+/* A pen link (parts.tsx, PenLink) under the pointer or the keyboard: its brush ribbon swells up
+   behind the words like a marker swipe (its stroke fills the middle 40% of its box, so the box
+   runs past the words), and a link off the site nudges its ↗ up and out. */
+/* The brush stretches to its box (its mask would keep its own 20:1 shape), so it can swell. */
+[data-penlink-ribbon] > span { -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+[data-penlink-ribbon] { transition: height 220ms cubic-bezier(0.23, 1, 0.32, 1), bottom 220ms cubic-bezier(0.23, 1, 0.32, 1); }
+[data-penlink-arrow] { transition: translate 220ms cubic-bezier(0.23, 1, 0.32, 1); }
+@media (hover: hover) {
+  [data-penlink]:hover [data-penlink-ribbon] { height: 1.5em; bottom: -0.15em; }
+  [data-penlink]:hover [data-penlink-arrow] { translate: 2px -2px; }
+}
+[data-penlink]:focus-visible [data-penlink-ribbon] { height: 1.5em; bottom: -0.15em; }
+[data-penlink]:focus-visible [data-penlink-arrow] { translate: 2px -2px; }
+@media (prefers-reduced-motion: reduce) {
+  [data-penlink-ribbon], [data-penlink-arrow] { transition: none; }
+}

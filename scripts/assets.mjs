@@ -290,14 +290,10 @@ await screen('snap/after-book-shelf-many-light.png', 'shelf', [700]);
 // What's new, as the app shows it in Settings › Updates.
 writeFileSync(path.join(root, 'src/content/Changelog.md'), readFileSync(path.join(iris, 'Sources/Iris/Resources/Changelog.md')));
 
-// The tab icon and the card a shared link shows: Iris's own icon and README banner.
+// The tab icon: Iris's own. (The card a shared link shows is drawn from the page: scripts/og.mjs.)
 execFileSync('sips', ['-s', 'format', 'png', '-Z', '512', path.join(iris, 'assets/AppIcon.icns'), '--out', path.join(tmpdir(), 'iris-icon.png')], { stdio: 'ignore' });
 await sharp(path.join(tmpdir(), 'iris-icon.png')).resize(180).png().toFile(out('apple-touch-icon.png'));
 await sharp(path.join(tmpdir(), 'iris-icon.png')).resize(64).png().toFile(out('favicon.png'));
-await sharp(src('readme/readme-hero-light.png'))
-  .resize({ width: 1200, height: 630, fit: 'contain', background: { r: 120, g: 162, b: 220 } })
-  .jpeg({ quality: 84, mozjpeg: true })
-  .toFile(out('og.jpg'));
 
 writeFileSync(path.join(root, 'src/assets.json'), JSON.stringify(manifest, null, 2) + '\n');
 

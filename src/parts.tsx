@@ -377,8 +377,9 @@ const pl = stylex.create({
     transitionDuration: '150ms',
     ':active': { transform: 'scale(0.98)' },
   },
-  words: { position: 'relative', paddingBottom: 4 },
-  ribbon: { position: 'absolute', left: 0, right: 0, bottom: -3, height: 6, opacity: { default: 1, ':hover': 1 } },
+  // Its own layer, so the ribbon can swell behind the words on hover (global.css).
+  words: { position: 'relative', paddingBottom: 4, isolation: 'isolate' },
+  ribbon: { position: 'absolute', zIndex: -1, left: 0, right: 0, bottom: -3, height: 6 },
   arrow: { display: 'inline-flex', transform: 'translateY(-2px)' },
 });
 /** Words with a printed pink pen stroke under them, and the turned-up arrow when they leave.
@@ -388,12 +389,12 @@ export function PenLink({ href, children, out = true, ribbon = 'pink' }: { href:
     <a href={href} {...stylex.props(pl.link)} {...(out ? { rel: 'noopener' } : {})} data-penlink>
       <span {...stylex.props(pl.words)}>
         {children}
-        <span aria-hidden {...stylex.props(pl.ribbon)}>
+        <span aria-hidden data-penlink-ribbon {...stylex.props(pl.ribbon)}>
           <Printed mask={ribbonMask(seedOf(children))} color={ribbon} />
         </span>
       </span>
       {out && (
-        <span {...stylex.props(pl.arrow)}>
+        <span data-penlink-arrow {...stylex.props(pl.arrow)}>
           <PenArrow up size={16} />
         </span>
       )}
