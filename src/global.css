@@ -45,3 +45,75 @@
     [data-brush]:active [data-rose] { filter: saturate(1.8) brightness(1.25); }
   }
 }
+
+/* Over the foot the pointer is a butterfly (client.ts sets this only on fine pointers, and not
+   under Reduce Motion); links and buttons keep the real pointer. */
+[data-fly-cursor] { cursor: none; }
+[data-fly-cursor] a, [data-fly-cursor] button { cursor: pointer; }
+
+/* How it works: the steps not playing step back (client.ts sets data-active). */
+[data-chapter][data-active="false"] { opacity: 0.45; }
+[data-chapter][data-active="false"]:hover { opacity: 0.75; }
+
+/* What Iris left alone in a fact's example is ringed in the pen. */
+[data-kept] { padding: 0 0.15em; border: 1.5px solid rgb(42 26 22 / 0.75); border-radius: 0.8em; }
+
+/* ── How it works: the desk's beats (Desk.tsx has the storyboard; client.ts sets data-at to the
+   beats reached: s1 keys, s2 bud, s3 bloom, s4 Return, s5 panel folds, s6 fix lands, s7 wilt;
+   and marks the app on screen data-on, the one before data-was) ── */
+@property --open { syntax: '<number>'; inherits: true; initial-value: 0.12; }
+[data-desk] { translate: calc(var(--cx, 0) * -1px) 0; transition: translate 700ms cubic-bezier(0.23, 1, 0.32, 1); }
+/* A turn: this app comes forward on top, solid almost at once, rising into place; the one
+   before stays solid under it, then goes once it's covered, so the two never show through
+   each other. */
+[data-desk-app] { position: absolute; inset: 0; opacity: 0; translate: 0 22px; scale: 0.97; transition: opacity 90ms linear, translate 650ms cubic-bezier(0.22, 1, 0.36, 1), scale 650ms cubic-bezier(0.22, 1, 0.36, 1); }
+[data-desk-app][data-on="true"] { z-index: 1; opacity: 1; translate: 0 0; scale: 1; }
+@keyframes desk-out { 0%, 45% { opacity: 1; translate: 0 0; scale: 1; } 100% { opacity: 0; translate: 0 6px; scale: 0.985; } }
+[data-desk-app][data-was="true"] { animation: desk-out 340ms ease-in forwards; }
+[data-desk-name] { opacity: 0; transition: opacity 250ms ease; }
+[data-desk-name][data-on="true"] { opacity: 1; }
+/* The reply as written, then, once the panel has folded, as fixed: Iris's words in pink until the flower goes. */
+[data-desk-fixed] { visibility: hidden; }
+[data-desk][data-at~="s6"] [data-on="true"] [data-desk-fixed], [data-desk-app][data-was="true"] [data-desk-fixed] { visibility: visible; }
+[data-desk][data-at~="s6"] [data-on="true"] [data-desk-draft], [data-desk-app][data-was="true"] [data-desk-draft] { visibility: hidden; }
+[data-desk-new] { background-color: rgb(240 134 176 / 0.5); -webkit-box-decoration-break: clone; box-decoration-break: clone; transition: background-color 1200ms ease; }
+[data-desk][data-at~="s7"] [data-desk-new], [data-desk-app][data-was="true"] [data-desk-new] { background-color: transparent; }
+@keyframes desk-caret { 50% { opacity: 0; } }
+[data-desk-caret] { animation: desk-caret 1060ms steps(1) infinite; }
+[data-desk][data-at~="s1"] [data-desk-caret] { animation: none; }
+/* Iris's flower: up from its foot as a bud, open a moment before its panel, gone once the fix is in. */
+[data-desk-bud] { --open: 0.12; scale: 0; opacity: 0; transition: scale 420ms cubic-bezier(0.4, 0, 1, 1), opacity 300ms ease 120ms, --open 380ms ease; }
+[data-desk][data-at~="s2"]:not([data-at~="s7"]) [data-on="true"] [data-desk-bud] { scale: 1; opacity: 1; transition: scale 620ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 160ms ease, --open 380ms ease; }
+[data-desk][data-at~="s3"]:not([data-at~="s5"]) [data-on="true"] [data-desk-bud] { --open: 1; transition: scale 620ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 160ms ease, --open 700ms cubic-bezier(0.34, 1.5, 0.64, 1); }
+/* Its panel, unfolding out of it once it has opened (250ms), and folding back in. */
+[data-desk-panel] { opacity: 0; scale: 0.3; transition: opacity 200ms ease 60ms, scale 280ms cubic-bezier(0.4, 0, 1, 1); }
+[data-desk][data-at~="s3"]:not([data-at~="s5"]) [data-on="true"] [data-desk-panel] { opacity: 1; scale: 1; transition: opacity 180ms ease 250ms, scale 560ms cubic-bezier(0.34, 1.25, 0.64, 1) 250ms; }
+[data-desk-replace] { transition: scale 90ms ease; }
+[data-desk][data-at~="s4"] [data-desk-replace] { scale: 0.94; }
+/* The key slips: in as the keys go down; ⌃ and ⌥ held, G a beat after, as a hand plays a chord. */
+[data-desk-slip] { opacity: 0; translate: -50% 16px; transition: opacity 220ms ease, translate 420ms cubic-bezier(0.23, 1, 0.32, 1); }
+[data-desk][data-at~="s1"]:not([data-at~="s3"]) [data-desk-slip="press"],
+[data-desk][data-at~="s4"]:not([data-at~="s7"]) [data-desk-slip="enter"] { opacity: 1; translate: -50% 0; }
+[data-desk-slip] kbd { transition: translate 90ms ease, scale 90ms ease; }
+[data-desk][data-at~="s1"]:not([data-at~="s2"]) [data-desk-slip="press"] kbd,
+[data-desk][data-at~="s4"]:not([data-at~="s5"]) [data-desk-slip="enter"] kbd { translate: -1px 2px; scale: 0.96; }
+[data-desk][data-at~="s1"]:not([data-at~="s2"]) [data-desk-slip="press"] kbd:nth-of-type(2) { transition-delay: 40ms; }
+[data-desk][data-at~="s1"]:not([data-at~="s2"]) [data-desk-slip="press"] kbd:nth-of-type(3) { transition-delay: 140ms; }
+@media (prefers-reduced-motion: reduce) {
+  [data-desk], [data-desk] *, [data-desk-bud] { transition: none !important; animation: none !important; }
+}
+
+/* Replace, pressed: its label turns over, "Replace ↵" up and out, "✓ Replaced" up and in, in
+   the same place (client.ts sets data-done for a moment). */
+[data-label-now], [data-label-done], [data-chip] { transition: opacity 160ms ease, translate 320ms cubic-bezier(0.23, 1, 0.32, 1), scale 200ms ease; }
+[data-label-done] { opacity: 0; translate: 0 9px; }
+[data-done] [data-label-now] { opacity: 0; translate: 0 -9px; }
+[data-done] [data-label-done] { opacity: 1; translate: 0 0; transition-delay: 60ms; }
+[data-done] [data-chip] { opacity: 0; scale: 0.7; }
+@media (prefers-reduced-motion: reduce) {
+  [data-label-now], [data-label-done], [data-chip] { transition: opacity 120ms ease; translate: none !important; }
+}
+
+/* The ⌃ ⌥ G panel on a narrow window: no key hints (client.ts). */
+[data-press][data-compact] [data-press-keys] { display: none !important; }
+[data-fit-panel][data-compact] [data-panel-notice] { display: none; }

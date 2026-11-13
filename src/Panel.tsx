@@ -8,7 +8,7 @@
 // height; the data attributes below are its hooks.
 import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
-import { diff } from './content';
+import { diff } from './diff';
 import { BrushButton, KeyRow } from './parts';
 import { HandTick, markerMask, PenRule, Printed, seedOf } from './pen';
 import { font, ink, tex } from './tokens.stylex';
@@ -57,10 +57,14 @@ export const panel = stylex.create({
   // As the app sets the message (DS.Font.subtitle): the mono a touch heavier than body text.
   message: { position: 'relative', fontSize: 'clamp(14px, 1.5vw, 16px)', fontWeight: 540, lineHeight: 1.85, color: ink.i12, margin: 0, paddingBlock: 16 },
   gone: { color: ink.espresso, textDecorationLine: 'line-through', textDecorationThickness: '1.5px', opacity: 0.75 },
-  added: { backgroundColor: 'rgb(240 134 176 / 0.45)', paddingInline: 2, boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone', textDecoration: 'none' },
+  // Iris's words over a pink marker. The marker is a background image, not a colour, so the page
+  // can swipe it on under the words (client.ts) while the words themselves stay put.
+  added: { backgroundImage: 'linear-gradient(rgb(240 134 176 / 0.45), rgb(240 134 176 / 0.45))', backgroundRepeat: 'no-repeat', backgroundSize: '100% 100%', paddingInline: 2, boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone', textDecoration: 'none' },
   foot: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', paddingTop: 14 },
   hints: { display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' },
   hint: { display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, letterSpacing: '0.08em', borderWidth: 0, backgroundColor: 'transparent', padding: 0, fontFamily: font.mono, cursor: 'pointer', color: { default: ink.i10, '@media (hover: hover)': { default: ink.i10, ':hover': ink.i12 } } },
+  // Iris's line in the footer, on a slip of the tinted paper the app uses for it.
+  notice: { position: 'relative', display: 'inline-block', paddingBlock: 4, paddingInline: 9, fontSize: 12, color: ink.espresso, backgroundColor: 'rgb(246 230 222)', backgroundImage: tex.paper, backgroundSize: '64px 64px', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgb(100 56 46 / 0.45)', borderRadius: 2 },
   // "looks good": Iris's word over the pink marker, with a tick.
   good: { display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: font.brush, fontSize: 24, lineHeight: 1, color: ink.i12, position: 'relative', isolation: 'isolate' },
   goodMarker: { position: 'absolute', left: -4, right: -6, bottom: -2, height: 12, zIndex: -1 },
@@ -73,6 +77,8 @@ export const panel = stylex.create({
   sticker: { position: 'absolute', left: -18, top: -9, width: 26, height: 26, transform: 'rotate(-9deg)', zIndex: 1 },
   // The Replace key's chip, as the app's TactileButton draws it: an outline, not a cap.
   chip: { display: 'inline-grid', placeItems: 'center', width: '1.5em', height: '1.5em', borderWidth: 1.5, borderStyle: 'solid', borderColor: 'rgb(255 252 249 / 0.85)', borderRadius: 4, fontSize: 13, color: ink.paper, lineHeight: 1 },
+  labels: { display: 'inline-grid' },
+  label: { gridArea: '1 / 1', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 },
   done: { fontFamily: font.brush, fontSize: 24, color: ink.i12, display: 'inline-flex', alignItems: 'center', gap: 6 },
   stack: { display: 'grid' },
   cell: { gridArea: '1 / 1', minWidth: 0 },
@@ -117,6 +123,14 @@ export function MessageStack({ children, sizers }: { children: ReactNode; sizers
 }
 
 type Data = Record<string, string | boolean | number | undefined>;
+/** How wide the panel is laid out, in px, for its footer (the keys, "into" the app, Replace)
+ *  to sit on one line, as the app's does. Lay it out at this width and scale it down to the
+ *  size wanted (CSS `zoom`); never let it lay out narrower, or the footer wraps. To fit one to
+ *  its box, wrap it in `data-fit-panel` > a 720px child: client.ts sets the zoom from the box's
+ *  width (and, where that would make it too small to read, lays it out narrower, without its
+ *  footer note, marking the box `data-compact`). */
+export const PANEL_LAYOUT = 720;
+
 export type PanelProps = {
   /** The tone names; the first is chosen. */
   tabs: readonly string[];
@@ -134,10 +148,12 @@ export type PanelProps = {
   after?: ReactNode;
   /** Extra lines between the message and the faint rule. */
   under?: ReactNode;
+  /** A line from Iris in place of the keys, as the app's footer shows one ("Translated to English…"). */
+  notice?: ReactNode;
   seed?: number;
 };
 
-export function Panel({ tabs, tab, children, app, good = false, hooks = {}, after, under, seed = 33 }: PanelProps) {
+export function Panel({ tabs, tab, children, app, good = false, hooks = {}, after, under, notice, seed = 33 }: PanelProps) {
   return (
     <div {...stylex.props(panel.sheet, panel.pad, panel.root)} {...hooks.root}>
       <span {...stylex.props(panel.grain)} />
@@ -166,7 +182,8 @@ export function Panel({ tabs, tab, children, app, good = false, hooks = {}, afte
             </span>
             <HandTick size={16} /> looks good
           </span>
-          <span hidden={good} {...stylex.props(panel.hints)} {...hooks.keys}>
+          {notice && <span data-panel-notice {...stylex.props(panel.notice)}>{notice}</span>}
+          <span hidden={good || !!notice} {...stylex.props(panel.hints)} {...hooks.keys}>
             <button type="button" aria-label="Next tone" {...stylex.props(panel.hint)} {...hooks.next}>
               <KeyRow keys={['⇥']} /> NEXT TONE
             </button>
@@ -187,8 +204,15 @@ export function Panel({ tabs, tab, children, app, good = false, hooks = {}, afte
           </span>
           {after}
           <span hidden={good} {...hooks.replaceWrap}>
-            <BrushButton hint={<span role="img" aria-label="Return" {...stylex.props(panel.chip)}>↵</span>} data={{ ...(hooks.replace as Record<string, string>) }}>
-              Replace
+            {/* Its label turns over to "Replaced" once pressed (client.ts, global.css); both
+                share one place, so the button never changes size. */}
+            <BrushButton hint={<span role="img" aria-label="Return" data-chip {...stylex.props(panel.chip)}>↵</span>} data={{ ...(hooks.replace as Record<string, string>) }}>
+              <span {...stylex.props(panel.labels)}>
+                <span data-label-now {...stylex.props(panel.label)}>Replace</span>
+                <span data-label-done aria-hidden {...stylex.props(panel.label)}>
+                  <HandTick size={16} color="rgb(255 252 249)" /> Replaced
+                </span>
+              </span>
             </BrushButton>
           </span>
         </div>

@@ -1,6 +1,7 @@
 // The Iris zine, issue for the web: one page per spread, printed like the app.
 import * as stylex from '@stylexjs/stylex';
-import { crossMask, HandArrow, HandTick, markerMask, penLine, PenRule, Printed, seedOf } from './pen';
+import type React from 'react';
+import { crossMask, HandArrow, HandRect, HandTick, markerMask, penLine, PenRule, Printed, rng, seedOf } from './pen';
 import {
   AppName,
   BrushButton,
@@ -18,9 +19,10 @@ import {
   Tape,
   Wordmark,
 } from './parts';
-import demo from './demo.json';
 import { Footer } from './Footer';
-import { MacCorner, PanelScene } from './Backdrop';
+import { FactStage, type FactLook, MacCorner, PanelScene } from './Backdrop';
+import { CHAPTERS, Desk } from './Desk';
+import { Pattern } from './Patterns';
 import { Garden } from './Garden';
 import { draft, issues, links, month, pageTones, pressTones, tones } from './content';
 import { Marks, MessageStack, Panel, panel } from './Panel';
@@ -34,10 +36,24 @@ const HOVER = '@media (hover: hover)';
 
 
 const s = stylex.create({
+  // The page is one sheet of paper lying over the foot: as you reach the end it lifts off,
+  // its edge casting a shadow on what's under it.
+  page: {
+    position: 'relative',
+    zIndex: 1,
+    backgroundColor: ink.paper,
+    backgroundImage: tex.paper,
+    backgroundSize: '64px 64px',
+    paddingBottom: 'clamp(64px, 8vw, 112px)',
+    boxShadow: '0 2px 2px rgb(42 26 22 / 0.1), 0 18px 30px -6px rgb(42 26 22 / 0.28), 0 46px 70px -10px rgb(42 26 22 / 0.3)',
+  },
   // ⌃ ⌥ G on the page (PressPanel)
   // The ⌃ ⌥ G panel's message area: as tall as the paragraph's longest version (client.ts).
   pressBody: { position: 'relative', maxHeight: '42vh', overflowY: 'auto' },
-  press: { position: 'absolute', zIndex: 30, top: 0, left: 0, width: 'min(680px, calc(100vw - 32px))' },
+  // Takes focus when it opens (as the app's panel does), so Tab, Return and Esc are its keys;
+  // the focus is the panel itself, so no ring is drawn round it.
+  press: { position: 'absolute', zIndex: 30, top: 0, left: 0, ':focus': { outline: 'none' }, ':focus-visible': { outline: 'none' } },
+  pressScale: { width: 720, zoom: 0.76 }, // 720: Panel.tsx's PANEL_LAYOUT
   toast: { position: 'fixed', zIndex: 31, left: '50%', bottom: 28, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8, paddingBlock: 10, paddingInline: 16, backgroundColor: ink.paper, color: ink.i12, fontSize: 13, whiteSpace: 'nowrap', boxShadow: '0 1px 1px rgb(42 26 22 / 0.08), 0 12px 28px -12px rgb(42 26 22 / 0.45)' },
   psst: { position: 'fixed', zIndex: 20, right: 16, bottom: 16, display: 'flex', alignItems: 'center', gap: 8, paddingBlock: 8, paddingInline: 14, backgroundColor: ink.paper, color: ink.i12, fontFamily: font.brush, fontSize: 20, lineHeight: 1.1, transform: 'rotate(-2deg)', boxShadow: '0 1px 1px rgb(42 26 22 / 0.08), 0 12px 28px -12px rgb(42 26 22 / 0.45)', maxWidth: 'calc(100vw - 32px)' },
 
@@ -67,6 +83,7 @@ const s = stylex.create({
   // Cover
   plate: {
     position: 'relative',
+    isolation: 'isolate',
     backgroundColor: ink.sky,
     backgroundImage: `${tex.screen}, ${tex.streaks}`,
     backgroundSize: '96px 96px, 128px 128px',
@@ -74,12 +91,14 @@ const s = stylex.create({
     overflowClipMargin: '160px',
   },
   ghostClip: { position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' },
-  plateInner: { minHeight: 'min(820px, 94svh)', display: 'flex', flexDirection: 'column', paddingTop: 28, paddingBottom: 'clamp(56px, 8vw, 96px)', [MOBILE]: { minHeight: 0, paddingBottom: 260 } },
+  plateInner: { minHeight: 'min(760px, 92svh)', display: 'flex', flexDirection: 'column', paddingTop: 24, paddingBottom: 'clamp(56px, 8vw, 96px)', [MOBILE]: { minHeight: 0, paddingBottom: 260 } },
   masthead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, position: 'relative', zIndex: 2 },
   nav: { display: 'flex', alignItems: 'center', gap: 'clamp(14px, 2.4vw, 32px)', fontSize: 13, [MOBILE]: { display: 'none' } },
   navLink: { color: ink.i12, textDecoration: 'none', paddingBlock: 6, backgroundImage: 'linear-gradient(rgb(42 26 22 / 0.0), rgb(42 26 22 / 0.0))', textDecorationLine: { default: 'none', [HOVER]: { default: 'none', ':hover': 'underline' } }, textDecorationThickness: '1.5px', textUnderlineOffset: '5px' },
-  coverBody: { marginTop: 'auto', paddingTop: 'clamp(56px, 9vw, 120px)', display: 'flex', flexDirection: 'column', gap: 28, position: 'relative', zIndex: 2, maxWidth: 'min(1000px, 72%)', [NARROW]: { maxWidth: '100%' } },
+  coverBody: { paddingTop: 'clamp(48px, 7vw, 104px)', display: 'flex', flexDirection: 'column', gap: 28, position: 'relative', zIndex: 2, maxWidth: 'min(1000px, 72%)', [NARROW]: { maxWidth: '100%' } },
   coverTitle: { fontSize: 'clamp(40px, 5.5vw, 92px)', whiteSpace: 'nowrap', [MOBILE]: { whiteSpace: 'normal' } },
+  promise: { margin: 0, marginTop: -12, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 18px', fontSize: 14, color: ink.i12 },
+  promiseItem: { display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' },
   lede: { fontSize: 'clamp(15px, 1.4vw, 17px)', lineHeight: 1.6, color: ink.i12, margin: 0, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px 14px' },
   cta: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '18px 28px' },
   ctaMeta: { fontSize: 12.5, lineHeight: 1.5, color: ink.i12 },
@@ -94,7 +113,11 @@ const s = stylex.create({
   print: { position: 'relative', padding: 10, [MOBILE]: { padding: 6 } },
   video: { display: 'block', width: '100%', height: 'auto', backgroundColor: ink.paper },
   steps: { listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 30 },
-  step: { display: 'flex', flexDirection: 'column', gap: 8 },
+  step: { display: 'flex', flexDirection: 'column', gap: 8, transitionProperty: 'opacity', transitionDuration: '250ms' },
+  stepButton: { display: 'block', padding: '2px 0', margin: 0, borderWidth: 0, backgroundColor: 'transparent', textAlign: 'start', cursor: 'pointer', color: 'inherit', font: 'inherit' },
+  // A thin pen track under each step; the playing step's fills as the video goes.
+  stepTrack: { position: 'relative', display: 'block', height: 2, maxWidth: 260, backgroundColor: 'rgb(42 26 22 / 0.14)', overflow: 'hidden' },
+  stepBar: { position: 'absolute', inset: 0, backgroundColor: ink.pinkText, transformOrigin: '0 50%', scale: 'var(--p, 0) 1' },
   stepTitle: { fontFamily: font.brush, fontSize: 28, lineHeight: 1, color: ink.i12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
   stepText: { fontSize: 14, lineHeight: 1.65, color: ink.i11, margin: 0, maxWidth: '44ch' },
   caption: { fontSize: 12, color: ink.i10, marginTop: 18, display: 'flex', gap: 10, alignItems: 'baseline' },
@@ -103,53 +126,105 @@ const s = stylex.create({
   // Tones
   tonesHead: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 32, flexWrap: 'wrap', position: 'relative' },
   corner: { position: 'relative', minWidth: 300, height: 170, flex: 'none', [MOBILE]: { display: 'none' } },
-  panelStage: { position: 'relative', marginTop: 'clamp(24px, 4vw, 48px)', display: 'grid', gridTemplateColumns: 'minmax(0, 680px) minmax(0, 1fr)', gap: 'clamp(28px, 5vw, 72px)', alignItems: 'center', [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
+  panelStage: { position: 'relative', marginTop: 'clamp(24px, 4vw, 48px)', display: 'grid', gridTemplateColumns: 'minmax(0, 680px) minmax(0, 1fr)', gap: 'clamp(20px, 3vw, 40px)', alignItems: 'start', [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
   hint: { display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, letterSpacing: '0.08em', borderWidth: 0, backgroundColor: 'transparent', padding: 0, fontFamily: font.mono, cursor: 'pointer', color: { default: ink.i10, [HOVER]: { default: ink.i10, ':hover': ink.i12 } } },
-  done: { fontFamily: font.brush, fontSize: 24, color: ink.i12, display: 'inline-flex', alignItems: 'center', gap: 6 },
   note: { position: 'absolute', left: -6, top: -52, display: 'flex', alignItems: 'flex-end', gap: 4, fontFamily: font.brush, fontSize: 22, color: ink.i12, transform: 'rotate(-3deg)', [MOBILE]: { display: 'none' } },
   aside: { display: 'flex', flexDirection: 'column', gap: 18 },
+  // The margin notes beside the panel: each placed level with what it points at.
+  notes: { position: 'relative', alignSelf: 'stretch', minHeight: 380, [NARROW]: { minHeight: 0, display: 'flex', flexDirection: 'column', gap: 18 } },
+  marginNote: { position: 'absolute', left: 0, right: 0, margin: 0, display: 'flex', alignItems: 'flex-start', gap: 10, transformOrigin: '0 50%', [NARROW]: { position: 'static' } },
+  // Stacked under the panel on narrow pages, the notes don't point sideways.
+  noteArrow: { display: 'flex', flex: 'none', [NARROW]: { display: 'none' } },
+  marginWord: { display: 'block', fontFamily: font.brush, fontSize: 'clamp(22px, 2vw, 27px)', lineHeight: 1.05, color: ink.i12 },
+  marginMore: { display: 'block', marginTop: 4, fontSize: 13, lineHeight: 1.5, color: ink.i11, maxWidth: '30ch' },
 
-  // Fixes
-  fixGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'minmax(0, 5fr) minmax(0, 4fr) minmax(0, 3fr)',
-    gap: 'clamp(28px, 4vw, 56px)',
-    alignItems: 'start',
-    marginTop: 'clamp(40px, 6vw, 72px)',
-    [NARROW]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' },
-    [MOBILE]: { gridTemplateColumns: 'minmax(0, 1fr)' },
-  },
+  // The example under Fix's lead: one line, marked the way the panel marks it.
+  example: { padding: '16px 20px', maxWidth: 560, rotate: '-0.6deg' },
+  exampleText: { position: 'relative', margin: 0, fontSize: 'clamp(14px, 1.3vw, 16px)', fontWeight: 540, lineHeight: 1.8, color: ink.i12 },
+  // A fact: its picture and its words, on the grid's two rows (subgrid), so pictures and
+  // headings line up across each row however long the words run.
+  fact: { display: 'grid', gridTemplateRows: 'subgrid', gridRow: 'span 2', rowGap: 18, minWidth: 0, [MOBILE]: { gridTemplateRows: 'auto auto' } },
+  factArt: { width: 'min(100%, 470px)', display: 'grid', justifyItems: 'center' },
+  // The whole panel, laid out at its own width (Panel.tsx's PANEL_LAYOUT) and zoomed to fit the
+  // tile by client.ts, so its footer stays on one line; 0.62 until the script has measured.
+  factPanel: { width: '100%', contain: 'inline-size' }, // its 720px layout never widens the tile
+  factPanelInner: { width: 780, zoom: 0.58 },
+  youWrote: { position: 'relative', margin: 0, paddingBottom: 12, fontSize: 12, lineHeight: 1.6, color: ink.i10 },
+  // The Mac window round a fact.
+  win: { width: '100%', borderRadius: 10, overflow: 'hidden' },
+  winBar: { position: 'relative', display: 'flex', alignItems: 'center', paddingBlock: 8, paddingInline: 12, borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'rgb(42 26 22 / 0.1)' },
+  lights: { display: 'flex', gap: 6 },
+  light: { width: 9, height: 9, borderRadius: '50%', borderWidth: 1.3, borderStyle: 'solid', borderColor: ink.i8 },
+  winTitle: { flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginRight: 39, fontSize: 11, color: ink.i10 },
+  winBody: { position: 'relative', padding: '12px 14px 14px', display: 'grid', gap: 10 },
+  chatPrev: { margin: 0, fontSize: 12, color: ink.i10 },
+  chatWho: { color: ink.i12, fontWeight: 600, marginRight: 6 },
+  // The text box being written in.
+  textBox: { fontSize: 'clamp(13px, 1.3vw, 14.5px)', fontWeight: 540, lineHeight: 1.9, color: ink.i12, paddingBlock: 8, paddingInline: 10, borderWidth: 1.5, borderStyle: 'solid', borderColor: 'rgb(42 26 22 / 0.22)', borderRadius: 8 },
+  mailText: { fontSize: 'clamp(13px, 1.3vw, 14.5px)', fontWeight: 540, lineHeight: 1.9, color: ink.i12, paddingBottom: 26 },
+  leftAlone: { margin: 0, fontFamily: font.brush, fontSize: 19, lineHeight: 1, color: ink.i11, rotate: '-1.5deg', justifySelf: 'end' },
+  // Iris's note, hung over the window's bottom edge as it sits by a text box.
+  overlap: { position: 'relative', marginTop: -26, width: { default: '108%', [MOBILE]: '100%' }, display: 'grid', justifyItems: 'center', rotate: '-1deg' },
+  irisNote: { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px 14px', paddingBlock: 12, paddingInline: { default: 16, [MOBILE]: 12 }, maxWidth: '100%' },
+  noteIcon: { position: 'relative', display: 'grid', placeItems: 'center' },
+  noteText: { position: 'relative', display: 'grid', gap: 4, flex: '1 1 0', minWidth: 'min(150px, 100%)' },
+  noteTitle: { fontFamily: font.brush, fontSize: 24, lineHeight: 1, color: ink.i12 },
+  noteLine: { fontSize: 11.5, lineHeight: 1.4, color: ink.i10 },
+  noteEnd: { position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 14, marginLeft: 'auto' },
+  keepBtn: { position: 'relative', paddingBlock: 6, paddingInline: 12, fontSize: 13, fontWeight: 600, color: ink.i12 },
+  noBtn: { fontSize: 13, color: ink.i10 },
+  fixedWord: { position: 'relative', isolation: 'isolate', display: 'inline-block', paddingInline: 3 },
+  undo: { display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, color: ink.i11 },
+  facts3: { marginTop: 'clamp(48px, 6vw, 80px)', display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 'clamp(36px, 4vw, 56px) clamp(28px, 4vw, 64px)', [NARROW]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }, [MOBILE]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
   tanPlate: {
     position: 'relative',
+    isolation: 'isolate',
     backgroundColor: ink.tan,
     backgroundImage: `${tex.screen}, ${tex.streaks}`,
     backgroundSize: '96px 96px, 128px 128px',
     padding: 'clamp(24px, 3vw, 40px)',
-    paddingLeft: 'clamp(48px, 5vw, 64px)',
-    minHeight: 420,
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'space-between',
-    gap: 28,
+    gap: 20,
     color: ink.i12,
   },
-  lowerTitle: { fontFamily: font.mono, fontWeight: 420, fontSize: 'clamp(26px, 2.8vw, 38px)', lineHeight: 1.1, margin: 0, letterSpacing: '-0.02em', color: ink.i12 },
-  labels: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 },
-  struck: { textDecorationLine: 'line-through', textDecorationThickness: '0.07em', textDecorationColor: ink.pinkText },
-  fixCorner: { position: 'relative', height: 'clamp(170px, 18vw, 240px)', [MOBILE]: { display: 'none' } },
   above: { position: 'relative', zIndex: 1 },
 
   // Private
   pinkPlate: {
     position: 'relative',
-    backgroundColor: ink.platePink,
+    isolation: 'isolate',
+    // A lighter pink than the plate elsewhere, so the section reads soft, with ink on it.
+    backgroundColor: 'rgb(246 172 207)',
     backgroundImage: `${tex.screen}, ${tex.streaks}`,
     backgroundSize: '96px 96px, 128px 128px',
     color: ink.i12,
     overflow: 'clip',
   },
   onPink: { color: ink.i12 },
-  figures: { display: 'flex', gap: 'clamp(28px, 5vw, 64px)', flexWrap: 'wrap', marginTop: 8 },
+  // Under the title: what Iris does with your words on the left, the figures on the right.
+  privateBody: { display: 'grid', gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 1fr)', gap: '28px clamp(32px, 6vw, 96px)', alignItems: 'start', marginTop: 'clamp(36px, 5vw, 64px)', position: 'relative', zIndex: 1, [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
+  figures: { display: 'flex', gap: 'clamp(20px, 3vw, 44px)', flexWrap: 'wrap', marginTop: 8 },
+  // The privacy stickers: paper slips stuck on the pink, each a drawing and a word.
+  stickers: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 'clamp(12px, 1.6vw, 18px)', maxWidth: 440, [MOBILE]: { gap: 12 } },
+  sticker: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '10px 14px 10px 10px',
+    // Paper slips, the white of Iris's panels, the drawings in ink with a sky plate under.
+    backgroundColor: ink.paper,
+    backgroundImage: tex.paper,
+    backgroundSize: '64px 64px',
+    boxShadow: '0 1px 1px rgb(42 26 22 / 0.08), 0 10px 18px -10px rgb(42 26 22 / 0.45)',
+    clipPath: 'polygon(0.8% 2%, 30% 0.4%, 62% 1.8%, 99.2% 0.6%, 100% 50%, 99% 98.4%, 66% 100%, 34% 98.6%, 0.4% 99.6%, 1.4% 48%)',
+  },
+  stickerArt: { position: 'relative', flex: 'none', width: 'clamp(54px, 5vw, 68px)', aspectRatio: '1' },
+  stickerSvg: { display: 'block', width: '100%', height: '100%', imageRendering: 'pixelated' },
+  // Our red brush X on what Iris doesn't need, on the pin's corner, the pin left readable.
+  stickerCross: { position: 'absolute', inset: '52% -8% -8% 52%' },
+  stickerWord: { fontFamily: font.brush, fontSize: 'clamp(18px, 1.6vw, 21px)', lineHeight: 1.05, color: ink.i12 },
   pinkBody: { fontSize: 16, lineHeight: 1.75, margin: 0, maxWidth: '44ch', color: ink.i12 },
 
   // Yours
@@ -167,10 +242,28 @@ const s = stylex.create({
   cross: { position: 'absolute', inset: '-12%' },
   methodText: { fontSize: 13.5, lineHeight: 1.6, color: ink.i11, margin: 0 },
 
+  // How it works: the steps, and the desk beside them as tall as they are.
+  momentGrid: { display: 'grid', gridTemplateColumns: 'minmax(max-content, 0.85fr) minmax(0, 1.8fr)', gap: 'clamp(32px, 4vw, 52px)', alignItems: 'stretch', [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
+  deskFigure: { margin: 0, display: 'flex', flexDirection: 'column', minWidth: 0 },
+  deskStage: {
+    position: 'relative', isolation: 'isolate', flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end',
+    padding: 'clamp(24px, 3vw, 44px) 0 0 clamp(24px, 3vw, 44px)',
+    backgroundColor: 'rgb(248 200 222)', backgroundImage: `${tex.screen}, ${tex.streaks}`, backgroundSize: '96px 96px, 128px 128px',
+    // At least this tall, so the Mac can take the sheet's whole width.
+    minHeight: 'clamp(460px, 40vw, 600px)',
+    containerType: 'size', [NARROW]: { containerType: 'normal', flex: 'none', minHeight: 0 },
+    clipPath: 'polygon(0.4% 1%, 21% 0%, 48% 1.4%, 76% 0.2%, 99.4% 1.2%, 100% 31%, 99.2% 66%, 100% 99.2%, 74% 100%, 46% 98.8%, 20% 99.8%, 0.6% 98.6%, 0% 70%, 1.2% 36%)',
+  },
   // Menu
-  menuGrid: { display: 'grid', gridTemplateColumns: 'minmax(0, 4.5fr) minmax(0, 5.5fr)', gap: 'clamp(32px, 6vw, 96px)', alignItems: 'center', [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
+  menuGrid: { display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: 'clamp(32px, 5vw, 80px)', alignItems: 'stretch', [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
   // The arrow's tip lands on the menu bar's flower (40% across the screen, in the corner's own
   // units, so it follows the flower at every size); the words trail off up and to the right.
+  // A torn tan sheet under the Mac, rings spreading from where Iris's flower sits. The Mac sits
+  // in its bottom left corner, cut by the sheet's torn edges.
+  macStage: { position: 'relative', isolation: 'isolate', backgroundColor: ink.tan, backgroundImage: `${tex.screen}, ${tex.streaks}`, backgroundSize: '96px 96px, 128px 128px', // The Mac runs to the sheet's bottom and left edges; room is left above it and to its right.
+    padding: 'clamp(52px, 4.6vw, 66px) clamp(28px, 4vw, 56px) 0 0', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start',
+    // As tall as the words beside it; the Mac grows to fill it (Backdrop.tsx), keeping its shape.
+    alignSelf: 'stretch', containerType: 'size', [NARROW]: { containerType: 'normal' }, clipPath: 'polygon(0.6% 1.4%, 24% 0.2%, 52% 1.6%, 79% 0%, 99.4% 1%, 100% 34%, 99.2% 68%, 100% 99%, 72% 99.8%, 44% 98.6%, 18% 100%, 0.4% 98.8%, 1.2% 64%, 0% 30%)', justifySelf: 'stretch' },
   menuNote: { position: 'absolute', zIndex: 1, left: 'calc(40cqw - 14px)', bottom: 'calc(100% + 3px)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'flex-start', gap: 4, fontFamily: font.brush, fontSize: 22, lineHeight: 1, color: ink.i12, transformOrigin: '0 100%', transform: 'rotate(-4deg)' },
   menuImg: { width: '100%', height: 'auto' },
   setupList: { listStyle: 'none', margin: 0, padding: 0 },
@@ -231,7 +324,7 @@ function Cover() {
     <header {...stylex.props(s.coverClip)}>
       <div {...stylex.props(s.plate)}>
         <span {...stylex.props(s.ghostClip)}>
-          <GhostWord lines={['WRI', 'TE']} tone="sky" style={{ left: '-2vw', top: 220, fontSize: 'clamp(180px, 30vw, 440px)' }} />
+          <GhostWord lines={['TO', 'NE']} tone="sky" style={{ left: '0.3vw', top: 70, fontSize: 'clamp(180px, 30vw, 440px)' }} />
         </span>
         <div {...stylex.props(s.wrap, s.plateInner)}>
           <div {...stylex.props(s.masthead)}>
@@ -246,10 +339,18 @@ function Cover() {
             </nav>
           </div>
           <div {...stylex.props(s.coverBody)}>
-            <PageTitle level={1} lines={['Fix your grammar.', 'Keep your voice.']} xstyle={s.coverTitle} />
+            <PageTitle level={1} lines={['Fix your grammar', 'Change your tone']} xstyle={s.coverTitle} />
             <p {...stylex.props(s.lede)}>
               <span data-tones="lede">Grammar and tone in every app on your Mac.</span>
-              <InkLabel>Nothing leaves your Mac.</InkLabel>
+            </p>
+            {/* The promise, said plainly: Iris has no server to send anything to. */}
+            <p {...stylex.props(s.promise)}>
+              <InkLabel>100% on your Mac</InkLabel>
+              {['No servers', 'No account', 'Works offline'].map((t) => (
+                <span key={t} {...stylex.props(s.promiseItem)}>
+                  <HandTick size={15} color="rgb(42 26 22)" /> {t}
+                </span>
+              ))}
             </p>
             <div {...stylex.props(s.cta)}>
               <BrushButton href={links.download} download>
@@ -274,61 +375,68 @@ function Cover() {
 }
 
 // ── 02 The moment ─────────────────────────────────────────────────────────────────────
+const MOMENT_STEPS: { title: string; keys?: string[]; text: React.ReactNode }[] = [
+  {
+    title: 'Press',
+    keys: ['⌃', '⌥', 'G'],
+    text: (
+      <>
+        In any text box: <AppName app="slack" />, <AppName app="mail" />, <AppName app="messages" />, <AppName app="notes" />, <AppName app="chrome" />, <AppName app="safari" />. Select some text first to fix just that.
+      </>
+    ),
+  },
+  { title: 'Read', text: 'Iris shows what it would change.' },
+  {
+    title: 'Replace',
+    keys: ['↵'],
+    text: (
+      <>
+        Nothing changes until you say so. <KeyRow keys={['⌘', 'Z']} /> in your app takes it back.
+      </>
+    ),
+  },
+];
+
 function Moment() {
   return (
     <section id="moment" aria-labelledby="moment-title" {...stylex.props(s.spread)}>
       <div {...stylex.props(s.wrap, s.stack)} style={{ gap: 'clamp(40px, 6vw, 72px)' }}>
         <RunningHead seed={21} cols={['How it works']} />
-        <div {...stylex.props(s.two)}>
+        <div {...stylex.props(s.momentGrid)}>
           <div {...stylex.props(s.stack)} style={{ gap: 44 }}>
             <PageTitle id="moment-title" lines={['One', 'shortcut']} small />
-            <ol {...stylex.props(s.steps)}>
-              <li {...stylex.props(s.step)}>
-                <span {...stylex.props(s.stepTitle)}>
-                  Press <KeyRow keys={['⌃', '⌥', 'G']} />
-                </span>
-                <p {...stylex.props(s.stepText)}>
-                  In any text box: <AppName app="slack" />, <AppName app="mail" />, <AppName app="messages" />, <AppName app="notes" />, <AppName app="chrome" />, <AppName app="safari" />. Select some text first to fix just that.
-                </p>
-              </li>
-              <li {...stylex.props(s.step)}>
-                <span {...stylex.props(s.stepTitle)}>Read</span>
-                <p {...stylex.props(s.stepText)}>A flower grows by your text, and Iris shows what it would change, marked like an editor would: your words struck through, its words in pink.</p>
-              </li>
-              <li {...stylex.props(s.step)}>
-                <span {...stylex.props(s.stepTitle)}>
-                  Replace <KeyRow keys={['↵']} />
-                </span>
-                <p {...stylex.props(s.stepText)}>
-                  Nothing changes until you say so. <KeyRow keys={['⌘', 'Z']} /> in your app takes it back.
-                </p>
-              </li>
+            {/* The steps are chapters of the recording beside them: pick one to see it; as the
+                video plays, the step it's on lights up and its line fills (client.ts). */}
+            <ol {...stylex.props(s.steps)} data-chapters={CHAPTERS.join(',')}>
+              {MOMENT_STEPS.map((st, i) => (
+                <li key={st.title} {...stylex.props(s.step)} data-chapter={i} data-active={i === 0}>
+                  <button type="button" {...stylex.props(s.stepButton)} aria-label={`Show step ${i + 1}: ${st.title}`}>
+                    <span {...stylex.props(s.stepTitle)}>
+                      {st.title} {st.keys && <KeyRow keys={st.keys} />}
+                    </span>
+                  </button>
+                  <span aria-hidden {...stylex.props(s.stepTrack)}>
+                    <span data-chapter-bar {...stylex.props(s.stepBar)} />
+                  </span>
+                  <p {...stylex.props(s.stepText)}>{st.text}</p>
+                </li>
+              ))}
             </ol>
           </div>
-          <figure style={{ margin: 0 }}>
-            <div {...stylex.props(s.print, s.sheet)}>
-              <span {...stylex.props(s.grain)} />
-              <video
-                {...stylex.props(s.video)}
-                data-moment
-                muted
-                loop
-                playsInline
-                preload="none"
-                poster="/demo/iris-in-textedit-700.webp"
-                data-poster-wide="/demo/iris-in-textedit.webp"
-                width={demo.width}
-                height={demo.height}
-                aria-label={`In TextEdit, a reply reads “${demo.draft}”. The shortcut is pressed: Iris’s flower comes up beside it and its panel marks three fixes. Return replaces the text, which now reads “${demo.fixed}”.`}
-              >
-                <source src="/demo/iris-in-textedit.mp4" type="video/mp4" />
-              </video>
-              <Tape style={{ left: -18, top: -14, width: 96, height: 26, transform: 'rotate(-14deg)' }} />
-              <Tape style={{ right: -16, bottom: -12, width: 92, height: 26, transform: 'rotate(-10deg)' }} />
+          <figure {...stylex.props(s.deskFigure)}>
+            {/* A torn pink sheet with waves, the Mac flush to its right and bottom (as the menu bar's Mac is to its left). */}
+            <div {...stylex.props(s.deskStage)}>
+              <Pattern kind="waves" color="rgb(242 178 208)" seed={23} scale={1.2} />
+              <Desk />
             </div>
             <figcaption {...stylex.props(s.caption)}>
-              <span aria-hidden>↑</span> <span>Recorded on a Mac: Iris fixing a reply in <AppName app="textedit" size={18} />.</span>
+              <span>
+                Iris in <AppName app="slack" size={18} />, <AppName app="mail" size={18} />, <AppName app="messages" size={18} />, <AppName app="notes" size={18} />, <AppName app="chrome" size={18} /> and <AppName app="safari" size={18} />. The messages are made up.
+              </span>
               <button type="button" data-moment-toggle {...stylex.props(s.hint, s.toggle)}>Pause</button>
+              <span {...stylex.props(s.srOnly)}>
+                An animation: on a Mac, a reply is waiting in Slack. ⌃ ⌥ G is pressed, Iris’s flower grows by the text box and its panel marks the fixes; Return puts them in. Then the same in Mail, Messages, Notes, Chrome and Safari.
+              </span>
             </figcaption>
           </figure>
         </div>
@@ -338,6 +446,25 @@ function Moment() {
 }
 
 // ── 03 Tones ──────────────────────────────────────────────────────────────────────────
+/* The margin notes round 03's panel, top to bottom: `top` is where each sits beside it (px from
+ * the stage's top), level with the part it points at. */
+const PANEL_NOTES: { text: string; more: React.ReactNode; top: number; tilt: number; seed: number }[] = [
+  { text: 'or change the tone', more: 'Professional, Friendly, Shorter, Clearer, or your own', top: 70, tilt: -2, seed: 81 },
+  { text: 'fixes, not rewrites', more: 'your words struck, Iris’s in pink. Your “hey” stays', top: 168, tilt: 1.5, seed: 82 },
+  { text: 'nothing changes until you press it', more: <><KeyRow keys={['⌘', 'Z']} /> in your app takes it back</>, top: 300, tilt: -1.5, seed: 83 },
+];
+
+/** A pen arrow pointing left, at the panel. */
+function NoteArrow({ seed }: { seed: number }) {
+  const r = rng(seed), y = 8 + r() * 8;
+  return (
+    <svg aria-hidden width={52} height={30} viewBox="0 0 52 30" style={{ flex: 'none', overflow: 'visible', marginTop: 4 }}>
+      <path d={`M50,${y.toFixed(1)} C36,${(y - 8).toFixed(1)} 18,2 5,15`} fill="none" stroke="rgb(42 26 22)" strokeWidth={2} strokeLinecap="round" />
+      <path d="M13,13.5 L5,15.5 L8,7.5" fill="none" stroke="rgb(42 26 22)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function Tones() {
   return (
     <section id="tones" aria-labelledby="tones-title" {...stylex.props(s.spread)}>
@@ -366,9 +493,6 @@ function Tones() {
               hooks={{ root: { 'data-panel': true }, next: { 'data-next': true }, replaceWrap: { 'data-replace-wrap': true }, replace: { 'data-replace': '' } }}
               after={
                 <>
-                  <span data-replaced hidden {...stylex.props(s.done)}>
-                    <HandTick size={18} /> replaced
-                  </span>
                   <span role="status" data-said {...stylex.props(s.srOnly)} />
                 </>
               }
@@ -389,14 +513,39 @@ function Tones() {
             </Panel>
           </div>
           </PanelScene>
-          <div {...stylex.props(s.aside)}>
-            <SectionHead title="Five ways to say it" seed={35}>
-              Professional, Friendly, Shorter and Clearer are built in, Funny is one click away, and you can add your own, like “Customer update: polite, says what happens next”.
-            </SectionHead>
-            <p {...stylex.props(s.body)}>
-              A tone keeps everything you said: your complaint, your thanks, your “I know you’re busy” and your “maybe”. <KeyRow keys={['⌘', 'R']} /> tries again.
-            </p>
+          {/* Margin notes, as an editor writes round a proof: each points at the part of the
+              panel it's about. On narrow pages they stack under the panel. */}
+          <div {...stylex.props(s.notes)}>
+            {PANEL_NOTES.map((n) => (
+              <p key={n.text} {...stylex.props(s.marginNote)} style={{ top: n.top, rotate: `${n.tilt}deg` }}>
+                <span {...stylex.props(s.noteArrow)}>
+                  <NoteArrow seed={n.seed} />
+                </span>
+                <span>
+                  <span {...stylex.props(s.marginWord)}>{n.text}</span>
+                  {n.more && <span {...stylex.props(s.marginMore)}>{n.more}</span>}
+                </span>
+              </p>
+            ))}
           </div>
+        </div>
+        {/* The small print of Fix, two by two: each fact on its own small collage, shown with the
+            app's own pieces (its panel, its notes) on a Mac window. The pictures are drawings:
+            screen readers get one line saying what each shows. */}
+        <div {...stylex.props(s.facts3)}>
+          {FIX_FACTS.map((f, i) => (
+            <div key={f.title} {...stylex.props(s.fact)}>
+              <FactStage look={f.look} seed={61 + i * 7}>
+                <div inert aria-hidden {...stylex.props(s.factArt)}>
+                  {f.art}
+                </div>
+                <p {...stylex.props(s.srOnly)}>{f.alt}</p>
+              </FactStage>
+              <SectionHead title={f.title} seed={43 + i}>
+                {f.text}
+              </SectionHead>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -404,62 +553,186 @@ function Tones() {
 }
 const tapeLabel = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 30' preserveAspectRatio='none'><path d='M2,1L98,0L96.5,6L99.5,12L97,18L99.4,24L98,30L1,29L3,23L0.5,17L2.6,11L0.4,5Z'/></svg>")}")`;
 
-// ── 04 Fixes, not rewrites ────────────────────────────────────────────────────────────
-function Fixes() {
+
+// Each fact shown with the app's own pieces, drawn on the page so the words are ours to choose.
+/** A Mac window, small: three lights, the app's name, and a body. */
+function MacWindow({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
   return (
-    <section id="fixes" aria-labelledby="fixes-title" {...stylex.props(s.spread)} style={{ paddingTop: 0 }}>
-      <div {...stylex.props(s.wrap)}>
-        <RunningHead seed={41} cols={['Fix']} />
-        <div {...stylex.props(s.fixGrid)}>
-          <div {...stylex.props(s.tanPlate)}>
-            <div {...stylex.props(s.stack)} style={{ gap: 14 }}>
-              <h3 {...stylex.props(s.lowerTitle)}>works where <span aria-hidden>/</span> you write</h3>
-              <p {...stylex.props(s.body)} style={{ color: 'rgb(42 26 22)' }}>
-                Any app with a text box. No plug-ins, and no copying your message into a chatbot and back.
-              </p>
-            </div>
-            <div style={{ transform: 'rotate(-1.5deg)', marginInline: -8 }}>
-              <Picture name="quick-fix" alt="A small paper note by the text box: fixed 4 words, undo with Command Z." />
-            </div>
-            <div {...stylex.props(s.stack)} style={{ gap: 10 }}>
-              <span {...stylex.props(s.brush)} style={{ fontSize: '1.625rem', lineHeight: 1 }}>
-                Quick Fix <KeyRow keys={['⌃', '⌥', '⇧', 'G']} />
-              </span>
-              <p {...stylex.props(s.body)} style={{ color: 'rgb(42 26 22)', fontSize: '0.875rem' }}>
-                Fixes the text box you’re in and replaces it straight away, no panel. A big rewrite or a translation opens the panel instead, so you look first.
-              </p>
-            </div>
+    <div {...stylex.props(panel.sheet, s.win)}>
+      <span {...stylex.props(panel.grain)} />
+      <div {...stylex.props(s.winBar)}>
+        <span {...stylex.props(s.lights)}>
+          {[0, 1, 2].map((i) => (
+            <span key={i} {...stylex.props(s.light)} />
+          ))}
+        </span>
+        <span {...stylex.props(s.winTitle)}>
+          <img src={`/app/${icon}.png`} alt="" width={14} height={14} loading="lazy" decoding="async" />
+          {title}
+        </span>
+      </div>
+      <div {...stylex.props(s.winBody)}>{children}</div>
+    </div>
+  );
+}
+
+/** One of Iris's notes by the text box, as the app draws it: paper, a brush line, mono under it. */
+function IrisNote({ icon, title, line, end }: { icon: React.ReactNode; title: React.ReactNode; line?: React.ReactNode; end?: React.ReactNode }) {
+  return (
+    <div {...stylex.props(panel.sheet, s.irisNote)}>
+      <span {...stylex.props(panel.grain)} />
+      <span {...stylex.props(s.noteIcon)}>{icon}</span>
+      <span {...stylex.props(s.noteText)}>
+        <span {...stylex.props(s.noteTitle)}>{title}</span>
+        {line && <span {...stylex.props(s.noteLine)}>{line}</span>}
+      </span>
+      {end && <span {...stylex.props(s.noteEnd)}>{end}</span>}
+    </div>
+  );
+}
+
+/** The app's "?" for a question: a pen ring in pink ink round a brush question mark. */
+function AskMark() {
+  return (
+    <svg viewBox="0 0 30 30" width={30} height={30} aria-hidden>
+      <path d="M15,2.6C22.4,2.4 27.6,7.8 27.4,15.2C27.2,22.4 21.8,27.6 14.6,27.4C7.6,27.2 2.4,21.8 2.6,14.6C2.8,8.2 7.4,3 14.2,2.8" fill="none" stroke="rgb(142 36 83)" strokeWidth={2} strokeLinecap="round" />
+      <text x="15" y="21" textAnchor="middle" fontFamily="Caveat Brush, cursive" fontSize="17" fill="rgb(142 36 83)">?</text>
+    </svg>
+  );
+}
+
+const FIX_FACTS: { title: string; look: FactLook; art: React.ReactNode; alt: string; text: React.ReactNode }[] = [
+  {
+    title: 'Leaves things alone',
+    look: 'sky',
+    alt: 'A Slack message: “hey @sam, can’t make #launch on friday 🙃”. Iris fixed “cant” and left @sam, #launch and the emoji as they were.',
+    text: '@mentions, #channels, emoji, links and code stay as you typed them.',
+    art: (
+      <MacWindow title="Slack" icon="slack">
+        <p {...stylex.props(s.chatPrev)}>
+          <b {...stylex.props(s.chatWho)}>maya</b> who’s in for the launch?
+        </p>
+        <div {...stylex.props(s.textBox)}>
+          hey <span data-kept>@sam</span>, <del {...stylex.props(panel.gone)}>cant</del> <ins {...stylex.props(panel.added)}>can’t</ins> make <span data-kept>#launch</span> on friday <span data-kept>🙃</span>
+        </div>
+        <p {...stylex.props(s.leftAlone)}>circled: left just as you typed them</p>
+      </MacWindow>
+    ),
+  },
+  {
+    title: 'Learns your words',
+    look: 'tan',
+    alt: 'An email reads “Thanks Kayleigh, the slides look great!”. Iris asks: keep “Kayleigh”? You changed it back, so Iris won’t touch it again. Keep it, or No.',
+    text: 'Put a word back once and Iris asks to keep it. It never touches it again.',
+    art: (
+      <>
+        <MacWindow title="Mail" icon="mail">
+          <div {...stylex.props(s.mailText)}>
+            Thanks <span data-kept>Kayleigh</span>, the slides look great!
           </div>
-          <div {...stylex.props(s.stack)} style={{ gap: 22 }}>
-            <h2 id="fixes-title" {...stylex.props(s.lowerTitle)} style={{ fontSize: 'clamp(30px, 3.4vw, 46px)' }}>
-              fixes <span aria-hidden>/</span>
-              <span {...stylex.props(s.srOnly)}>, not</span> <del {...stylex.props(s.struck)}>rewrites</del>
-            </h2>
-            <p {...stylex.props(s.body)} data-tones="fixes">
-              Fix corrects grammar and spelling and leaves the rest alone: your words, your style, your casual “hey”. Text that’s already fine stays exactly as it is, and Iris says <Marked seed={7}>looks good</Marked>.
+        </MacWindow>
+        <div {...stylex.props(s.overlap)}>
+          <IrisNote
+            icon={<AskMark />}
+            title="keep “Kayleigh”?"
+            line="You changed it back. Iris won’t touch it again."
+            end={
+              <>
+                <span {...stylex.props(s.keepBtn)}>
+                  <HandRect seed={71} width={1.4} />
+                  Keep it
+                </span>
+                <span {...stylex.props(s.noBtn)}>No</span>
+              </>
+            }
+          />
+        </div>
+      </>
+    ),
+  },
+  {
+    title: 'Any language in',
+    look: 'pink',
+    alt: 'Iris’s panel, on Fix: “The order will arrive by tomorrow, tell the customer.” Under it, “You wrote: bhai order kal tak aa jayega, customer ko bol do”, and a note: translated to English, check it reads right.',
+    text: 'Write in Hinglish or another language; Fix gives it back in English, with what you wrote beside it.',
+    art: (
+      <div data-fit-panel="780" {...stylex.props(s.factPanel)}>
+        {/* 780: its footer note, "into Slack" and Replace need a little more than the usual 720. */}
+        <div {...stylex.props(s.factPanelInner)}>
+        <Panel
+          tabs={tones.map((t) => t.name)}
+          app={{ name: 'Slack', icon: 'slack' }}
+          seed={77}
+          notice="Translated to English, check it reads right"
+          under={<p {...stylex.props(s.youWrote)}>You wrote: bhai order kal tak aa jayega, customer ko bol do</p>}
+        >
+          <p {...stylex.props(panel.message)} style={{ paddingBottom: 4 }}>The order will arrive by tomorrow, tell the customer.</p>
+        </Panel>
+        </div>
+      </div>
+    ),
+  },
+  {
+    title: 'Quick Fix',
+    look: 'khaki',
+    alt: 'A note reads “I’m running late. Start without me and save me a seat.”, four words fixed. Iris’s note by it: fixed 4 words, undo with Command Z.',
+    text: (
+      <>
+        <KeyRow keys={['⌃', '⌥', '⇧', 'G']} /> skips the panel and fixes the box you’re in, in about 0.3 seconds. <KeyRow keys={['⌘', 'Z']} /> undoes it.
+      </>
+    ),
+    art: (
+      <>
+        <MacWindow title="Notes" icon="notes">
+          <div {...stylex.props(s.mailText)}>
+            <ins {...stylex.props(panel.added)}>I’m</ins> running <ins {...stylex.props(panel.added)}>late.</ins> <ins {...stylex.props(panel.added)}>Start</ins> without me and save me a <ins {...stylex.props(panel.added)}>seat.</ins>
+          </div>
+        </MacWindow>
+        <div {...stylex.props(s.overlap)}>
+          <IrisNote
+            icon={<HandTick size={24} />}
+            title={
+              <span {...stylex.props(s.fixedWord)}>
+                <span aria-hidden {...stylex.props(panel.goodMarker)}>
+                  <Printed mask={markerMask(seedOf('fixed 4 words'))} color="pink" />
+                </span>
+                fixed 4 words
+              </span>
+            }
+            end={
+              <span {...stylex.props(s.undo)}>
+                Undo with <KeyRow keys={['⌘', 'Z']} />
+              </span>
+            }
+          />
+        </div>
+      </>
+    ),
+  },
+];
+
+// ── 05 Private ────────────────────────────────────────────────────────────────────────
+function Private() {
+  return (
+    <section id="private" aria-labelledby="private-title" {...stylex.props(s.pinkPlate)}>
+      <Pattern kind="ripples" color="rgb(250 190 220)" seed={51} at={[1, 0]} count={7} weight={0.8} />
+      {/* PRIVATE up the left edge, reading bottom to top, like the VOICE scrap in 03. */}
+      <GhostWord lines={['PRIVATE', '']} tone="pink" style={{ backgroundImage: 'url(/tex/streaks.png), linear-gradient(rgb(255 252 249), rgb(255 252 249))', opacity: 0.85, left: 'calc(-0.08em + 5px)', top: '50%', fontSize: 'clamp(110px, 13vw, 200px)', transformOrigin: '0 0', transform: 'rotate(-90deg) translate(-50%, 0)' }} />
+      <div {...stylex.props(s.wrap)} style={{ paddingBlock: 'clamp(64px, 9vw, 120px)' }}>
+        <PageTitle id="private-title" lines={['Your words stay', 'on your Mac']} xstyle={s.onPink} />
+        <div {...stylex.props(s.privateBody)}>
+          <div {...stylex.props(s.stack)} style={{ gap: 20 }}>
+            <p {...stylex.props(s.pinkBody)} data-tones="private">
+              Iris runs entirely on your Mac: a 5 GB model you download once, on Apple’s MLX. What you write is never sent anywhere. There’s no server, no account and no tracking, and once the model is in, it works offline.
             </p>
-            <div {...stylex.props(s.labels)}>
-              <InkLabel wrap>@mentions, #channels and :emoji: stay.</InkLabel>
-              <InkLabel wrap>So do links, emails and code.</InkLabel>
-            </div>
-            <p {...stylex.props(s.body)}>
-              Add the names and terms Iris should never touch, once. Put a word back after Iris changed it, and Iris learns to leave it alone.
-            </p>
-            <p {...stylex.props(s.body)}>
-              Writing in Hinglish or another language? Fix gives it back in English, with your original beside it.
+            <p {...stylex.props(s.pinkBody)} style={{ fontSize: '0.84375rem' }}>
+              Iris never reads password fields, and stays out of password managers from the start.
             </p>
           </div>
-          <div {...stylex.props(s.stack)} style={{ gap: 24 }}>
-            <div {...stylex.props(s.fixCorner)} aria-hidden>
-              <GhostWord lines={['WOR', 'DS']} tone="khaki" style={{ right: -40, top: 0, fontSize: 'clamp(96px, 10vw, 136px)' }} />
-              <span style={{ position: 'absolute', left: 0, top: '30%' }}>
-                <HandWord word="FIX" size="clamp(64px, 7vw, 92px)" />
-              </span>
-            </div>
-            <div {...stylex.props(s.stack, s.above)} style={{ gap: 14 }}>
-              <StackedFigure value="0.3" unit={['seconds', 'a fix']} />
-              <p {...stylex.props(s.meta)}>A typical fix, after the first one, measured on an M3 Max.</p>
-            </div>
+          <div {...stylex.props(s.stickers)}>
+            {STICKERS.map((st) => (
+              <Sticker key={st.label} {...st} />
+            ))}
           </div>
         </div>
       </div>
@@ -467,30 +740,30 @@ function Fixes() {
   );
 }
 
-// ── 05 Private ────────────────────────────────────────────────────────────────────────
-function Private() {
+// The privacy stickers: what Iris doesn't need, crossed out with the brush, and where your words
+// stay. Paper slips, each with a printed picture (scripts/privacy-icons.mjs).
+const STICKERS = [
+  { label: 'no server', picture: 'cloud', crossed: true, tilt: -2.5, seed: 61 },
+  { label: 'no sign-up', picture: 'card', crossed: true, tilt: 2, seed: 62 },
+  { label: 'works offline', picture: 'wifi', crossed: true, tilt: 1.5, seed: 63 },
+  { label: 'stays on your Mac', picture: 'mac', crossed: false, tilt: -1.5, seed: 64 },
+] as const;
+
+/** A sticker: Iris's pin for it, printed by scripts/privacy-icons.mjs, our red brush X on what
+ *  Iris doesn't need, and its word. */
+function Sticker({ label, picture, crossed, tilt, seed }: (typeof STICKERS)[number]) {
   return (
-    <section id="private" aria-labelledby="private-title" {...stylex.props(s.pinkPlate)}>
-      <GhostWord lines={['PRI', 'VATE']} tone="pink" style={{ right: '-2vw', bottom: '-9vw', fontSize: 'clamp(150px, 20vw, 300px)', opacity: 0.45 }} />
-      <div {...stylex.props(s.wrap)} style={{ paddingBlock: 'clamp(64px, 9vw, 120px) 40px' }}>
-        <div {...stylex.props(s.two)}>
-          <PageTitle id="private-title" lines={['Your words', 'stay here']} xstyle={s.onPink} />
-          <div {...stylex.props(s.stack)} style={{ gap: 32, position: 'relative', zIndex: 1 }}>
-            <p {...stylex.props(s.pinkBody)} data-tones="private">
-              The model runs on your Mac, with Apple’s MLX. Your text is never sent anywhere: no account, no cloud, no tracking. Once the model is in, Iris even works offline.
-            </p>
-            <div {...stylex.props(s.figures)}>
-              <StackedFigure value="0" unit={['servers', 'involved']} />
-              <StackedFigure value="0" unit={['accounts', 'to make']} />
-              <StackedFigure value="5" unit={['GB, once', 'the model']} />
-            </div>
-            <p {...stylex.props(s.pinkBody)} style={{ fontSize: '0.84375rem' }}>
-              Iris never reads password fields, and stays out of password managers from the start.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
+    <div {...stylex.props(s.sticker)} style={{ rotate: `${tilt}deg` }}>
+      <span aria-hidden {...stylex.props(s.stickerArt)}>
+        <img src={`/privacy/${picture}.png`} alt="" width={320} height={320} loading="lazy" decoding="async" {...stylex.props(s.stickerSvg)} />
+        {crossed && (
+          <span {...stylex.props(s.stickerCross)}>
+            <Printed mask={crossMask(seed)} color="red" />
+          </span>
+        )}
+      </span>
+      <span {...stylex.props(s.stickerWord)}>{label}</span>
+    </div>
   );
 }
 
@@ -554,6 +827,8 @@ function MenuBar() {
       <div {...stylex.props(s.wrap, s.stack)} style={{ gap: 'clamp(40px, 6vw, 64px)' }}>
         <RunningHead seed={71} cols={['Menu bar', 'No Dock icon, no window', 'Setup takes about five minutes']} />
         <div {...stylex.props(s.menuGrid)}>
+          <div {...stylex.props(s.macStage)}>
+          <Pattern kind="ripples" color="rgb(210 177 146)" seed={71} at={[0.5, 0.2]} scale={1.3} />
           <MacCorner
             note={
               <span {...stylex.props(s.menuNote)} aria-hidden>
@@ -565,12 +840,13 @@ function MenuBar() {
               <Picture
                 name="menu"
                 width={400}
-                sizes="(max-width: 760px) 52vw, 292px"
+                sizes="(max-width: 760px) 46vw, 294px"
                 alt="The Iris menu, open under its flower in the menu bar: a printed sky band with a flower, then Check text, Quick Fix, Free model memory, Setup, Settings, Check for Updates and Quit."
                 xstyle={s.menuImg}
               />
             }
           />
+          </div>
           <div {...stylex.props(s.stack)} style={{ gap: 30 }}>
             <PageTitle id="menu-title" lines={['Lives in your', 'menu bar']} small />
             <p {...stylex.props(s.body)} data-tones="menu">
@@ -760,6 +1036,7 @@ function WhatsNew() {
 export function Page() {
   return (
     <>
+      <div {...stylex.props(s.page)} data-sheet>
       <a href="#moment" {...stylex.props(s.srOnly, s.skip)}>
         Skip to how it works
       </a>
@@ -767,13 +1044,13 @@ export function Page() {
       <main>
         <Moment />
         <Tones />
-        <Fixes />
         <Private />
         <Yours />
         <MenuBar />
         <Install />
         <WhatsNew />
       </main>
+      </div>
       <Footer />
       <PressPanel />
     </>
@@ -792,6 +1069,9 @@ function PressPanel() {
     <>
       <script type="application/json" data-press-tones dangerouslySetInnerHTML={{ __html: JSON.stringify({ tones: pressTones, pageTones }).replace(/</g, '\\u003c') }} />
       <div data-press hidden role="dialog" aria-label="Iris" tabIndex={-1} {...stylex.props(s.press)}>
+        {/* Laid out at the panel's own width and scaled down to fit (client.ts sets the zoom),
+            so its footer stays on one line. */}
+        <div data-press-scale {...stylex.props(s.pressScale)}>
         <Panel
           tabs={pressNames}
           tab={(i) => ({ 'data-press-tab': i })}
@@ -804,6 +1084,12 @@ function PressPanel() {
             <p data-press-text aria-live="polite" {...stylex.props(panel.message)} />
           </div>
         </Panel>
+        </div>
+        {/* The marks, as Panel.tsx styles them, for the script to copy onto each version. */}
+        <template data-press-marks>
+          <del {...stylex.props(panel.gone)} />
+          <ins {...stylex.props(panel.added)} />
+        </template>
       </div>
       <div data-press-note hidden role="status" {...stylex.props(s.toast)}>
         <HandTick size={16} /> <span data-press-note-text />

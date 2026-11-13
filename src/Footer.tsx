@@ -1,259 +1,395 @@
-// The foot: Iris's pink foot (`PageFoot`, the band at the bottom of every Settings page),
-// printed through the screen like the other plates, ink words on it. Its last line is the
-// zine's sign-off, written in a hurry, and Iris proofreads it as you arrive: each fix is
-// written in above its slip, the slip is struck through, then the fixes drop into place and
-// the line reads clean. ⌃⌥G beside it does it again.
+// The foot. The page ends on the sky with Iris's name, big, cut off by the page's edge, and the
+// zine's back cover: a torn-off stub with the keys on it. As the page lifts off it, night turns
+// to day: the sun climbs out from behind the S, rough rings spread from it like warmth, then the
+// butterflies fly in and land on the letters, each letter dipping a little under its butterfly. Over the foot your pointer
+// is a butterfly too (client.ts). ⌃ ⌥ G here plays it again.
 //
-// Nothing moves the page: every word Iris touches sits in a slot as wide as the longer of its
-// two versions, both stacked in it, and the line's height leaves room for the fixes written
-// above, so the line never reflows and the foot never changes height.
+// Nothing here changes size: everything that moves is drawn over the wordmark's fixed box.
 //
-// Contrast on plate pink (rgb 236 110 176): ink words 5.9:1, past WCAG AA at every size; the
-// focus ring is ink (global.css). Paper markers under ink words: 16:1.
+// Contrast: ink on sky 6.4:1; the wordmark is a logo.
 
 /* ─────────────────────────────────────────────────────────
- * ANIMATION STORYBOARD
+ * ANIMATION STORYBOARD: night to day, as the page lifts off the foot
  *
- * Read top-to-bottom. Each time is ms after the line scrolls into view (client.ts).
+ * Act one follows the scroll, both ways. Its playhead is how much of the foot shows
+ * (--reveal, 0 covered … 1 shown); scroll back up and it plays backwards.
  *
- *     0ms   the sign-off as written: "thanks for reading. now go write somthing in
- *           ur own voice"
- *   250ms   Iris's flower pops up at the end of the line, 0 → 1.1 → 1 from its foot
- *   900ms   proofreading, one slip every 420ms (five slips):
- *             the pen strikes the slip through, left to right
- *             its fix is written in above it, small, on a paper marker
- *             the flower nods at it
- *  3200ms   Replace: the slips fall away and the fixes drop into place, a wave left to
- *           right (90ms apart), each over-shooting a touch and settling
- *  3950ms   a tick lands after "voice.", 0 → 1.25 → 1
- *  4100ms   a butterfly flies in from the upper right and settles on the flower
+ *   0.00   night: the sky deep blue-black, paper stars twinkling, the sun down
+ *          behind the S, IRIS a silhouette
+ *   0.10   the stars start to go out, the farthest first
+ *   0.15   dawn: a soft pale-blue halo comes up round the sun, still behind the S
+ *   0.30   the sun's rays peek over the S
+ *   0.35   the night lifts, slowly
+ *   0.55   the sun half out of the S; its halo at its brightest
+ *   0.70   the sun clears the S; the rings start to spread round it, inner first
+ *   0.80   the halo softens as the sky turns blue
+ *   0.90   day: blue sky, sun up, every ring out, the stars gone
  *
- * Under Reduce Motion the line is simply the fixed one, the butterfly already on the
- * flower. Without the script it plays once.
+ * Act two plays once it's day (0.90 shown), in ms from then (client.ts):
+ *
+ *    200ms   the butterflies fly in from the sky, one by one (260ms apart), each on
+ *            its own arc, and land on I, R and S; the letter dips as it lands
+ *   1500ms   all landed; then each wanders off on its own: every 1.5–3s a random
+ *            spot in the sky over the letters, tilting the way it goes, now and then
+ *            pausing
+ *
+ * Under Reduce Motion it is simply day: the sky blue, the sun up, the butterflies on
+ * their letters. ⌃ ⌥ G at the foot plays act two again.
  * ───────────────────────────────────────────────────────── */
 import * as stylex from '@stylexjs/stylex';
 import type React from 'react';
-import { diff, links } from './content';
-import { BrushButton, KeyRow, PenLink, Picture } from './parts';
-import { HandTick, markerMask, PenRule, Printed } from './pen';
+import { links } from './content';
+import { rng } from './pen';
+import { BrushButton, KeyRow, PageTitle, PenLink, Wordmark } from './parts';
 import { font, ink, tex } from './tokens.stylex';
 
-const TIMING = {
-  flowerPops:  250,    // the flower comes up at the end of the line
-  firstSlip:   900,    // the first slip is struck, its fix written in above
-  slipGap:     420,    // each next slip
-  replace:     3200,   // the fixes drop into place, left to right
-  waveGap:     90,     // between one word dropping and the next
-  tick:        3950,   // the tick lands after the line
-  butterfly:   4100,   // the butterfly sets off for the flower
+export const TIMING = {
+  flyIn:       200,    // the first butterfly sets off, once the sun is up
+  flyGap:      260,    // each next one
 };
 
-/* The line, as written and as Iris fixes it */
-const LINE = {
-  // Every fix is at least as wide as its slip, so the clean line has no gaps in it.
-  draft: 'thanks for reading. now go write somthing in ur own voice',
-  fixed: 'Thanks for reading. Now go write something in your own voice.',
-  lineHeight: 1.85,   // room above every line for the fixes written in over it
+/* The wordmark, in its own units: its box is MARK.w × MARK.h at 100px type. Read off the drawn
+ * letters (not their text boxes): the I's top at (18, 12), the R's crest (66, 14), the S's
+ * top (138, 12). */
+const MARK = { w: 155, h: 100, size: 'clamp(150px, 27vw, 420px)', crop: 0.26 };   // crop: the share cut off by the page's edge
+
+/* The sun, behind the S */
+const SUN = {
+  x: 140, y: -6, size: 34,   // where it ends up
+  down: 240,                 // how far below its place it sits when set, as a share of its size: behind the S
+  turnMs: 24000,             // one turn of the rays
 };
 
-/* A slip and its fix */
-const SLIP = {
-  strikeMs:   240,    // the pen drawn through the slip
-  writeMs:    320,    // the fix written in above it, left to right
-  writeAfter: 140,    // after the strike starts
-  swipeMs:    280,    // the paper marker under the fix
-  swipeAfter: 180,
-  above:      '-0.92em',   // where the fix is written, over its slip
-  aboveScale: 0.62,        // and how small
-  aboveTilt:  '-5deg',
-  dropMs:     560,    // the fix dropping into place, with a little overshoot
-  fallMs:     280,    // the slip falling away, just ahead of its fix
-  fallLead:   80,     // how far ahead
-  liftMs:     300,    // the marker lifting off as the fix lands
+/* The butterflies: where each lands (on a letter's top), where it comes from, and the arc's
+ * highest point on the way, as shares of its own size. `letter` is the letter it lands on. */
+const BUTTERFLIES = {
+  flightMs: 1150,
+  flapMs: 150,      // wings in flight
+  restFlapMs: 900,  // wings once landed
+  items: [
+    { sprite: 'monarch', letter: 0, x: 18,  y: 7, size: 13, tilt: -10, from: ['-420%', '-520%'], arc: ['-160%', '-260%'] },
+    { sprite: 'rose',    letter: 1, x: 64,  y: 9, size: 11, tilt: 12,  from: ['260%', '-640%'],  arc: ['140%', '-300%'] },
+    { sprite: 'white',   letter: 3, x: 128, y: 8, size: 10, tilt: 6,   from: ['620%', '-380%'],  arc: ['320%', '-240%'] },
+  ],
 };
 
-/* Iris's flower at the end of the line */
-const FLOWER = { popMs: 620, nodDeg: -9, swayDeg: 3, swayMs: 2400 };
+/* The rings round the sun: rough brush loops in the pale sky ink, spreading out from it */
+const RINGS = {
+  count: 6,
+  first: 30,         // the smallest ring's radius, in wordmark units
+  gap: 17,           // between rings
+  width: 5.5,        // the brush's width
+  wobble: 2.4,       // how far a loop strays from round
+};
 
-/* The tick, and the butterfly that comes to see */
-const TICK = { popMs: 420, size: '0.62em' };
-const FLY = { flightMs: 900, from: 'translate(2.6em, -2.2em) rotate(24deg)', wingMs: 150, size: '0.62em' };
+/* The back-cover stub */
+
+/* Act one's beats, as shares of the foot shown: each part moves from `from` to `to`. */
+const SCROLL = {
+  starsOut:  { from: 0.10, to: 0.55 },   // the stars go out (the farthest first)
+  dawnIn:    { from: 0.15, to: 0.55 },   // the sun's halo warms up
+  sunRises:  { from: 0.30, to: 0.75 },   // the sun climbs out of the S
+  nightLifts:{ from: 0.35, to: 0.90 },   // the dark goes
+  ringsOut:  { from: 0.70, to: 0.90 },   // the rings spread, inner first
+  dawnOut:   { from: 0.80, to: 0.95 },   // and softens as it's day
+  day:       0.90,                       // act two starts
+};
+/** Each beat as 0 → 1 while the playhead goes from its `from` to its `to` (held at 0 or 1 outside),
+ *  written out so StyleX can read it. */
+const BEAT = {
+  starsOut: `clamp(0, (var(--reveal, 1) - ${SCROLL.starsOut.from}) / (${SCROLL.starsOut.to} - ${SCROLL.starsOut.from}), 1)`,
+  dawnIn: `clamp(0, (var(--reveal, 1) - ${SCROLL.dawnIn.from}) / (${SCROLL.dawnIn.to} - ${SCROLL.dawnIn.from}), 1)`,
+  sunRises: `clamp(0, (var(--reveal, 1) - ${SCROLL.sunRises.from}) / (${SCROLL.sunRises.to} - ${SCROLL.sunRises.from}), 1)`,
+  nightLifts: `clamp(0, (var(--reveal, 1) - ${SCROLL.nightLifts.from}) / (${SCROLL.nightLifts.to} - ${SCROLL.nightLifts.from}), 1)`,
+  ringsOut: `clamp(0, (var(--reveal, 1) - ${SCROLL.ringsOut.from}) / (${SCROLL.ringsOut.to} - ${SCROLL.ringsOut.from}), 1)`,
+  dawnOut: `clamp(0, (var(--reveal, 1) - ${SCROLL.dawnOut.from}) / (${SCROLL.dawnOut.to} - ${SCROLL.dawnOut.from}), 1)`,
+};
+
+/* The foot coming forward as it's uncovered */
+const REVEAL = { rise: 70, shrink: 0.05, playAt: SCROLL.day };
+
+/* The night */
+const NIGHT = { color: 'rgb(26 28 54)', depth: 0.78 };   // the dark over the sky, at its deepest
+
+/* The stars: paper ✻s scattered in the night sky (shares of the foot), each going out in turn */
+const STARS = {
+  twinkleMs: 1800,
+  items: [
+    { x: 54, y: 10, size: 13, k: 0.0 },
+    { x: 68, y: 22, size: 9,  k: 0.15 },
+    { x: 78, y: 6,  size: 16, k: 0.3 },
+    { x: 90, y: 18, size: 10, k: 0.45 },
+    { x: 61, y: 38, size: 8,  k: 0.6 },
+    { x: 96, y: 40, size: 12, k: 0.75 },
+    { x: 46, y: 26, size: 7,  k: 0.9 },
+  ],
+};
+
+/* The dawn: a soft halo round the sun in a paler sky blue, rising with it */
+const HALO = { color: 'rgb(170 200 240)', reach: '-120%', strength: 0.35 };   // a pale sky blue, soft
+
+/* The butterflies wandering once they've landed: a random spot in this box (shares of the
+ * butterfly's own size, from where it landed) every so often (client.ts) */
+export const WANDER = { x: [-520, 520], y: [-560, -40], hopMs: [1500, 3000], pause: 0.25, tiltDeg: 22 };
+
+/* The letter under a butterfly, dipping as it lands */
+export const DIP = { by: '0.05em', ms: 420 };
 
 const STILL = '@media (prefers-reduced-motion: reduce)';
 const MOBILE = '@media (max-width: 760px)';
-const ms = (v: number) => `${v}ms`;
+const pct = (v: number, of: number) => `${+((v / of) * 100).toFixed(3)}%`;
+const ms = (v: number) => `${Math.round(v)}ms`;
+const vars = (v: Record<string, string | number>) => v as React.CSSProperties;
 
-const pop = stylex.keyframes({ '0%': { scale: '0' }, '65%': { scale: '1.1' }, '100%': { scale: '1' } });
-const sway = stylex.keyframes({ from: { rotate: `-${FLOWER.swayDeg}deg` }, to: { rotate: `${FLOWER.swayDeg}deg` } });
-const nod = stylex.keyframes({ '0%': { rotate: '0deg' }, '35%': { rotate: `${FLOWER.nodDeg}deg` }, '100%': { rotate: '0deg' } });
-const strike = stylex.keyframes({ from: { backgroundSize: '0% 2px' }, to: { backgroundSize: '100% 2px' } });
-const write = stylex.keyframes({ from: { clipPath: 'inset(-0.4em 100% -0.4em -0.2em)' }, to: { clipPath: 'inset(-0.4em -0.4em -0.4em -0.2em)' } });
-const drop = stylex.keyframes({
-  '0%': { transform: `translateY(${SLIP.above}) scale(${SLIP.aboveScale}) rotate(${SLIP.aboveTilt})` },
-  '70%': { transform: 'translateY(0.06em) scale(1.05) rotate(0deg)' },
-  '100%': { transform: 'none' },
+const turn = stylex.keyframes({ from: { rotate: '0deg' }, to: { rotate: '360deg' } });
+const flyIn = stylex.keyframes({
+  '0%': { translate: 'var(--fx) var(--fy)', rotate: '-30deg', opacity: 0 },
+  '15%': { opacity: 1 },
+  '55%': { translate: 'var(--ax) var(--ay)', rotate: '18deg' },
+  '85%': { translate: '0 -18%', rotate: '-6deg' },
+  '100%': { translate: '0 0', rotate: '0deg', opacity: 1 },
 });
-const fall = stylex.keyframes({ from: { opacity: 1, transform: 'none' }, to: { opacity: 0, transform: 'translateY(0.4em) rotate(7deg)' } });
-const swipe = stylex.keyframes({ from: { clipPath: 'inset(0 100% 0 0)' }, to: { clipPath: 'inset(0 0 0 0)' } });
-const lift = stylex.keyframes({ from: { opacity: 1 }, to: { opacity: 0 } });
-const flyIn = stylex.keyframes({ from: { transform: FLY.from, opacity: 0 }, '20%': { opacity: 1 }, to: { transform: 'none', opacity: 1 } });
+const twinkle = stylex.keyframes({ from: { scale: '0.7', opacity: 0.55 }, to: { scale: '1.1', opacity: 1 } });
 const flap = stylex.keyframes({ from: { scale: '1 1' }, to: { scale: '0.3 1' } });
+const rest = stylex.keyframes({ '0%': { scale: '1 1' }, '8%': { scale: '0.45 1' }, '16%': { scale: '1 1' }, '100%': { scale: '1 1' } });
 
 const f = stylex.create({
+  // Pinned to the bottom of the window, under the page (Page.tsx's sheet), so the page lifts off
+  // it as you reach the end.
   foot: {
-    position: 'relative',
-    backgroundColor: ink.platePink,
+    position: 'sticky',
+    bottom: 0,
+    zIndex: 0,
+    overflow: 'clip',
+    backgroundColor: ink.sky,
     backgroundImage: `${tex.screen}, ${tex.streaks}`,
     backgroundSize: '96px 96px, 128px 128px',
     color: ink.i12,
-    marginTop: 'clamp(64px, 8vw, 112px)',
   },
-  wrap: { width: '100%', maxWidth: 1280, marginInline: 'auto', paddingInline: 'clamp(20px, 5vw, 72px)', paddingBlock: 'clamp(30px, 3.5vw, 44px) 20px' },
-  top: { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: '28px 56px', alignItems: 'end', [MOBILE]: { gridTemplateColumns: '1fr' } },
-
-  // The sign-off Iris proofreads.
-  line: { margin: 0, fontFamily: font.brush, fontWeight: 400, fontSize: 'clamp(26px, 2.7vw, 38px)', lineHeight: LINE.lineHeight, maxWidth: '34ch' },
-  // A word Iris touches: both versions stacked in one slot, as wide as the longer.
-  slot: { display: 'inline-grid', verticalAlign: 'baseline', justifyItems: 'start' },
-  layer: { gridArea: '1 / 1', whiteSpace: 'nowrap' },
-  // The slip: struck through, then falling away. At rest (and under Reduce Motion) gone.
-  was: {
-    justifySelf: 'center',   // the room for a longer fix shared either side, not one gap after it
-    opacity: 0,
-    backgroundImage: 'linear-gradient(rgb(42 26 22), rgb(42 26 22))',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: '0 58%',
-    backgroundSize: '100% 2px',
-    animationName: { default: `${strike}, ${fall}`, [STILL]: 'none' },
-    animationDuration: `${ms(SLIP.strikeMs)}, ${ms(SLIP.fallMs)}`,
-    animationDelay: `var(--at), calc(var(--drop) - ${SLIP.fallLead}ms)`,
-    animationFillMode: 'both',
-    animationTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1), cubic-bezier(0.55, 0, 0.75, 0.3)',
+  // As it's uncovered (--reveal 0 → 1, client.ts) it comes forward: up, to full size, out of
+  // the page's shade.
+  depth: {
+    transformOrigin: '50% 100%',
+    translate: `0 calc((1 - var(--reveal, 1)) * ${REVEAL.rise}px)`,
+    scale: `calc(1 - (1 - var(--reveal, 1)) * ${REVEAL.shrink})`,
+    [STILL]: { translate: 'none', scale: 'none' },
   },
-  // The fix: written in above its slip, then dropping into place. At rest, just the word.
-  now: {
-    position: 'relative',
-    isolation: 'isolate',
-    paddingInline: 2,
-    transformOrigin: '0 100%',
-    animationName: { default: `${write}, ${drop}`, [STILL]: 'none' },
-    animationDuration: `${ms(SLIP.writeMs)}, ${ms(SLIP.dropMs)}`,
-    animationDelay: `calc(var(--at) + ${SLIP.writeAfter}ms), var(--drop)`,
-    animationFillMode: 'both',
-    animationTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1), cubic-bezier(0.34, 1.3, 0.64, 1)',
+  // The night over the sky, lifting as the sun comes up. Over everything, so the sun climbs
+  // out of the dark too.
+  shade: { position: 'absolute', inset: 0, zIndex: 3, pointerEvents: 'none', backgroundColor: NIGHT.color, opacity: { default: `calc((1 - ${BEAT.nightLifts}) * ${NIGHT.depth})`, [STILL]: 0 } },
+  // A star: paper ✻, going out in its turn (--k), twinkling till then.
+  star: {
+    position: 'absolute',
+    zIndex: 4,
+    pointerEvents: 'none',
+    color: ink.paper,
+    fontFamily: font.mono,
+    fontWeight: 600,
+    lineHeight: 1,
+    translate: '-50% -50%',
+    opacity: { default: `clamp(0, 1 - (${BEAT.starsOut} * 1.6 - var(--k) * 0.6), 1)`, [STILL]: 0 },
   },
-  marker: { position: 'absolute', left: -3, right: -4, bottom: '0.12em', height: '0.55em', zIndex: -1, opacity: 0, animationName: { default: lift, [STILL]: 'none' }, animationDuration: ms(SLIP.liftMs), animationDelay: 'var(--drop)', animationFillMode: 'both' },
-  swipe: { position: 'absolute', inset: 0, animationName: { default: swipe, [STILL]: 'none' }, animationDuration: ms(SLIP.swipeMs), animationDelay: `calc(var(--at) + ${SLIP.swipeAfter}ms)`, animationFillMode: 'both', animationTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)' },
-
-  // The tick after the line.
-  tick: { display: 'inline-block', marginLeft: '0.18em', verticalAlign: '0.05em', transformOrigin: '30% 90%', animationName: { default: pop, [STILL]: 'none' }, animationDuration: ms(TICK.popMs), animationDelay: ms(TIMING.tick), animationFillMode: 'both', animationTimingFunction: 'cubic-bezier(0.34, 1.5, 0.64, 1)' },
-  // The flower: pops up, nods at each fix, sways.
-  flower: { position: 'relative', display: 'inline-block', width: '1.05em', marginLeft: '0.1em', verticalAlign: '-0.12em', transformOrigin: '45% 97%', animationName: { default: pop, [STILL]: 'none' }, animationDuration: ms(FLOWER.popMs), animationDelay: ms(TIMING.flowerPops), animationFillMode: 'both', animationTimingFunction: 'cubic-bezier(0.34, 1.3, 0.64, 1)' },
-  nod: { display: 'block', transformOrigin: '45% 97%', animationName: { default: nod, [STILL]: 'none' }, animationDuration: ms(TIMING.slipGap), animationDelay: ms(TIMING.firstSlip), animationIterationCount: 'var(--slips)', animationTimingFunction: 'ease-in-out' },
-  sway: { display: 'block', transformOrigin: '45% 97%', animationName: { default: sway, [STILL]: 'none' }, animationDuration: ms(FLOWER.swayMs), animationIterationCount: 'infinite', animationDirection: 'alternate', animationTimingFunction: 'ease-in-out' },
-  flowerImg: { width: '100%' },
-  // The butterfly that comes to see, landing on the bloom.
-  fly: { position: 'absolute', right: '-0.18em', top: '-0.28em', width: FLY.size, height: FLY.size, transformOrigin: '50% 50%', animationName: { default: flyIn, [STILL]: 'none' }, animationDuration: ms(FLY.flightMs), animationDelay: ms(TIMING.butterfly), animationFillMode: 'both', animationTimingFunction: 'cubic-bezier(0.3, 0.7, 0.3, 1)' },
-  flyPart: { position: 'absolute', inset: 0, width: '100%', height: '100%' },
-  wings: { animationName: { default: flap, [STILL]: 'none' }, animationDuration: ms(FLY.wingMs), animationDelay: ms(TIMING.butterfly), animationIterationCount: Math.round(FLY.flightMs / FLY.wingMs) + 1, animationDirection: 'alternate', animationTimingFunction: 'ease-in-out' },
-  again: { display: 'inline-flex', alignItems: 'center', gap: 10, marginTop: 4, padding: '4px 0', borderWidth: 0, backgroundColor: 'transparent', fontFamily: font.mono, fontSize: 12.5, color: ink.i12, cursor: 'pointer', [STILL]: { display: 'none' } },
-
+  twinkle: { display: 'block', animationName: { default: twinkle, [STILL]: 'none' }, animationDuration: ms(STARS.twinkleMs), animationDelay: 'var(--tw)', animationIterationCount: 'infinite', animationDirection: 'alternate', animationTimingFunction: 'ease-in-out' },
+  wrap: {
+    width: '100%',
+    maxWidth: 1280,
+    marginInline: 'auto',
+    paddingInline: 'clamp(20px, 5vw, 72px)',
+    paddingTop: 'clamp(40px, 5vw, 64px)',
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0, 1fr) auto',
+    gap: '24px clamp(24px, 4vw, 56px)',
+    alignItems: 'end',
+    [MOBILE]: { gridTemplateColumns: 'minmax(0, 1fr)' },
+  },
+  // The last call.
+  call: { display: 'flex', flexDirection: 'column', gap: 26, alignItems: 'flex-start', paddingBottom: 'clamp(28px, 3vw, 40px)' },
   cta: { display: 'flex', alignItems: 'center', gap: '14px 22px', flexWrap: 'wrap' },
   ctaMeta: { fontSize: 12.5, lineHeight: 1.5 },
-
-  rule: { marginTop: 'clamp(20px, 2.6vw, 30px)' },
-  bottom: { display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '18px 40px', flexWrap: 'wrap', paddingTop: 18 },
   links: { display: 'flex', flexWrap: 'wrap', gap: '12px 26px', alignItems: 'center' },
-  maker: { display: 'flex', alignItems: 'flex-end', gap: 12 },
-  stepped: { fontSize: 13, lineHeight: 1.4, fontWeight: 600, display: 'flex', flexDirection: 'column' },
-  name: { fontFamily: font.brush, fontSize: 30, lineHeight: 0.9 },
-  credits: { fontSize: 11.5, lineHeight: 1.6, margin: 0, marginTop: 14, maxWidth: '96ch' },
-  srOnly: { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)', whiteSpace: 'nowrap' },
+
+  // The wordmark, cut off by the page's bottom edge, the sun behind it, butterflies on it.
+  markCell: { position: 'relative', justifySelf: 'end', maxWidth: '100%', [MOBILE]: { justifySelf: 'center' } },
+  mark: { position: 'relative', display: 'block', lineHeight: 0, marginBottom: `calc(-${MARK.crop} * ${MARK.size})` },
+  letters: { display: 'block', position: 'relative', zIndex: 1 },
+  layer: { position: 'absolute', inset: 0, pointerEvents: 'none' },
+  behind: { zIndex: 0 },
+  front: { zIndex: 2 },
+  sprite: { position: 'absolute', inset: 0, width: '100%', height: '100%' },
+
+  // The sun follows the scroll: down behind the S while the foot is covered, up as it shows.
+  // The halo behind the sun: the dawn, brightest while it's rising.
+  halo: { position: 'absolute', inset: HALO.reach, borderRadius: '50%', pointerEvents: 'none', backgroundImage: `radial-gradient(closest-side, ${HALO.color}, transparent)`, opacity: { default: `calc(${BEAT.dawnIn} * (1 - ${BEAT.dawnOut} * 0.6) * ${HALO.strength})`, [STILL]: 0.15 } },
+  sun: { position: 'absolute', translate: { default: `0 calc((1 - ${BEAT.sunRises}) * ${SUN.down}%)`, [STILL]: 'none' } },
+  // A wandering butterfly drifts to each new spot; the script sets where and how long.
+  wander: { transitionProperty: 'translate, rotate', transitionDuration: 'var(--d, 2000ms)', transitionTimingFunction: 'cubic-bezier(0.45, 0.05, 0.3, 1)' },
+  // Each ring spreads as the sun climbs, the inner ones first (--k: its place, 0 … 1).
+  rings: {
+    position: 'absolute',
+    overflow: 'visible',
+    transformOrigin: '50% 50%',
+    scale: { default: `calc(0.25 + 0.75 * clamp(0, (${BEAT.ringsOut} - var(--k) * 0.5) * 2, 1))`, [STILL]: 'none' },
+    opacity: { default: `clamp(0, (${BEAT.ringsOut} - var(--k) * 0.5) * 2.5, 1)`, [STILL]: 1 },
+  },
+
+  // The zine's back cover: a stub torn off along a perforation, the keys on it.
+  stub: {
+    position: 'relative',
+    display: 'grid',
+    gridTemplateColumns: 'auto auto',
+    gap: '4px 18px',
+    alignItems: 'center',
+    padding: '12px 16px 12px 22px',
+    backgroundColor: ink.paper,
+    color: ink.i12,
+    transform: 'rotate(-1.2deg)',
+    boxShadow: '0 1px 1px rgb(42 26 22 / 0.08), 0 10px 22px -12px rgb(42 26 22 / 0.4)',
+    // Perforated along its left edge: a row of bites out of the paper.
+    maskImage: 'radial-gradient(circle at 0 6px, transparent 3.5px, black 4px)',
+    maskSize: '100% 12px',
+    maskRepeat: 'repeat-y',
+    WebkitMaskImage: 'radial-gradient(circle at 0 6px, transparent 3.5px, black 4px)',
+    WebkitMaskSize: '100% 12px',
+    WebkitMaskRepeat: 'repeat-y',
+  },
+  perf: { position: 'absolute', left: 9, top: 6, bottom: 6, borderLeftWidth: 1.5, borderLeftStyle: 'dashed', borderLeftColor: 'rgb(42 26 22 / 0.45)' },
+  stubWord: { fontFamily: font.brush, fontSize: 26, lineHeight: 1, textTransform: 'none', letterSpacing: 0, fontWeight: 400 },
+  keys: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 },
+  keysNote: { fontFamily: font.brush, fontSize: 17, lineHeight: 1 },
+  stubSmall: { fontSize: 10.5, lineHeight: 1.5, maxWidth: '30ch', margin: 0 },
+  rays: {
+    animationName: { default: turn, [STILL]: 'none' },
+    animationDuration: ms(SUN.turnMs),
+    animationIterationCount: 'infinite',
+    animationTimingFunction: 'linear',
+  },
+  fly: {
+    position: 'absolute',
+    animationName: { default: flyIn, [STILL]: 'none' },
+    animationDuration: ms(BUTTERFLIES.flightMs),
+    animationDelay: 'var(--at)',
+    animationFillMode: 'both',
+    animationTimingFunction: 'cubic-bezier(0.35, 0.6, 0.3, 1)',
+  },
+  // In flight the wings beat fast; landed, a slow beat now and then (the second animation
+  // takes over when the flight ends).
+  wings: {
+    animationName: { default: `${flap}, ${rest}`, [STILL]: 'none' },
+    animationDuration: `${ms(BUTTERFLIES.flapMs)}, ${ms(BUTTERFLIES.restFlapMs * 4)}`,
+    animationDelay: `var(--at), calc(var(--at) + ${BUTTERFLIES.flightMs}ms)`,
+    animationIterationCount: `${Math.round(BUTTERFLIES.flightMs / BUTTERFLIES.flapMs)}, infinite`,
+    animationDirection: 'alternate, normal',
+    animationTimingFunction: 'ease-in-out',
+  },
 });
 
-/** The sign-off with Iris's proof marks in it. A slip and its fix share one slot; a fix
- *  with no slip (the full stop) gets a slot of its own. */
-type Part = string | { was: string; now: string };
-function proof(): Part[] {
-  const segs = diff(LINE.draft, LINE.fixed);
-  const parts: Part[] = [];
-  for (let i = 0; i < segs.length; i++) {
-    const s = segs[i];
-    if (s.kind === 'same') parts.push(s.text);
-    else if (s.kind === 'gone' && segs[i + 1]?.kind === 'new') parts.push({ was: s.text, now: segs[++i].text });
-    else parts.push(s.kind === 'gone' ? { was: s.text, now: '' } : { was: '', now: s.text });
-  }
-  return parts;
+/** Each ring a loop drawn by hand: its radius strays as it goes round, and it overshoots where
+ *  it started, as a brush does. Centred on 0,0, in wordmark units. */
+function roughRings() {
+  const r = rng(71);
+  return Array.from({ length: RINGS.count }, (_, k) => {
+    const base = RINGS.first + k * RINGS.gap, n = 40, start = r() * Math.PI * 2;
+    const phase = [r() * 6, r() * 6, r() * 6];
+    let d = '';
+    for (let i = 0; i <= n + 3; i++) {
+      const t = start + (i / n) * Math.PI * 2;
+      const rad = base + RINGS.wobble * (Math.sin(t * 3 + phase[0]) * 0.6 + Math.sin(t * 5 + phase[1]) * 0.3 + Math.sin(t * 2 + phase[2]) * 0.4) + (i > n ? 1.6 : 0);
+      d += `${i ? 'L' : 'M'}${(Math.cos(t) * rad).toFixed(2)},${(Math.sin(t) * rad).toFixed(2)}`;
+    }
+    return d;
+  });
 }
-const PARTS = proof();
-const SLIPS = PARTS.filter((p) => typeof p !== 'string').length;
 
-function FixedLine() {
-  let slip = -1;
+/** The zine's back cover, torn off: the keys and the small print. */
+function Stub() {
   return (
-    <>
-      {PARTS.map((part, i) => {
-        const text = typeof part === 'string' ? part : part.now || part.was;
-        const space = i > 0 && !/^[^\w]/.test(text) ? ' ' : '';
-        if (typeof part === 'string') return <span key={i}>{space + part}</span>;
-        slip++;
-        const vars = {
-          '--at': ms(TIMING.firstSlip + slip * TIMING.slipGap),
-          '--drop': ms(TIMING.replace + slip * TIMING.waveGap),
-        } as React.CSSProperties;
-        return (
-          <span key={i}>
-            {space}
-            <span {...stylex.props(f.slot)} style={vars} data-slip>
-              {part.was && (
-                <span aria-hidden {...stylex.props(f.layer, f.was)} data-slip-was>
-                  {part.was}
-                </span>
-              )}
-              <span {...stylex.props(f.layer, f.now)} data-slip-now>
-                <span aria-hidden {...stylex.props(f.marker)}>
-                  <span {...stylex.props(f.swipe)}>
-                    <Printed mask={markerMask(31 + i)} color="paper" />
-                  </span>
-                </span>
-                {part.now}
+    <div {...stylex.props(f.stub)}>
+      <span aria-hidden {...stylex.props(f.perf)} />
+      {/* Where a back cover has its barcode, the one thing to take away: the keys. */}
+      <span {...stylex.props(f.keys)}>
+        <KeyRow keys={['⌃', '⌥', 'G']} />
+        <span {...stylex.props(f.keysNote)}>in any text box</span>
+      </span>
+      <span>
+        <span {...stylex.props(f.stubWord)}>
+          Made by Abhishek
+        </span>
+        <p {...stylex.props(f.stubSmall)}>Gemma 4 (Gemma Terms of Use), Apple MLX (MIT), fonts under the SIL OFL. MIT license.</p>
+      </span>
+    </div>
+  );
+}
+
+/** The giant wordmark with the sun behind it and the butterflies that land on it. */
+function Mark() {
+  const at = (x: number, y: number, size: number): React.CSSProperties => ({ left: pct(x - size / 2, MARK.w), top: pct(y - size / 2, MARK.h), width: pct(size, MARK.w), aspectRatio: '1' });
+  return (
+    <span
+      {...stylex.props(f.mark)}
+      data-reveal
+      data-landings={BUTTERFLIES.items.map((b, i) => `${b.letter}:${TIMING.flyIn + i * TIMING.flyGap + BUTTERFLIES.flightMs}`).join(',')}
+      data-dip={`${DIP.by},${DIP.ms}`}
+      data-wander-box={JSON.stringify(WANDER)}
+    >
+      <span aria-hidden {...stylex.props(f.layer, f.behind)}>
+        {roughRings().map((d, i) => {
+          const R = RINGS.first + i * RINGS.gap + RINGS.wobble + RINGS.width;
+          return (
+            <svg
+              key={i}
+              viewBox={`${-R} ${-R} ${R * 2} ${R * 2}`}
+              {...stylex.props(f.rings)}
+              style={{ ...at(SUN.x, SUN.y, R * 2), height: 'auto', ...vars({ '--k': i / (RINGS.count - 1) }) }}
+            >
+              <path d={d} fill="none" stroke="rgb(150 184 230)" strokeWidth={RINGS.width} strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          );
+        })}
+        <span {...stylex.props(f.sun)} style={at(SUN.x, SUN.y, SUN.size)}>
+          <span {...stylex.props(f.halo)} />
+          <img src="/sprite/sun-rays.png" alt="" loading="lazy" decoding="async" {...stylex.props(f.sprite, f.rays)} />
+          <img src="/sprite/sun-glints.png" alt="" loading="lazy" decoding="async" {...stylex.props(f.sprite, f.rays)} />
+          <img src="/sprite/sun-face.png" alt="" loading="lazy" decoding="async" {...stylex.props(f.sprite)} />
+        </span>
+      </span>
+      <span {...stylex.props(f.letters)} data-foot-mark>
+        <Wordmark size={MARK.size} />
+      </span>
+      <span aria-hidden {...stylex.props(f.layer, f.front)}>
+        {BUTTERFLIES.items.map((b, i) => (
+          <span
+            key={b.sprite}
+            {...stylex.props(f.fly)}
+            style={{
+              ...at(b.x, b.y, b.size),
+              ...vars({ '--at': ms(TIMING.flyIn + i * TIMING.flyGap), '--fx': b.from[0], '--fy': b.from[1], '--ax': b.arc[0], '--ay': b.arc[1] }),
+            }}
+          >
+            <span {...stylex.props(f.sprite, f.wander)} data-wander>
+              <span {...stylex.props(f.sprite)} style={{ rotate: `${b.tilt}deg` }}>
+                <img src={`/sprite/${b.sprite}-wings.png`} alt="" loading="lazy" decoding="async" {...stylex.props(f.sprite, f.wings)} data-wander-wings />
+                <img src={`/sprite/${b.sprite}-body.png`} alt="" loading="lazy" decoding="async" {...stylex.props(f.sprite)} />
               </span>
             </span>
           </span>
-        );
-      })}
-    </>
+        ))}
+      </span>
+    </span>
   );
 }
 
 export function Footer() {
   return (
-    <footer {...stylex.props(f.foot)} aria-labelledby="foot-line">
-      <div {...stylex.props(f.wrap)}>
-        <div {...stylex.props(f.top)}>
-          <div data-fixline>
-            <p id="foot-line" {...stylex.props(f.line)} aria-label={LINE.fixed}>
-              <FixedLine />
-              <span aria-hidden {...stylex.props(f.tick)}>
-                <HandTick size={22} color="rgb(42 26 22)" />
-              </span>
-              <span aria-hidden {...stylex.props(f.flower)}>
-                <span {...stylex.props(f.nod)} style={{ '--slips': SLIPS } as React.CSSProperties}>
-                  <span {...stylex.props(f.sway)}>
-                    <Picture name="hero-flower" alt="" scale={6} xstyle={f.flowerImg} />
-                  </span>
-                </span>
-                <span {...stylex.props(f.fly)}>
-                  <img src="/sprite/monarch-wings.png" alt="" loading="lazy" decoding="async" {...stylex.props(f.flyPart, f.wings)} />
-                  <img src="/sprite/monarch-body.png" alt="" loading="lazy" decoding="async" {...stylex.props(f.flyPart)} />
-                </span>
-              </span>
-            </p>
-            <button type="button" {...stylex.props(f.again)} data-fixline-again>
-              <KeyRow keys={['⌃', '⌥', 'G']} />
-              fix it again
-            </button>
-          </div>
+    <footer {...stylex.props(f.foot)} aria-labelledby="foot-title" data-foot data-play-at={REVEAL.playAt}>
+      <span aria-hidden {...stylex.props(f.shade)} />
+      {STARS.items.map((st, i) => (
+        <span key={i} aria-hidden {...stylex.props(f.star)} style={{ left: `${st.x}%`, top: `${st.y}%`, fontSize: st.size, ...vars({ '--k': st.k, '--tw': ms(-i * 530) }) }}>
+          <span {...stylex.props(f.twinkle)}>✻</span>
+        </span>
+      ))}
+      <div {...stylex.props(f.wrap, f.depth)}>
+        <div {...stylex.props(f.call)}>
+          <PageTitle id="foot-title" lines={['Go write', 'something']} small />
           <div {...stylex.props(f.cta)}>
             <BrushButton href={links.download} download>
               Download Iris
@@ -264,12 +400,6 @@ export function Footer() {
               macOS 15 or later, Apple silicon
             </span>
           </div>
-        </div>
-
-        <div {...stylex.props(f.rule)}>
-          <PenRule seed={101} strong />
-        </div>
-        <div {...stylex.props(f.bottom)}>
           <nav aria-label="More about Iris" {...stylex.props(f.links)}>
             <PenLink ribbon="paper" out={false} href="#install">Install</PenLink>
             <PenLink ribbon="paper" out={false} href="#new">What's new</PenLink>
@@ -277,20 +407,17 @@ export function Footer() {
             <PenLink ribbon="paper" href={links.code}>The code</PenLink>
             <PenLink ribbon="paper" href={links.problem}>Report a problem</PenLink>
           </nav>
-          <div {...stylex.props(f.maker)}>
-            <span {...stylex.props(f.stepped)} aria-hidden>
-              <span>made</span>
-              <span style={{ paddingLeft: '1em' }}>— by</span>
-            </span>
-            <span {...stylex.props(f.name)}>
-              <span {...stylex.props(f.srOnly)}>Made by </span>Abhishek
-            </span>
-          </div>
+          <Stub />
         </div>
-        <p {...stylex.props(f.credits)}>
-          Iris uses Gemma 4 (Gemma Terms of Use) and Apple MLX (MIT). Set in Martian Mono, Caveat Brush, Rubik Doodle Shadow, Londrina Solid, Knewave and Mansalva (SIL OFL). MIT license.
-        </p>
+        <div {...stylex.props(f.markCell)}>
+          <Mark />
+        </div>
       </div>
+      {/* The pointer, as a butterfly, while it's over the foot (client.ts). */}
+      <span aria-hidden data-cursor-fly hidden style={{ position: 'fixed', left: 0, top: 0, width: 34, height: 34, pointerEvents: 'none', zIndex: 40 }}>
+        <img data-cursor-wings src="/sprite/rose-wings.png" alt="" loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+        <img src="/sprite/rose-body.png" alt="" loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+      </span>
     </footer>
   );
 }

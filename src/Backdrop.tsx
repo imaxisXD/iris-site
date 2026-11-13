@@ -1,11 +1,13 @@
 // Printed backdrops for the panels: Iris's garden and the page's ghost word, run through a
 // riso halftone by scripts/art.mjs. Paper on print, so the panel and the menu stand out.
 import * as stylex from '@stylexjs/stylex';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { Picture } from './parts';
+import { Pattern } from './Patterns';
 import { font, ink, tex } from './tokens.stylex';
 
 const MOBILE = '@media (max-width: 760px)';
+const NARROW = '@media (max-width: 1000px)';
 
 const ART = {
   garden: { width: 2200, height: 1000, sizes: [900, 1800] },
@@ -40,7 +42,8 @@ const TORN = [
 ];
 const ps = stylex.create({
   scene: { position: 'relative', paddingTop: 'clamp(40px, 5vw, 64px)', paddingBottom: 'clamp(40px, 6vw, 80px)', isolation: 'isolate' },
-  sheet: { position: 'absolute', zIndex: -1, overflow: 'hidden' },
+  sheet: { position: 'absolute', zIndex: -1, overflow: 'hidden', isolation: 'isolate' },
+  tan: { backgroundColor: ink.tan, backgroundImage: `${tex.screen}, ${tex.streaks}`, backgroundSize: '96px 96px, 128px 128px' },
   // The sheets lie flat on the page (only the panel on top casts a shadow), dimmed as if in the
   // panel's shade, so the eye goes to the panel.
   lift: { position: 'absolute', zIndex: -1, inset: 0, pointerEvents: 'none', filter: 'brightness(0.99) saturate(0.99)' },
@@ -90,11 +93,12 @@ export function PanelScene({ children }: { children: ReactNode }) {
   return (
     <div {...stylex.props(ps.scene)}>
       <span aria-hidden {...stylex.props(ps.lift)}>
-      <span aria-hidden {...stylex.props(ps.sheet, ps.garden)}>
-        <Art name="garden" sizes="(max-width: 1000px) 100vw, 560px" position="left center" />
+      <span aria-hidden {...stylex.props(ps.sheet, ps.garden, ps.tan)}>
+        <Pattern kind="loops" color="rgb(212 180 150)" seed={33} scale={1.4} />
         <span {...stylex.props(ps.texture)} />
       </span>
       <span aria-hidden {...stylex.props(ps.sheet, ps.tone)}>
+        <Pattern kind="ripples" color="rgb(244 186 214)" seed={35} at={[0.2, 0.75]} />
         <span {...stylex.props(ps.toneWord)}>TONE</span>
         <span {...stylex.props(ps.texture)} />
       </span>
@@ -107,16 +111,79 @@ export function PanelScene({ children }: { children: ReactNode }) {
   );
 }
 
+// ── The Fix facts' stages (section 03) ──────────────────────────────────────────────
+// Each fact's picture lies on a small collage, cut from the same prints as the panel's
+// stage: a torn back sheet with its own pattern, and a scrap across one corner carrying a big
+// printed glyph, as a zine pastes a cut-out over a print. Four looks, so the four read as one
+// spread without repeating.
+const fs = stylex.create({
+  stage: { position: 'relative', isolation: 'isolate', display: 'grid', placeItems: 'center', minWidth: 0, padding: 'clamp(30px, 3.6vw, 48px) clamp(18px, 2.8vw, 40px)' },
+  sheet: { position: 'absolute', zIndex: -1, overflow: 'hidden', isolation: 'isolate', pointerEvents: 'none' },
+  back: { inset: '0 2% 0 0' },
+  scrap: { width: 'clamp(110px, 34%, 190px)', aspectRatio: '1 / 1' },
+  glyph: { position: 'absolute', fontFamily: font.chunky, fontWeight: 900, fontSize: 'clamp(80px, 8vw, 120px)', lineHeight: 0.8, letterSpacing: '-0.02em', color: ink.paper, opacity: 0.85, whiteSpace: 'nowrap' },
+  over: { position: 'relative', width: '100%', minWidth: 0, display: 'grid', justifyItems: 'center' },
+  // The picture sits away from the scrap, so the scrap's glyph shows beside it.
+  awayLeft: { justifyItems: { default: 'start', [MOBILE]: 'center' } },
+  awayRight: { justifyItems: { default: 'end', [MOBILE]: 'center' } },
+});
+
+type Corner = 'tl' | 'tr' | 'bl' | 'br';
+const SCRAP_AT: Record<Corner, CSSProperties> = {
+  tl: { left: -10, top: -14, transform: 'rotate(-3deg)' },
+  tr: { right: -8, top: -16, transform: 'rotate(2.5deg)' },
+  bl: { left: -12, bottom: -12, transform: 'rotate(2deg)' },
+  br: { right: -6, bottom: -14, transform: 'rotate(-2.5deg)' },
+};
+const GLYPH_AT: Record<Corner, CSSProperties> = {
+  tl: { left: '7%', top: '9%' },
+  tr: { right: '7%', top: '9%' },
+  bl: { left: '7%', bottom: '4%' },
+  br: { right: '7%', bottom: '4%' },
+};
+
+export const FACT_LOOKS = {
+  // The Slack box: a sky print with waves, a pink scrap with @.
+  sky: { back: 'rgb(200 216 240)', backInk: 'rgb(182 202 234)', backKind: 'waves', scrap: 'rgb(249 205 226)', scrapInk: 'rgb(244 186 214)', scrapKind: 'ripples', glyph: '@', corner: 'tr', torn: 0 },
+  // A word kept: the panel's tan print with petal loops, a khaki scrap with Aa.
+  tan: { back: 'rgb(222 196 170)', backInk: 'rgb(210 180 150)', backKind: 'loops', scrap: 'rgb(226 218 196)', scrapInk: 'rgb(214 204 178)', scrapKind: 'stars', glyph: 'Aa', corner: 'tl', torn: 1 },
+  // Another language: the TONE sheet's pink with ripples, a sky scrap with ¿?.
+  pink: { back: 'rgb(249 214 230)', backInk: 'rgb(244 194 218)', backKind: 'ripples', scrap: 'rgb(200 216 240)', scrapInk: 'rgb(182 202 234)', scrapKind: 'waves', glyph: '¿?', corner: 'bl', torn: 2 },
+  // A third of a second: khaki with ✻, a tan scrap with 0.3.
+  khaki: { back: 'rgb(230 223 204)', backInk: 'rgb(218 208 182)', backKind: 'stars', scrap: 'rgb(222 196 170)', scrapInk: 'rgb(210 180 150)', scrapKind: 'loops', glyph: '0.3', corner: 'br', torn: 0 },
+} as const;
+export type FactLook = keyof typeof FACT_LOOKS;
+
+export function FactStage({ look, seed, children }: { look: FactLook; seed: number; children: ReactNode }) {
+  const L = FACT_LOOKS[look];
+  return (
+    <div {...stylex.props(fs.stage)}>
+      <span aria-hidden {...stylex.props(fs.sheet, fs.back)} style={{ backgroundColor: L.back, clipPath: TORN[L.torn] }}>
+        <Pattern kind={L.backKind} color={L.backInk} seed={seed} scale={1.6} count={L.backKind === 'ripples' ? 9 : undefined} at={L.backKind === 'ripples' ? [0.85, 0.2] : undefined} />
+        <span {...stylex.props(ps.texture)} />
+      </span>
+      <span aria-hidden {...stylex.props(fs.sheet, fs.scrap)} style={{ ...SCRAP_AT[L.corner as Corner], backgroundColor: L.scrap, clipPath: TORN[(L.torn + 1) % 3] }}>
+        <Pattern kind={L.scrapKind} color={L.scrapInk} seed={seed + 1} scale={2.4} />
+        <span {...stylex.props(fs.glyph)} style={GLYPH_AT[L.corner as Corner]}>{L.glyph}</span>
+        <span {...stylex.props(ps.texture)} />
+      </span>
+      <div {...stylex.props(fs.over, L.corner.endsWith('r') ? fs.awayLeft : fs.awayRight)}>{children}</div>
+    </div>
+  );
+}
+
 // ── A Mac's top right corner (section 07) ───────────────────────────────────────────
 // The bezel, the desktop (the garden at night), the menu bar with Iris's flower in it, and
 // Iris's menu hanging from the flower, as the app draws it. Sized in container units, so
 // the whole screen scales as one.
 const BAR = 5.4; // the menu bar's height, in % of the corner's width
 const FLOWER_AT = 60; // the flower's centre, in % from the screen's right edge
-const MENU_W = 52; // the menu's width, in %: at most 292px, so its 577px picture stays a true 2×
+const MENU_W = 46; // the menu's width, in %: at most 294px, so its 577px picture stays a true 2×
 
 const mc = stylex.create({
-  box: { position: 'relative', width: '100%', maxWidth: 560, containerType: 'inline-size', justifySelf: 'center' },
+  // As wide as the sheet allows, or as the sheet's height allows at its shape (1 / 0.95), whichever
+  // is less; on narrow pages, the full width.
+  box: { position: 'relative', flex: 'none', width: { default: 'min(100cqw, 100cqh / 0.95)', [NARROW]: '100%' }, maxWidth: 640, containerType: 'inline-size' },
   bezel: {
     position: 'relative',
     aspectRatio: '1 / 0.95',

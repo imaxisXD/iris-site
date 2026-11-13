@@ -18,11 +18,12 @@ const hw = stylex.create({
     isolation: 'isolate',
     fontFamily: font.fat,
     color: ink.i12,
-    marginInline: '-0.02em',
+    marginRight: '-0.03em',
   },
   fat: {},
   first: { fontSize: '1.18em' },
-  small: { fontSize: '0.66em', marginInline: '0.02em' },
+  // The app's small i is the brush face's own lowercase i, at full size.
+  small: {},
   hollow: {
     color: 'transparent',
     WebkitTextStroke: 'var(--pen, 0.045em) rgb(42 26 22)',
@@ -34,7 +35,7 @@ const hw = stylex.create({
       zIndex: -1,
       color: ink.pink,
       WebkitTextStroke: '0',
-      transform: 'translate(-0.05em, 0.045em)',
+      transform: 'translate(0.05em, 0.04em)',
       backgroundImage: tex.screen,
       backgroundSize: '64px 64px',
     },
@@ -81,15 +82,21 @@ export function HandWord({ word, size, pattern, seed, pen, label }: { word: stri
       {letters.map((ch, i) => {
         const hand = hands[i];
         const shown = hand === 'small' ? ch.toLowerCase() : ch.toUpperCase();
-        const tilt = (r() - 0.5) * 12;
-        const drop = (r() - 0.5) * 0.09;
+        // As the app's HandLayout: a drop of up to ±0.04em and a tilt of up to ±4°, and
+        // Knewave's rightward lean taken out (the app skews each glyph back by 0.2), so the
+        // letters stand upright. The sketched hand is another face, already upright.
+        const drop = (r() - 0.5) * 0.08;
+        const tilt = (r() - 0.5) * 8;
+        // (The app skews by 0.2, about 11°; the browser's Knewave leans further, so 18° here
+        // is what stands it upright: checked against the app's render.)
+        const upright = hand === 'sketched' ? '' : ' skewX(18deg)';
         return (
           <span
             key={i}
             data-l={shown}
             aria-hidden
             {...stylex.props(hw.letter, hw[hand], i === 0 && !pattern && hw.first)}
-            style={{ transform: `translateY(${drop.toFixed(3)}em) rotate(${tilt.toFixed(1)}deg)` }}
+            style={{ transform: `translateY(${drop.toFixed(3)}em) rotate(${tilt.toFixed(1)}deg)${upright}` }}
           >
             {shown}
           </span>
@@ -100,14 +107,26 @@ export function HandWord({ word, size, pattern, seed, pen, label }: { word: stri
 }
 
 const wm = stylex.create({
-  mark: { display: 'inline-flex', alignItems: 'baseline', gap: '0.02em', lineHeight: 1, color: ink.i12, textDecoration: 'none' },
-  i: { fontFamily: font.logo, fontSize: '1em', color: ink.i12 },
+  // As the app's IrisLogo: the doodle I, a little room, then RIS.
+  mark: { display: 'inline-flex', alignItems: 'baseline', gap: '0.01em', lineHeight: 1, color: ink.i12, textDecoration: 'none' },
+  // The doodle I with its outline drawn solid, the shadow's hatching closed up, as it prints in the app.
+  // The doodle I as the app prints it: a hollow box in a heavy pen, its shadow thickening the
+  // left side. Drawn, not set, so it reads the same at every size.
+  i: { display: 'inline-block', height: '0.84em', width: 'auto', overflow: 'visible', alignSelf: 'baseline', translate: '0 0.12em' },
 });
 /** The wordmark: the doodle I, a little room, a hollow R, a small i and a hollow S. */
 export function Wordmark({ size = '40px' }: { size?: string }) {
   return (
     <span role="img" aria-label="Iris" {...stylex.props(wm.mark)} style={{ fontSize: size }}>
-      <span aria-hidden {...stylex.props(wm.i)}>I</span>
+      <svg aria-hidden viewBox="0 0 52 100" {...stylex.props(wm.i)}>
+        {/* The doodle I as the app draws it: a wide box in a heavy pen, its shadow a dark strip
+            down the left with the hatching just showing at its edge. */}
+        <path d="M3.4,8 C3,36 3.8,66 3.2,96 L13,96.4 L13.6,7.4 Z" fill="rgb(42 26 22)" />
+        <g stroke="rgb(42 26 22)" strokeWidth={1.8} strokeLinecap="round">
+          {[16, 30, 44, 58, 72, 86].map((y) => <path key={y} d={`M0.8,${y} L4.6,${y + 0.4}`} />)}
+        </g>
+        <path d="M13.4,5.4 C23.6,4.2 37,4.4 47.6,5.2 C48.4,34 47.8,66 48.2,94.8 C37.6,95.6 24.4,95.2 13.8,95.4 C13,66 14,34 13.4,5.4 Z" fill="none" stroke="rgb(42 26 22)" strokeWidth={7.6} strokeLinejoin="round" />
+      </svg>
       <HandWord word="RIS" size="0.9em" pattern={['hollow', 'small', 'hollow']} seed={4} pen="0.075em" />
     </span>
   );
@@ -148,20 +167,23 @@ export function GhostWord({ lines, tone, style }: { lines: [string, string]; ton
 const pt = stylex.create({
   title: {
     fontFamily: font.mono,
+    // As the app's PageTitle (DS.Font.display): weight 400, width 75, tracking −0.8 at 30pt,
+    // the lines close but clear.
     fontStretch: '75%',
-    fontWeight: 420,
+    fontWeight: 400,
     textTransform: 'uppercase',
     fontSize: 'clamp(40px, 6.4vw, 92px)',
     lineHeight: 0.98,
-    letterSpacing: '-0.01em',
+    letterSpacing: '-0.027em',
     color: ink.i12,
     margin: 0,
     position: 'relative',
     zIndex: 1,
   },
   line: { display: 'block' },
-  step: { paddingLeft: '1.1em' },
-  star: { fontStretch: '75%', fontWeight: 560, marginRight: '0.28em' },
+  // Each line steps right about an em, behind a ✻ set like the words (the app's 64pt at 66pt).
+  step: { paddingLeft: '0.97em' },
+  star: { fontStretch: '75%', fontWeight: 400, marginRight: '0.21em' },
   // A mono space is wider than the gap after the ✻: pull it back so both sides match.
   starInline: { marginLeft: '-0.3em' },
   small: { fontSize: 'clamp(34px, 4.4vw, 64px)' },

@@ -290,7 +290,4 @@ await sharp(src('readme/readme-hero-light.png'))
 
 writeFileSync(path.join(root, 'src/assets.json'), JSON.stringify(manifest, null, 2) + '\n');
 
-// The /02 video is a real recording of Iris in TextEdit now: scripts/record-demo.py, then
-// scripts/demo-video.mjs, into public/demo.
-
 console.log('assets done:', Object.keys(manifest).length, 'images');

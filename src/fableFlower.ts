@@ -5,9 +5,10 @@
 export const flower = {
   scale: 3.125,
   stem: 70,
-  sheet: { src: '/fable/flower.webp', width: 420, height: 353 },
+  sheet: { src: '/fable/flower.webp', width: 420, height: 426 },
   parts: {
-    'ground': { width: 109, height: 19, origin: [53, 9.8], angle: 0, sheet: [0, 334] },
+    'ground-back': { width: 270, height: 54, origin: [132.8, 49.8], angle: 0, sheet: [0, 334] },
+    'ground': { width: 242, height: 36, origin: [120, 19.6], angle: 0, sheet: [0, 390] },
     'leaf': { width: 49, height: 189, origin: [44.3, 184.8], angle: -10, sheet: [20, 0] },
     'stem': { width: 18, height: 233, origin: [8.8, 224.3], angle: 0, sheet: [0, 0] },
     'back-1': { width: 67, height: 113, origin: [35.4, 105.2], angle: -96, sheet: [262, 0] },
@@ -21,7 +22,7 @@ export const flower = {
     'fall-1': { width: 64, height: 132, origin: [28.7, 128.1], angle: -122, sheet: [129, 0] },
     'fall-3': { width: 56, height: 140, origin: [35.7, 136.1], angle: 122, sheet: [71, 0] },
     'fall-2': { width: 59, height: 97, origin: [31.7, 92.4], angle: 180, sheet: [0, 235] },
-    'throat': { width: 21, height: 20, origin: [10.8, 11.9], angle: 0, sheet: [345, 235] },
+    'throat': { width: 21, height: 20, origin: [10.8, 11.9], angle: 0, sheet: [244, 390] },
   },
 } as const;
 export type FlowerPart = keyof typeof flower.parts;

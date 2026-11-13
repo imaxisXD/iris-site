@@ -47,6 +47,8 @@ const RAMP = {
   outer: [INK.lilac, INK.blush, INK.pink, INK.hot],
   heart: [INK.magenta, INK.raspberry],
   soil: [INK.tan, INK.tan, INK.espresso],
+  // The earth's top, seen from above: a lighter tan at the far edge, deeper near the stem.
+  surface: [[212, 178, 146], INK.tan, [178, 138, 104]],
 };
 
 // ── The shapes, in the rig's points: a part grows from 0,0 up the page (−y) ────────────
@@ -68,7 +70,8 @@ const ellipse = (x, y, w, h) => `M${f(x)},${f(y + h / 2)}a${f(w / 2)},${f(h / 2)
 const STEM = 70;   // IrisRig.stem
 const petalBox = (l, w) => [-w - 9, -1.14 * l - 6, w + 9, 7];
 const PARTS = [
-  { name: 'ground', kind: 'ground', angle: 0, box: [-24, -6, 26, 6] },
+  { name: 'ground-back', kind: 'groundBack', angle: 0, box: [-46, -22, 48, 3] },
+  { name: 'ground', kind: 'ground', angle: 0, box: [-40, -13, 42, 8] },
   { name: 'leaf', kind: 'leaf', angle: -10, box: [-18, -62, 6, 4] },
   { name: 'stem', kind: 'stem', angle: 0, box: [-6, -STEM - 4, 6, 5] },
   { name: 'back-1', kind: 'petal', angle: -96, shape: fall(31, 10, 0), l: 31, w: 10, tone: [0.45, 0.85], ramp: RAMP.soft },
@@ -145,6 +148,26 @@ function room([x0, y0, x1, y1]) {
         }
       }
     },
+    /** Earth going back into the picture: dots as thick as `near` at y = `yNear`, thinning to
+     *  `far` at y = `yFar` (points), the ink paling the same way, a little uneven across. */
+    async fade(d, [near, far], [yNear, yFar], [inkNear, inkFar], seed) {
+      const a = await cover(fillOf(d));
+      const r = rng(seed), ph = [r() * 6, r() * 6, r() * 6];
+      for (let y = 0; y < h; y++) {
+        const py = y0 + (y + 0.5) / S;
+        const cy = mod(Math.floor(py / DOT), 16);
+        const t = Math.min(1, Math.max(0, (py - yNear) / (yFar - yNear)));
+        for (let x = 0; x < w; x++) {
+          const i = y * w + x;
+          if (a[i] < 0.5) continue;
+          const px = x0 + (x + 0.5) / S;
+          const wobble = 0.12 * Math.sin(px * 0.31 + ph[0]) + 0.08 * Math.sin(px * 0.77 + ph[1]) + 0.06 * Math.sin(px * 1.9 + py * 0.6 + ph[2]);
+          const density = Math.min(1, Math.max(0, near + (far - near) * t + wobble * t));
+          const cx = mod(Math.floor(px / DOT), 16);
+          if (density > FIELD[cy * 16 + cx]) out.set([...along([inkNear, inkFar], t), 1], i * 4);
+        }
+      }
+    },
     /** Pen.stroke: the heavy round line, gone over once more a hair off so it reads as pressed. */
     async pen(d, width) {
       lay(await cover(strokeOf(d, width)), INK.pen);
@@ -217,9 +240,52 @@ const printers = {
     await r.pen('M-3.5,-3Q-4,-28 -11.5,-44', 0.9);
     return r.done();
   },
-  /** The ground: the puddle the plant stands in, tan at its edges, espresso under the stem. */
+  /** The ground's top, going back into the picture behind the stem: no shape to it, earth
+   *  petering out unevenly, its dots thinning and paling with distance, crumbs beyond.
+   *  Printed before everything else; the front lip covers its near side. */
+  async groundBack(p) {
+    const r = room(p.box), rand = rng(37), f1 = (n) => n.toFixed(2);
+    const ph = [rand() * 6, rand() * 6, rand() * 6];
+    // The far edge, left to right: no curve to it, just earth petering out unevenly, reaching
+    // furthest back a little off the stem.
+    const edge = [];
+    for (let x = -42; x <= 44; x += 2) {
+      const reach = 7 + 4.5 * Math.exp(-((x - 4) ** 2) / 900) + 2.2 * Math.sin(x * 0.23 + ph[0]) + 1.4 * Math.sin(x * 0.61 + ph[1]) + (rand() - 0.5) * 2.6;
+      edge.push([x + (rand() - 0.5) * 1.2, -Math.max(2.5, reach * (1 - (Math.abs(x - 1) / 46) ** 3))]);
+    }
+    let d = 'M-42,1.5L' + edge.map(([x, y]) => `${f1(x)},${f1(y)}`).join('L') + 'L44,1.5Z';
+    // Clods and crumbs scattered beyond it, thinning out with distance.
+    for (let k = 0; k < 22; k++) {
+      const x = -38 + rand() * 80, back = 6 + rand() * 11, s = 0.5 + rand() * (2.4 - back * 0.08);
+      d += ellipse(x, -back, s * 1.6, s);
+    }
+    await r.fade(d, [1, 0.12], [0, -17], [INK.tan, [222, 196, 170]], 41);
+    return r.done();
+  },
+  /** The ground: a patch of earth the plant stands in, tan at its edges, espresso under the
+   *  stem. Wider than the rig's puddle and never round: its top edge is broken into clods and
+   *  dips, lopsided, a stray clump to one side, as dug earth is. */
   async ground(p) {
-    const r = room(p.box), puddle = ellipse(-17, -3, 34, 6) + ellipse(12.9, -0.9, 5, 3);
+    const r = room(p.box), rand = rng(29);
+    // The top edge, left to right: a wobble at two scales, lumpier toward the ends.
+    const top = [];
+    for (let i = 0; i <= 26; i++) {
+      const x = -36 + (i / 26) * 74, edge = Math.abs(x) / 37;
+      // A low mound, highest just off the stem, with clods along its top.
+      const y = -1.4 - (1 - edge * edge) * 3.4 - Math.max(0, Math.sin(i * 2.3 + 0.6)) * 1.2 + (rand() - 0.5) * 1.6 * (0.5 + edge);
+      top.push([x, y]);
+    }
+    // The bottom edge, right to left: flatter, a little ragged.
+    const bottom = [];
+    for (let i = 26; i >= 0; i--) {
+      const x = -36 + (i / 26) * 74;
+      bottom.push([x + (rand() - 0.5) * 1.2, 4.6 + (rand() - 0.5) * 1.8 - (Math.abs(x) > 30 ? 1.6 : 0)]);
+    }
+    const f1 = (n) => n.toFixed(2);
+    const outline = 'M' + [...top, ...bottom].map(([x, y]) => `${f1(x)},${f1(y)}`).join('L') + 'Z';
+    // A couple of clods thrown off to the sides.
+    const clods = ellipse(-38.5, 0.6, 3.6, 2.6) + ellipse(34, -0.4, 5, 3.2) + ellipse(-31, 3, 2.8, 1.8) + ellipse(24, -6.4, 2.6, 2);
+    const puddle = outline.replace(/^/, '') + clods;
     // fillScreen shrinks toward 0,0, which is the stem's foot: the middle prints deepest.
     await r.screen(puddle, [0, 0], [0.85, 1], RAMP.soil);
     return r.done();

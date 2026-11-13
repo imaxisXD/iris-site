@@ -106,8 +106,8 @@ const NOTE: { words: Word[]; tones: string[]; app: string } = {
  *           its right edge at the box's, as wide as fits clear of the words.
  *   phone   (760px and under) the same, as wide as the phone. */
 const PANEL = {
-  natural: { hints: 660, plain: 540, simple: 372 },   // px it is laid out at before scaling: the least its footer fits on one line
-  scale: { wide: 0.82, at1440: 0.82, at1280: 0.78 },
+  natural: { hints: 720, plain: 540, simple: 372 },   // px it is laid out at before scaling: the least its footer fits on one line (hints: Panel.tsx's PANEL_LAYOUT)
+  scale: { wide: 0.7, at1440: 0.82, at1280: 0.78 },
   // Its height as a share of its width, until the script has measured it (client.ts).
   ratio: { wide: 0.391, desk: 0.476, simple: 0.55 },
   // How far past the bloom's left edge (35.3cqw in the box) its right edge goes: its own
@@ -178,7 +178,7 @@ const FLOWER = {
  * and everything behind it slides past it. */
 const DEPTH = {
   swayMs: 9000,                                                              // one way across, every plane together
-  sun:    { scale: 0.86, ink: 0.84, pace: 1,    drift: 2,  look: [3, 2] },    // far away: moves least
+  sun:    { scale: 1,    ink: 1,    pace: 1,    drift: 2,  look: [3, 2] },    // far away, but in full ink, as the foot's: moves least
   far:    { scale: 0.72, ink: 0.78, pace: 1.35, drift: 5,  look: [7, 4] },    // butterflies behind the panel
   panel:  { scale: 1,    ink: 1,    pace: 1,    drift: 8,  look: [11, 6] },   // the panel, and whatever has landed on it
   near:   { scale: 1,    ink: 1,    pace: 0.82, drift: 8,  look: [11, 6] },   // the butterflies in front of the panel: they land on it, so they slide with it
@@ -189,12 +189,12 @@ type Plane = { scale: number; ink: number; pace: number; drift: number; look: nu
 
 /* The sun, in three prints: face, long rays, short glints */
 const SUN = {
-  size: 140,                        // before its plane's scale
-  // Its centre: up and to the right of the flower, in the open sky under the headline's line.
-  // Where the panel opens over the bloom it is above the panel's right end, and on a phone
-  // beside the bloom, to its right.
-  wide:   ['84.3cqw', '25.7cqw'],
-  narrow: ['88.6cqw', 'calc(var(--py) - var(--pw) * var(--pr) - 17cqw)'  ],        // under 1024px
+  size: 162,                        // before its plane's scale: as big as the foot's sun
+  halo: { color: 'rgb(170 200 240)', reach: '-55%', ink: 0.16 },   // the foot's soft pale-blue halo, at its daytime strength
+  // Its centre: on top, high above the flower in the open sky beside the headline, the highest
+  // thing in the garden. On a phone, beside the bloom, to its right.
+  wide:   ['57.6cqw', '-54.8cqw'],
+  narrow: ['57.6cqw', '-55cqw'],                                                            // under 1024px
   phone:  ['calc(100cqw - 22px)', '70cqw'],                                                // 760px and under
   notchMs: 375,                     // the rays move a sixteenth of a turn at a time
   beam: 1.2, beamMs: [150, 350],    // the rays as the garden wakes
@@ -223,7 +223,7 @@ type Butterfly = { name: string; dots: number; plane: 'far' | 'landing'; perched
 /* The landing butterflies' homes, in the order they are listed below. */
 const HOMES = [
   { home: [-725, 461], narrow: [-190, 468], phone: [-250, 440] },   // low on the left, under the Download button's lines
-  { home: [410, -384], narrow: [410, -384], phone: [-64, 551] },    // high on the right, in the sky beside the headline
+  { home: [595, 179],  narrow: [595, 179],  phone: [-64, 551] },    // up and to the right of the bloom, where the sun was
   { home: [617, 452],  narrow: [617, 452],  phone: [557, 392] },    // beside the bloom, to its right
 ];
 const BUTTERFLIES = {
@@ -586,6 +586,7 @@ export function Garden() {
       {/* 1. The sun, far away */}
       <Depth plane={DEPTH.sun}>
         <div {...stylex.props(g.layer, g.square)} style={{ left: `calc(var(--sx) - ${cq((SUN.size * DEPTH.sun.scale) / 2)})`, opacity: DEPTH.sun.ink, top: `calc(var(--sy) - ${cq((SUN.size * DEPTH.sun.scale) / 2)})`, width: cq(SUN.size * DEPTH.sun.scale), ...vars({ '--turn': ms(SUN.notchMs * 16) }) }}>
+          <div style={{ position: 'absolute', inset: SUN.halo.reach, borderRadius: '50%', opacity: SUN.halo.ink, backgroundImage: `radial-gradient(closest-side, ${SUN.halo.color}, transparent)` }} />
           <div {...stylex.props(g.fill, g.beam)} style={vars({ '--beam': SUN.beam, '--cheer': SUN.cheer })}>
             <div {...stylex.props(g.fill, g.tick)}>
               <Sprite name="sun-rays" dots={44} />
@@ -644,6 +645,8 @@ export function Garden() {
           aspectRatio: `${FLOWER.room.width} / ${FLOWER.room.height}`,
         }}
       >
+        {/* The far side of the earth, behind the stem and leaf: the ground lies back in depth. */}
+        <Part name="ground-back" at={[0, 0]} />
         <div {...stylex.props(g.fill, g.open)} style={{ ...on(FLOWER.leafAt), ...vars({ '--open': `${FLOWER.leafFlick}deg`, '--shut': `${FLOWER.leafFlick * FLOWER.shiverBack}deg`, '--swell': 1, '--at': '0ms' }) }}>
           <div {...stylex.props(g.fill, g.swing)} style={{ ...on(FLOWER.leafAt), ...swings(FLOWER.leaf.deg, FLOWER.leaf.ms, FLOWER.leaf.lagMs) }}>
             <Part name="leaf" at={FLOWER.leafAt} />

@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import assets from './assets.json';
 import { Page } from './Page';
 
-const title = 'Iris: fix your grammar, keep your voice';
+const title = 'Iris: fix your grammar, change your tone';
 const description =
   'Iris fixes your grammar and changes your tone in any app on your Mac. Press ⌃ ⌥ G in a text box, read the fix, press Return. Free, open source, and it never sends your text anywhere.';
 

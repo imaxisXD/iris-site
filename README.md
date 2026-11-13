@@ -37,19 +37,24 @@ the code.
   shape's ink is Iris's `PrintedInk` screen, with its lighter touch on dark ink).
   `scripts/sprites.mjs` prints the garden's sun, butterflies and petals the way Iris prints
   its sprites (`RisoArt.print`). `scripts/art.mjs` prints the backdrops behind the panels
-  (flat riso plates with Iris's flower and ghost words) and the desktop for the recording;
+  (flat riso plates with Iris's flower and ghost words) and the menu bar Mac's desktop;
   `scripts/app-icons.mjs` draws the apps the page names (Slack, Mail, Notes…) in Iris's pen
   and riso, in their own colours. The results are committed, so a build never needs Iris.
-- **The How it works video is a real recording**: the installed Iris, its real model, in
-  TextEdit, on the printed desk from `scripts/art.mjs`. `scripts/record-demo.py` takes it
-  (it waits until nobody has touched the Mac for a minute, uses a scratch document, and
-  puts the Mac back as it found it: light or dark, the desktop picture, hidden apps, the app
-  in front, however it ends); `scripts/demo-video.mjs` trims, crops and encodes it into
-  `public/demo` (about 600 KB, with a half-size still for phones).
-- **The foot** (`src/Footer.tsx`) is Iris's pink foot: the sign-off, written in a hurry,
-  proofread by Iris as you arrive (fixes written in above, slips struck, then dropped into
-  place, a tick and a butterfly at the end). Every word sits in a slot as wide as its longer
-  version, so the foot never changes height.
+- **How it works is drawn, not recorded** (`src/Desk.tsx`): the top left corner of a Mac on a
+  torn pink sheet, its desktop a green plate with loops and brush-stroke flowers. Slack, Mail,
+  Messages, Notes, Chrome and Safari take turns, simply drawn, each with a made-up reply in its
+  box: the shortcut goes down, Iris's own flower grows by the box, the shared panel
+  (`src/Panel.tsx`) marks the fixes, and Return puts them in. Every name and sentence is made
+  up. Its storyboard is at the top of the file; `client.ts` runs the clock (only while it's on
+  screen; Pause holds it), zooms its fixed canvas to the screen, follows the text box on a
+  phone, and makes the steps beside it chapters; `global.css` turns the beats into motion.
+  Under Reduce Motion it holds Iris's panel open in Slack.
+- **The foot** (`src/Footer.tsx`) waits under the page, pinned to the bottom of the window;
+  at the end the page lifts off it like a sheet, and it comes forward out of the page's
+  shade. It's the sky with the IRIS wordmark, big and cut off by the page's edge, drawn as
+  the app draws it (`IrisLogo`), and a torn-off back-cover stub with the keys. As it comes into view the sun
+  climbs out from behind the S and three butterflies land on the letters; over the foot the
+  pointer is a butterfly. ⌃ ⌥ G there plays it again. Its height never changes.
 - **Cloudflare Workers, static assets only** (`wrangler.jsonc`). Caching rules are in
   `public/_headers`, and `/download` and `/code` redirect via `public/_redirects`.
 
@@ -69,9 +74,8 @@ pnpm typecheck
 pnpm assets         # redo public/ from Iris (needs `swift build` in ../grammly-alt, or IRIS=…)
 pnpm sprites        # reprint the garden's sprites into public/sprite
 node scripts/fable-flower.mjs   # reprint the cover flower's parts from Iris's rig
-node scripts/art.mjs            # reprint the backdrops and the recording's desk
+node scripts/art.mjs            # reprint the backdrops and the menu bar Mac's desktop
 node scripts/app-icons.mjs      # redraw the app icons
-pnpm demo           # record /02 again: the real Iris in TextEdit (takes the screen for ~30 s)
 pnpm deploy         # build and `wrangler deploy` (needs `wrangler login` first)
 ```
 
@@ -82,7 +86,7 @@ pnpm deploy         # build and `wrangler deploy` (needs `wrangler login` first)
 | Section | What's there |
 |---|---|
 | Cover | The sky plate, the stair headline, the garden where Iris fixes a note |
-| How it works | Press, read, replace; a real recording of Iris in TextEdit |
+| How it works | Press, read, replace; a Mac drawn on the page, Iris fixing a reply in six apps in turn |
 | Fix and tones | The panel on a collage of printed sheets; Tab through the tones |
 | Fix | Fixes, not rewrites: what Iris leaves alone |
 | Privacy | The pink plate: the model runs on your Mac |
@@ -90,7 +94,7 @@ pnpm deploy         # build and `wrangler deploy` (needs `wrangler login` first)
 | Menu bar | A Mac's corner with Iris's menu open under its flower; setup in three steps |
 | Install | Four steps, and why macOS asks |
 | What's new | Each version an issue on a shelf, from Iris's Changelog.md |
-| Foot | The sign-off Iris proofreads, download, links, who made it |
+| Foot | Go write something: download, links, and IRIS with the sun and butterflies on it |
 
 The zine itself (`design-reference/` in the Iris checkout) is someone else's work and never
 goes in this repo or on the site.

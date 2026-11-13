@@ -10,7 +10,6 @@
     "shoot": "node scripts/shoot.mjs",
     "garden": "node scripts/garden.mjs",
     "sprites": "node scripts/sprites.mjs",
-    "demo": "python3 -I scripts/record-demo.py && node scripts/demo-video.mjs",
     "typecheck": "tsc --noEmit",
     "deploy": "node scripts/build.mjs && wrangler deploy"
   },
