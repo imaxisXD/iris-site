@@ -58,6 +58,15 @@ const html = render({ css, script, origin: (process.env.SITE_URL ?? '').replace(
 mkdirSync(dist, { recursive: true });
 cpSync(path.join(root, 'public'), dist, { recursive: true });
 writeFileSync(path.join(dist, 'index.html'), html);
+// With a known address, tell search engines where the one page is.
+const origin = (process.env.SITE_URL ?? '').replace(/\/$/, '');
+if (origin) {
+  writeFileSync(
+    path.join(dist, 'sitemap.xml'),
+    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${origin}/</loc></url>\n</urlset>\n`,
+  );
+  writeFileSync(path.join(dist, 'robots.txt'), `${readFileSync(path.join(root, 'public/robots.txt'), 'utf8').trimEnd()}\nSitemap: ${origin}/sitemap.xml\n`);
+}
 rmSync(ssr, { recursive: true, force: true });
 
 const kb = (n) => `${(n / 1024).toFixed(1)} KB`;

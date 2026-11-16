@@ -6,6 +6,9 @@ import { Page } from './Page';
 const title = 'Iris: fix your grammar, change your tone';
 const description =
   'Iris fixes your grammar and changes your tone in any app on your Mac. Press ⌃ ⌥ G in a text box, read the fix, press Return. Free, open source, and it never sends your text anywhere.';
+// What the share card shows, for people who can't see it.
+const cardAlt =
+  'Iris: fix your grammar, change your tone. Iris’s panel fixes “cant”, “tmrw” and “their” in a note, under a sun and butterflies.';
 
 /** `origin` is where the site lives (SITE_URL at build time), for the canonical link and the
  *  share card, which need full addresses. */
@@ -23,15 +26,25 @@ export function render({ css, script, origin = '' }: { css: string; script: stri
 <meta name="theme-color" content="#78A2DC">
 <meta name="color-scheme" content="light">
 ${origin ? `<link rel="canonical" href="${origin}/">` : ''}
-<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Iris">
+${origin ? `<meta property="og:url" content="${origin}/">` : ''}
+<meta property="og:locale" content="en_US">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
 <meta property="og:image" content="${origin}/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:alt" content="${cardAlt}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${title}">
+<meta name="twitter:description" content="${description}">
+<meta name="twitter:image" content="${origin}/og.jpg">
+<meta name="twitter:image:alt" content="${cardAlt}">
 ${fonts.map((f) => `<link rel="preload" href="/fonts/${f}.woff2" as="font" type="font/woff2" crossorigin>`).join('\n')}
 <link rel="preload" as="image" href="/fable/flower.webp" fetchpriority="high">
 <link rel="preload" href="/tex/screen.png" as="image">
