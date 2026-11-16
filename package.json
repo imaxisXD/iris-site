@@ -1,6 +1,7 @@
 {
   "name": "iris-site",
   "private": true,
+  "packageManager": "pnpm@12.2.1",
   "type": "module",
   "scripts": {
     "assets": "node scripts/assets.mjs",

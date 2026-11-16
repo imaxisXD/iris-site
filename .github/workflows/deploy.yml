@@ -1,0 +1,56 @@
+# Builds the page, uses it in headless Chromium (scripts/check.mjs), and on main puts it live on
+# the iris-site Worker. A pull request gets the same build and checks, and is never deployed.
+name: Check and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# One deploy at a time; a newer push to main waits rather than racing an older one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  WRANGLER_SEND_METRICS: 'false'
+
+jobs:
+  site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
+
+      - name: Use the page in headless Chromium
+        run: |
+          pnpm exec playwright-core install --with-deps --only-shell chromium
+          pnpm exec wrangler dev --port 8788 --ip 127.0.0.1 > wrangler-dev.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8788/ > /dev/null && break; sleep 1; done
+          pnpm check
+
+      - name: Deploy to the Worker
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: pnpm exec wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

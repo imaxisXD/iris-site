@@ -89,8 +89,16 @@ pnpm sprites        # reprint the garden's sprites into public/sprite
 node scripts/fable-flower.mjs   # reprint the cover flower's parts from Iris's rig
 node scripts/art.mjs            # reprint the backdrops and the menu bar Mac's desktop
 node scripts/app-icons.mjs      # redraw the app icons
-pnpm deploy         # build and `wrangler deploy` (needs `wrangler login` first)
+pnpm deploy         # by hand: build and `wrangler deploy` (needs `wrangler login` first)
 ```
+
+## Deploying
+
+Every push to `main` deploys itself (`.github/workflows/deploy.yml`): GitHub Actions installs,
+typechecks, builds, serves the page with `wrangler dev` and runs `pnpm check` against it in
+headless Chromium, and only then runs `wrangler deploy` to the `iris-site` Worker. A pull request
+runs the same build and checks without deploying. The workflow needs two repository secrets,
+`CLOUDFLARE_API_TOKEN` (the "Edit Cloudflare Workers" template) and `CLOUDFLARE_ACCOUNT_ID`.
 
 `check` and `shoot` use the Chromium that Playwright keeps in `~/Library/Caches/ms-playwright`.
 

@@ -2,14 +2,17 @@
 // something they'd touch doesn't work.
 //   node scripts/check.mjs [url]
 import { chromium } from 'playwright-core';
-import { readdirSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
 const url = process.argv[2] ?? 'http://127.0.0.1:8788/';
+// On a Mac, the newest headless shell Playwright keeps; anywhere else (CI) the one
+// `playwright-core install --only-shell chromium` put where Playwright looks by itself.
 const cache = path.join(homedir(), 'Library/Caches/ms-playwright');
-const shell = readdirSync(cache).filter((d) => d.startsWith('chromium_headless_shell')).sort().pop();
-const browser = await chromium.launch({ executablePath: path.join(cache, shell, 'chrome-headless-shell-mac-arm64/chrome-headless-shell') });
+const shell = existsSync(cache) ? readdirSync(cache).filter((d) => d.startsWith('chromium_headless_shell')).sort().pop() : undefined;
+const executablePath = shell ? path.join(cache, shell, 'chrome-headless-shell-mac-arm64/chrome-headless-shell') : undefined;
+const browser = await chromium.launch({ executablePath });
 let failed = 0;
 const ok = (cond, what) => {
   console.log(`${cond ? '✓' : '✗'} ${what}`);
