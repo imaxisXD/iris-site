@@ -19,12 +19,17 @@ the code.
   agent): Iris's flower, built part by part from the app's own rig
   (`scripts/fable-flower.mjs` ports `IrisRig.swift`), the sun and four butterflies, in depth
   planes. ⌃ ⌥ G goes down, Iris's panel pops out of the bloom, three butterflies each fly
-  from their own spot to one of its fixes, Return puts the fix in. `TIMING` and one config
+  from their own spot to one of its fixes, and Return finishes as the app does
+  (`IrisRig.swift`'s "Done"): the panel goes at once, the flower flicks its front petal onto
+  the text, where it lands as a stamp with a tick, and Iris's note says "replaced", Undo
+  with ⌘ Z. `TIMING` and one config
   per part sit at the top, and the build fails if a keyframe drifts from them. It plays
   three times and settles, pauses while scrolled away, and holds still under Reduce Motion.
 - **One panel for the whole site** (`src/Panel.tsx`): the app's panel (`PanelView.swift`),
   tone names, the marked message, the keys, "into" an app on tape with its icon, Replace.
-  Section 03, the cover and the ⌃ ⌥ G panel all use it.
+  Section 03, the cover and the ⌃ ⌥ G panel all use it. Where its footer would wrap it drops
+  its key hints, and on a phone section 03's is laid out wider and zoomed down (`client.ts`),
+  so its tones and its footer each stay on one line, as the app's.
 - **⌃ ⌥ G works on the page.** The keys go down and the panel opens on the paragraph you're
   reading: Fix says "looks good", Tab tries hand-written tones (`content.ts`), Return puts
   one on the page, ⌘Z takes it back. With Iris installed, Iris takes the keys instead.

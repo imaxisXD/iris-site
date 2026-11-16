@@ -194,6 +194,7 @@ const s = stylex.create({
   // Under the title: what Iris does with your words on the left, the figures on the right.
   privateBody: { display: 'grid', gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 1fr)', gap: '28px clamp(32px, 6vw, 96px)', alignItems: 'start', marginTop: 'clamp(36px, 5vw, 64px)', position: 'relative', zIndex: 1, [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
   figures: { display: 'flex', gap: 'clamp(20px, 3vw, 44px)', flexWrap: 'wrap', marginTop: 8 },
+  privateGhost: { display: { default: 'contents', [MOBILE]: 'none' } },
   // The privacy stickers: paper slips stuck on the pink, each a drawing and a word.
   stickers: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 'clamp(12px, 1.6vw, 18px)', maxWidth: 440, [MOBILE]: { gap: 12 } },
   sticker: {
@@ -289,13 +290,14 @@ const s = stylex.create({
   dragNote: { display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: font.brush, fontSize: 20, lineHeight: 1, color: ink.i12, rotate: '-4deg', marginTop: -18 },
   macBtn: { position: 'relative', display: 'inline-flex', alignItems: 'center', paddingBlock: 4, paddingInline: 10, fontSize: 11, color: ink.i12, whiteSpace: 'nowrap', isolation: 'isolate' },
   macRing: { position: 'absolute', inset: '-55% -22%', zIndex: -1, opacity: 0.9 },
-  // The dialog, and System Settings behind it, lower down and to the right.
+  // The dialog, and System Settings behind it, lower down and to the right. On a phone the
+  // collage is the page's width, so both take more of it and their lines stop wrapping early.
   askStack: { display: 'grid', width: '100%', justifyItems: 'start' },
-  dialog: { width: '64%', minWidth: 210, display: 'grid', justifyItems: 'center', gap: 6, padding: '14px 14px 16px', borderRadius: 10, textAlign: 'center', rotate: '-1.5deg', zIndex: 1 },
+  dialog: { width: { default: '64%', [MOBILE]: '84%' }, minWidth: 210, display: 'grid', justifyItems: 'center', gap: 6, padding: '14px 14px 16px', borderRadius: 10, textAlign: 'center', rotate: '-1.5deg', zIndex: 1 },
   dialogTitle: { position: 'relative', fontSize: 12.5, fontWeight: 600, color: ink.i12 },
   dialogLine: { position: 'relative', fontSize: 10.5, lineHeight: 1.45, color: ink.i10 },
   dialogButtons: { position: 'relative', display: 'flex', gap: 12, marginTop: 8 },
-  askSettings: { width: '86%', justifySelf: 'end', marginTop: -8 },
+  askSettings: { width: { default: '86%', [MOBILE]: '100%' }, justifySelf: 'end', marginTop: -8 },
   secLabel: { fontSize: 11.5, fontWeight: 600, color: ink.i12, paddingTop: 10 },
   secRow: { display: 'grid', justifyItems: 'start', gap: 10, paddingBottom: 6 },
 
@@ -482,6 +484,10 @@ function NoteArrow({ seed }: { seed: number }) {
   );
 }
 
+/** How wide section 03's panel is laid out on a phone (px), then zoomed to fit: the most its five
+ *  tone names need on one line, with Professional chosen, at the phone's tighter gap. */
+const PHONE_PANEL = 440;
+
 function Tones() {
   return (
     <section id="tones" aria-labelledby="tones-title" {...stylex.props(s.spread)}>
@@ -498,16 +504,20 @@ function Tones() {
         </div>
         <div {...stylex.props(s.panelStage)}>
           <PanelScene>
-            <div style={{ position: 'relative' }}>
+            {/* Where its footer would wrap the panel drops its key hints, and on a phone it's laid
+                out PHONE_PANEL wide and zoomed to the room (client.ts), so its tones and its
+                footer each keep to one line, as the app's do. */}
+            <div style={{ position: 'relative' }} data-phone-panel={PHONE_PANEL}>
             <span {...stylex.props(s.note)} aria-hidden>
               click a tone to try it
               <HandArrow width={46} height={40} flip seed={9} />
             </span>
+            <div>
             <Panel
               tabs={tones.map((t) => t.name)}
               tab={(i) => ({ id: `tab-${i}`, 'aria-controls': `tone-${i}`, 'data-tab': i })}
               app={{ name: 'Slack', icon: 'slack' }}
-              hooks={{ root: { 'data-panel': true }, next: { 'data-next': true }, replaceWrap: { 'data-replace-wrap': true }, replace: { 'data-replace': '' } }}
+              hooks={{ root: { 'data-panel': true }, keys: { 'data-panel-keys': true }, next: { 'data-next': true }, replaceWrap: { 'data-replace-wrap': true }, replace: { 'data-replace': '' } }}
               after={
                 <>
                   <span role="status" data-said {...stylex.props(s.srOnly)} />
@@ -528,6 +538,7 @@ function Tones() {
                 ))}
               </MessageStack>
             </Panel>
+            </div>
           </div>
           </PanelScene>
           {/* Margin notes, as an editor writes round a proof: each points at the part of the
@@ -733,8 +744,11 @@ function Private() {
   return (
     <section id="private" aria-labelledby="private-title" {...stylex.props(s.pinkPlate)}>
       <Pattern kind="ripples" color="rgb(250 190 220)" seed={51} at={[1, 0]} count={7} weight={0.8} />
-      {/* PRIVATE up the left edge, reading bottom to top, like the VOICE scrap in 03. */}
+      {/* PRIVATE up the left edge, reading bottom to top, like the VOICE scrap in 03. On a
+          phone there's no margin for it: it would lie in pieces under the words and stickers. */}
+      <span {...stylex.props(s.privateGhost)}>
       <GhostWord lines={['PRIVATE', '']} tone="pink" style={{ backgroundImage: 'url(/tex/streaks.png), linear-gradient(rgb(255 252 249), rgb(255 252 249))', opacity: 0.85, left: 'calc(-0.08em + 5px)', top: '50%', fontSize: 'clamp(110px, 13vw, 200px)', transformOrigin: '0 0', transform: 'rotate(-90deg) translate(-50%, 0)' }} />
+      </span>
       <div {...stylex.props(s.wrap)} style={{ paddingBlock: 'clamp(64px, 9vw, 120px)' }}>
         <PageTitle id="private-title" lines={['Your words stay', 'on your Mac']} xstyle={s.onPink} />
         <div {...stylex.props(s.privateBody)}>

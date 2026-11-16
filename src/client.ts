@@ -191,6 +191,29 @@ for (const box of $$<HTMLElement>('[data-fit-panel]')) {
   fit();
 }
 
+// ── Section 03's panel where the room is short (Page.tsx, Tones) ─────────────────────
+// Where its footer would wrap, it drops its key hints (`data-compact`), so "into" the app and
+// Replace keep to one line, as the app's footer does; on a phone, where even its tone names
+// wouldn't fit as they are, it's laid out `data-phone-panel` wide and zoomed to the room
+// (`data-zoomed`).
+for (const box of $$<HTMLElement>('[data-phone-panel]')) {
+  const inner = box.querySelector<HTMLElement>(':scope > div')!, layout = Number(box.dataset.phonePanel);
+  const keys = box.querySelector<HTMLElement>('[data-panel-keys]')!, replace = box.querySelector<HTMLElement>('[data-replace-wrap]')!;
+  const fit = () => {
+    const room = box.clientWidth;
+    if (!room) return;
+    const zoomed = room < layout + 24;
+    box.toggleAttribute('data-zoomed', zoomed);
+    inner.style.width = zoomed ? `${layout}px` : '';
+    inner.style.zoom = zoomed ? String(Math.min(1, room / layout)) : '';
+    // With its hints, is the footer two rows (the keys above Replace)?
+    box.removeAttribute('data-compact');
+    box.toggleAttribute('data-compact', keys.getBoundingClientRect().bottom <= replace.getBoundingClientRect().top + 1);
+  };
+  new ResizeObserver(fit).observe(box);
+  fit();
+}
+
 // ── TRY AGAIN in a panel (Panel.tsx) ──────────────────────────────────────────────────
 // As ⌘R does in the app, it asks for the tone again: the marks wipe off as Iris thinks, then
 // swipe back on one after another (the storyboard above). (⌘R itself stays the browser's.)

@@ -146,6 +146,11 @@
 /* The ⌃ ⌥ G panel on a narrow window: no key hints (client.ts). */
 [data-press][data-compact] [data-press-keys] { display: none !important; }
 [data-fit-panel][data-compact] [data-panel-notice] { display: none; }
+/* Section 03's panel where the room is short (client.ts): no key hints; on a phone, zoomed down,
+   its tones a little closer and its message at the size the app sets it. */
+[data-phone-panel][data-compact] [data-panel-keys] { display: none !important; }
+[data-phone-panel][data-zoomed] [role="tablist"] { column-gap: 10px; flex-wrap: nowrap; }
+[data-phone-panel][data-zoomed] [data-panel] p { font-size: 16px; }
 
 /* A pen link (parts.tsx, PenLink) under the pointer or the keyboard: its brush ribbon swells up
    behind the words like a marker swipe (its stroke fills the middle 40% of its box, so the box

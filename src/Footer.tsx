@@ -203,7 +203,9 @@ const f = stylex.create({
     [MOBILE]: { gridTemplateColumns: 'minmax(0, 1fr)' },
   },
   // The last call.
-  call: { display: 'flex', flexDirection: 'column', gap: 26, alignItems: 'flex-start', paddingBottom: 'clamp(28px, 3vw, 40px)' },
+  // Above the wordmark's layers, so on a phone, where the wordmark sits under it, the sun's rings
+  // go behind the stub instead of being drawn over its words.
+  call: { position: 'relative', zIndex: 3, display: 'flex', flexDirection: 'column', gap: 26, alignItems: 'flex-start', paddingBottom: 'clamp(28px, 3vw, 40px)' },
   cta: { display: 'flex', alignItems: 'center', gap: '14px 22px', flexWrap: 'wrap' },
   ctaMeta: { fontSize: 12.5, lineHeight: 1.5 },
   links: { display: 'flex', flexWrap: 'wrap', gap: '12px 26px', alignItems: 'center' },

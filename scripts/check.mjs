@@ -227,6 +227,82 @@ for (const reduce of [false, true]) {
   ok(over.length === 0, `at 320px nothing runs past the edge${over.length ? ': ' + over.slice(0, 3).join(', ') : ''}`);
   await page.close();
 }
+// The cover's Return, as the app finishes a fix (Garden.tsx, DONE): the panel goes at once, the
+// flower's fall lands as a stamp with a tick, and Iris's note says "replaced", Undo with ⌘Z.
+// Every part of the garden runs on one 12s clock, so seeking them all to a time shows that beat.
+{
+  const page = await browser.newPage({ viewport: { width: 1280, height: 860 } });
+  await page.goto(url, { waitUntil: 'networkidle' });
+  const at = (ms) =>
+    page.evaluate((ms) => {
+      const g = document.querySelector('[data-garden]');
+      for (const a of g.getAnimations({ subtree: true })) (a.pause(), (a.currentTime = ms));
+      const cs = (sel) => getComputedStyle(g.querySelector(sel));
+      return { panel: +cs('[inert]').opacity, note: +cs('[data-done-note]').opacity, stamp: cs('[data-done-stamp]').scale, words: g.querySelector('[data-done-note]').textContent };
+    }, ms);
+  const open = await at(6000), done = await at(8700), later = await at(11500), rest = await at(0);
+  ok(open.panel === 1 && open.note === 0 && rest.stamp === '0', 'the cover shows Iris\'s panel, and no note or stamp before Return');
+  ok(done.panel === 0 && done.note === 1 && Math.abs(parseFloat(done.stamp) - 1) < 0.05, `after Return the panel is gone, the stamp is down and Iris's note is up (stamp ${done.stamp})`);
+  ok(/replaced/.test(done.words) && /Undo with/.test(done.words), `and the note says what the app's does ("${done.words.replace(/\s+/g, ' ').trim()}")`);
+  ok(later.note === 0 && later.stamp === '0', 'and both are gone before the garden comes round again');
+  await page.close();
+}
+
+// On phones and narrow windows Iris's panel in section 03 keeps its tone names on one line and
+// its footer on one line, as the app's, with every tone chosen; and on a phone its message is
+// still big enough to read.
+for (const width of [320, 390, 520, 820]) {
+  const page = await browser.newPage({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
+  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(200);
+  const r = await page.evaluate(() => {
+    const p = document.querySelector('#tones [data-panel]');
+    const tabs = [...p.querySelectorAll('[role="tab"]')];
+    /** Whether any of `els` starts below where the highest of them ends: a second row. */
+    const twoRows = (els) => {
+      const v = els.filter((e) => e.getBoundingClientRect().width > 0).map((e) => e.getBoundingClientRect());
+      const end = Math.min(...v.map((b) => b.bottom));
+      return v.some((b) => b.top >= end - 1);
+    };
+    let tonesWrap = false;
+    for (const t of tabs) (t.click(), (tonesWrap ||= twoRows(tabs)));
+    const foot = [...p.querySelectorAll('[data-panel-keys] button, [data-replace-wrap]')];
+    const into = p.querySelector('[data-replace-wrap]').parentElement.firstElementChild; // "into" and the app's tape
+    const box = p.closest('[data-phone-panel]');
+    const msg = p.querySelector('[role="tabpanel"]:not([hidden])');
+    return { tonesWrap, footWraps: twoRows([...foot, into]), text: parseFloat(getComputedStyle(msg).fontSize) * (Number(box.querySelector(':scope > div').style.zoom) || 1) };
+  });
+  ok(!r.tonesWrap && !r.footWraps, `at ${width}px section 03's panel keeps its tones and its footer each on one line`);
+  if (width >= 360) ok(r.text >= 11.5, `and its message reads at ${r.text.toFixed(1)}px`);
+  await page.close();
+}
+
+// On a phone the foot's stub lies over the sun's rings, not under them.
+{
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForTimeout(300);
+  const covered = (undo) => page.evaluate((undo) => {
+    const word = [...document.querySelectorAll('footer span')].find((e) => e.textContent === 'Made by Abhishek');
+    const stub = word.parentElement.parentElement;
+    // The wordmark's layers let the pointer through, so let them catch it here to find what's on top.
+    for (const el of document.querySelectorAll('footer [aria-hidden] *')) el.style.pointerEvents = 'auto';
+    if (undo) stub.parentElement.style.setProperty('z-index', 'auto');
+    const b = stub.getBoundingClientRect();
+    let over = 0;
+    for (let x = 0.04; x < 1; x += 0.04)
+      for (let y = 0.1; y < 1; y += 0.2) {
+        const h = document.elementFromPoint(b.left + b.width * x, b.top + b.height * y);
+        if (h && !stub.contains(h)) over++;
+      }
+    if (undo) stub.parentElement.style.removeProperty('z-index');
+    return over > 0;
+  }, undo);
+  ok(!(await covered(false)), 'on a phone nothing at the foot is drawn over "Made by Abhishek"');
+  ok(await covered(true), 'and this check sees the rings when they are on top');
+  await page.close();
+}
 await browser.close();
 if (failed) {
   console.log(`\n${failed} check(s) failed`);

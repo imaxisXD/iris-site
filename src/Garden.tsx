@@ -6,8 +6,10 @@
 // keys go down, the flower perks up, the sun beams, and Iris's panel pops out of the bloom,
 // drawn as the app draws it (PanelView.swift, and section 03 of this page). Three butterflies
 // leave the bloom and each lands on one of Iris's words; as it lands, the pink is swiped on
-// under that word. They go back, the fix is read, Return: Replace takes the press, the panel
-// folds back into the bloom, and the garden is pleased about it.
+// under that word. They go back, the fix is read, Return: Replace takes the press and Iris
+// finishes as the app does (PanelController.close(immediately:), IrisRig's "Done"): the panel
+// goes at once, the flower nods and flicks its front fall onto the text, where it lands as a
+// stamp with a tick, and Iris's note says "replaced", Undo with ⌘ Z. The garden is pleased.
 //
 // The flower is the app's own, printed part by part (scripts/fable-flower.mjs ports its rig,
 // IrisRig.swift): three falls, two more behind, five standards, the heart, the throat, the
@@ -51,10 +53,20 @@
  *           (they sit on the three fixes for 2880ms)
  *  6500ms   they lift off again in the same order, each back to its own home (700ms)
  *  7900ms   Return: Replace takes the press (scale 0.94)
- *  8050ms   the panel folds back into the bloom, 1 → 0.15; the head rocks the
- *           other way and settles, the petals open, overshoot shut and settle,
- *           the same wave again; the sun's rays kick 1 → 1.28 → 1, its face
- *           hops, its glints blink twice; every butterfly jumps, 250ms apart
+ *  8050ms   the panel goes at once (100ms), as the app's does so the keys reach
+ *           the app; the head nods the other way and settles; the sun's rays
+ *           kick 1 → 1.28 → 1, its face hops, its glints blink twice; every
+ *           butterfly jumps, 250ms apart
+ *  8110ms   the front fall leaves the bloom and flies one high arc with a full
+ *           turn (340ms), a dotted pen trail behind it
+ *  8200ms   Iris's note by the text: ✓ replaced, Undo with ⌘ Z (in 150ms, held
+ *           2400ms, out 120ms, the app's Toast)
+ *  8450ms   the fall lands left of the flower, by the text, as a stamp with a
+ *           tick: 0.55 → 1.1 → 1, throwing a pink ring with ink spokes (220ms),
+ *           its pink snapping into register; the trail is rubbed out (140ms)
+ *  9050ms   the stamp pops away (140ms)
+ *  9850ms   the cover's flower stays (the app's folds and sinks): its front fall
+ *           grows back out of the heart (320ms)
  * 12000ms   the loop comes round. After three loops it settles: the garden at rest,
  *           no panel, nothing flying, every part held still (client.ts)
  * ───────────────────────────────────────────────────────── */
@@ -63,6 +75,8 @@ import type React from 'react';
 import { flower } from './fableFlower';
 import type { FlowerPart } from './fableFlower';
 import { Panel, panel } from './Panel';
+import { KeyRow } from './parts';
+import { HandTick, markerMask, Printed, seedOf, svgUrl } from './pen';
 import { font, ink } from './tokens.stylex';
 
 const TIMING = {
@@ -76,7 +90,7 @@ const TIMING = {
   flyHome:     6500,   // the first lifts off again: the last has been down 2880ms
   loops:       3,      // rounds played before the garden settles at rest for good (client.ts)
   returnKey:   7900,   // Replace takes the press
-  replace:     8050,   // the panel folds away, the garden is pleased
+  replace:     8050,   // the panel goes, the flower stamps the fix, Iris says "replaced" (DONE)
 };
 
 /* The garden box, 700 × 720 in its own units, the flower in the same
@@ -122,7 +136,7 @@ const PANEL = {
   from: 0.15, over: 1.02,           // its scale as it pops: from, past, then 1
   popMs: [260, 140],                // out past full size, then settling
   swipeMs: 250,                     // a marker swiped on
-  foldMs: 220,                      // folding back into the bloom
+  closeMs: 100,                     // gone at Return, as the app's (it hides as it pastes)
   pressScale: 0.94, pressMs: [80, 70],
 };
 
@@ -148,9 +162,7 @@ const FLOWER = {
   openGap: 40,                      // between one ring of petals opening and the next
   leafFlick: -6,                    // the leaf, as the petals open
   leanDeg: -4, leanMs: 400,         // the head tipped back to the panel while it is out
-  rockDeg: 5, rockMs: [180, 420],   // and rocked the other way as the panel folds in
-  shiverMs: [150, 250, 250],        // the petals at Return: open, past shut, settled
-  shiverBack: -0.5,                 // how far past shut, as a share of `open`
+  rockDeg: 5, rockMs: [180, 420],   // and nodded the other way at Return, as the app's does
   // The bloom, back to front as the rig draws it. Each petal: how far it opens (degrees, away
   // from the top of the fan; the two that point straight up and down swell instead), its
   // place in the wave (the front fall first, the top standard last), and its own breathing.
@@ -168,6 +180,27 @@ const FLOWER = {
     { part: 'fall-2',     open: 0,  swell: 1.06, ring: 0, breathe: 1.4, ms: 2000 },
     { part: 'throat' },
   ] as ({ part: 'heart' | 'throat' } | { part: Exclude<FlowerPart, 'heart' | 'throat'>; open: number; swell: number; ring: number; breathe: number; ms: number })[],
+};
+
+/* Return, as the app finishes a fix (IrisRig's "Done", replaced, the full show). Places are the
+ * rig's points from the flower's foot, times ms after `TIMING.replace`. The front fall tips off
+ * the bloom and flies one parabola, y = from + (to − from)·f² − lift·f(1 − f), turning once and
+ * shrinking a little, a dotted pen trail behind it (the last half of the way it has come); it
+ * lands as a stamp, rubbing the trail out, and the stamp overshoots, throws a pink ring with ink
+ * spokes and snaps into register, holds and pops away. The app's flower then folds and sinks;
+ * the cover's stays and grows its fall back. Iris's note is the app's Toast for a replace. */
+const DONE = {
+  flyFrom: 60, flyMs: 340,
+  from: [0, -flower.stem * FLOWER.stretch + 16],   // the front fall, hanging under the head
+  stampAt: [-64, -19],                            // the app's (reach.right + 22, −19), mirrored: the cover's text is left of the flower
+  lift: 360,
+  spin: 360, shrink: 0.85,
+  dash: 2.5, gap: 4,                              // the trail's pen dots, along the way
+  stamp: { tilt: -12, size: 1.15, holdMs: 600, popMs: 140, from: 0.55, over: 1.1, under: 0.97, steps: [70, 60, 60] },
+  register: { from: [4.4, 3.9], to: [1.4, 1.4], waitMs: 50, snapMs: 120 },   // the stamp's pink off the line, in its points
+  ring: { r: 16, grow: 5, ms: 220, spokes: 7 },
+  regrowAt: 1800, regrowMs: 320,
+  note: { at: 150, inMs: 150, holdMs: 2400, outMs: 120 },   // shown once pasted; DS.Motion.fast, DS.Motion.toastHold
 };
 
 /* Depth. The cover is a scene, not a sheet of stickers: five planes, back to front. A plane
@@ -269,15 +302,12 @@ const lean = stylex.keyframes({
   '68.58%': { rotate: 'var(--rock)', animationTimingFunction: 'cubic-bezier(0.3, 0, 0.3, 1)' },
   '72.08%, 100%': { rotate: '0deg' },
 });
-// A petal (or the leaf) opening as the garden wakes, and again at Return, when it swings
-// past shut before it settles. Each ring of petals runs this a little after the one before.
+// A petal (or the leaf) opening as the garden wakes. Each ring of petals runs this a little
+// after the one before.
 const open = stylex.keyframes({
   '0%, 14.17%': { rotate: '0deg', scale: '1', animationTimingFunction: 'cubic-bezier(0.2, 0.9, 0.3, 1)' },
   '15.67%': { rotate: 'var(--open)', scale: 'var(--swell)', animationTimingFunction: 'cubic-bezier(0.4, 0, 0.3, 1.4)' },
-  '18.17%, 67.08%': { rotate: '0deg', scale: '1', animationTimingFunction: 'cubic-bezier(0.2, 0.9, 0.3, 1)' },
-  '68.33%': { rotate: 'var(--open)', scale: 'var(--swell)', animationTimingFunction: 'ease-in-out' },
-  '70.42%': { rotate: 'var(--shut)', scale: '1', animationTimingFunction: 'ease-out' },
-  '72.5%, 100%': { rotate: '0deg', scale: '1' },
+  '18.17%, 100%': { rotate: '0deg', scale: '1' },
 });
 // Breathing: a swing either side of rest, and the centre's swell.
 const swing = stylex.keyframes({
@@ -316,14 +346,74 @@ const blink = stylex.keyframes({
   '69.58%': { opacity: 0.15, animationTimingFunction: 'step-end' },
   '70.42%, 100%': { opacity: 1 },
 });
-// The panel popping out of the bloom, and folding back into it at Return.
+// The panel popping out of the bloom, and gone at once at Return, as the app's.
 const pop = stylex.keyframes({
   '0%, 16.67%': { scale: 'var(--from)', opacity: 0, animationTimingFunction: 'cubic-bezier(0.2, 0.9, 0.3, 1)' },
   '17.17%': { opacity: 1 },
   '18.83%': { scale: 'var(--over)', opacity: 1, animationTimingFunction: 'ease-in-out' },
-  '20%, 67.08%': { scale: '1', opacity: 1, animationTimingFunction: 'cubic-bezier(0.5, 0, 0.9, 0.4)' },
-  '68.42%': { opacity: 1 },
-  '68.92%, 100%': { scale: 'var(--from)', opacity: 0 },
+  '20%, 67.08%': { scale: '1', opacity: 1, animationTimingFunction: 'ease-in' },
+  '67.92%, 100%': { scale: '0.98', opacity: 0 },
+});
+// ── Return (DONE) ──
+// The front fall in the bloom: gone as it flies, grown back out of the heart later.
+const leave = stylex.keyframes({
+  '0%, 67.57%': { scale: '1' },
+  '67.58%, 82.08%': { scale: '0' },
+  '82.09%': { scale: '0.3 0.15', animationTimingFunction: 'cubic-bezier(0.2, 0.9, 0.3, 1.15)' },
+  '84.75%, 100%': { scale: '1' },
+});
+// The flying fall: straight across, and up and down over it on one parabola (a cubic Bézier
+// whose middle points make it exactly the rig's quadratic), turning once as it goes.
+const flyAcross = stylex.keyframes({
+  '0%, 67.58%': { translate: '0 0', animationTimingFunction: 'linear' },
+  '70.42%, 100%': { translate: 'var(--dx) 0' },
+});
+const flyArc = stylex.keyframes({
+  '0%, 67.58%': { translate: '0 0', animationTimingFunction: 'cubic-bezier(0.3333, -3.4286, 0.6667, -3.0952)' },
+  '70.42%, 100%': { translate: '0 var(--dy)' },
+});
+const flySpin = stylex.keyframes({
+  '0%, 67.57%': { opacity: 0, rotate: '0deg', scale: '1' },
+  '67.58%': { opacity: 1, rotate: '0deg', scale: '1', animationTimingFunction: 'linear' },
+  '70.41%': { opacity: 1, rotate: 'var(--spin)', scale: 'var(--shrink)' },
+  '70.42%, 100%': { opacity: 0, rotate: 'var(--spin)', scale: 'var(--shrink)' },
+});
+// The trail, a pen dot at a time: each shows as the fall passes it (its delay) and is rubbed out
+// once the fall is half the way further on, so the trail is the last half of the way it came.
+const dot = stylex.keyframes({
+  '0%, 67.57%': { opacity: 0 },
+  '67.58%, 69%': { opacity: 1 },
+  '69.01%, 100%': { opacity: 0 },
+});
+// The stamp landing: in at 0.55, past full size, back under it, settled; held, then popped away.
+const stamp = stylex.keyframes({
+  '0%, 70.41%': { scale: '0' },
+  '70.42%': { scale: 'var(--from)', animationTimingFunction: 'cubic-bezier(0.2, 0.8, 0.3, 1)' },
+  '71%': { scale: 'var(--over)', animationTimingFunction: 'ease-in-out' },
+  '71.5%': { scale: 'var(--under)', animationTimingFunction: 'ease-in-out' },
+  '72%, 75.42%': { scale: '1', animationTimingFunction: 'cubic-bezier(0.55, 0, 1, 0.45)' },
+  '76.58%, 100%': { scale: '0' },
+});
+// Its pink, landed off the line, snapping into register.
+const register = stylex.keyframes({
+  '0%, 70.83%': { translate: 'var(--rx) var(--ry)', animationTimingFunction: 'cubic-bezier(0.3, 1.5, 0.5, 1)' },
+  '71.83%, 100%': { translate: 'var(--gx) var(--gy)' },
+});
+// The burst as it lands: the ring and its spokes spread out, thinning to nothing.
+const ringOut = stylex.keyframes({
+  '0%, 70.42%': { scale: '1', animationTimingFunction: 'cubic-bezier(0.2, 0.8, 0.3, 1)' },
+  '72.25%, 100%': { scale: 'var(--grow)' },
+});
+const ringThin = stylex.keyframes({
+  '0%, 70.41%': { strokeWidth: 0 },
+  '70.42%': { strokeWidth: 'var(--w)', animationTimingFunction: 'cubic-bezier(0.2, 0.8, 0.3, 1)' },
+  '72.25%, 100%': { strokeWidth: 0 },
+});
+// Iris's note, in and out as the app's.
+const note = stylex.keyframes({
+  '0%, 68.33%': { opacity: 0, animationTimingFunction: 'ease-out' },
+  '69.58%, 89.58%': { opacity: 1, animationTimingFunction: 'ease-in' },
+  '90.58%, 100%': { opacity: 0 },
 });
 // Replace taking Return.
 const push = stylex.keyframes({
@@ -378,14 +468,22 @@ const flap = stylex.keyframes({
   /** The stops after `from`, each `steps` further on. */
   const then = (from: number, steps: number[]) => steps.map((_, i) => at(from + steps.slice(0, i + 1).reduce((a, b) => a + b, 0)));
   const B = BUTTERFLIES, half = B.flightMs / 2;
+  const D = DONE, fly = T.replace + D.flyFrom, land = fly + D.flyMs;
   const stops: Record<string, [number[], number[]]> = {
     perk: [[14.17, 15.67, 18.17], [at(T.wakes), ...then(T.wakes, FLOWER.perkMs)]],
-    open: [[14.17, 15.67, 18.17, 67.08, 68.33, 70.42, 72.5], [at(T.wakes), ...then(T.wakes, FLOWER.perkMs), at(T.replace), ...then(T.replace, FLOWER.shiverMs)]],
+    open: [[14.17, 15.67, 18.17], [at(T.wakes), ...then(T.wakes, FLOWER.perkMs)]],
     lean: [[16.67, 20, 67.08, 68.58, 72.08], [at(T.panelPops), at(T.panelPops + FLOWER.leanMs), at(T.replace), ...then(T.replace, FLOWER.rockMs)]],
     beam: [[14.17, 15.42, 18.33, 67.08, 68.33, 72.08], [at(T.wakes), ...then(T.wakes, SUN.beamMs), at(T.replace), ...then(T.replace, SUN.cheerMs)]],
     hop: [[67.08, 68.33, 70.42, 72.5], [at(T.replace), ...then(T.replace, SUN.hopMs)]],
     blink: [[67.08, 67.92, 68.75, 69.58, 70.42], [at(T.replace), ...then(T.replace, [SUN.blinkMs, SUN.blinkMs, SUN.blinkMs, SUN.blinkMs])]],
-    pop: [[16.67, 18.83, 20, 67.08, 68.92], [at(T.panelPops), ...then(T.panelPops, PANEL.popMs), at(T.replace), at(T.replace + PANEL.foldMs)]],
+    pop: [[16.67, 18.83, 20, 67.08, 67.92], [at(T.panelPops), ...then(T.panelPops, PANEL.popMs), at(T.replace), at(T.replace + PANEL.closeMs)]],
+    leave: [[67.58, 82.08, 84.75], [at(fly), at(T.replace + D.regrowAt), at(T.replace + D.regrowAt + D.regrowMs)]],
+    flight: [[67.58, 70.42], [at(fly), at(land)]],
+    dot: [[67.58, 69], [at(fly), at(fly + D.flyMs / 2)]],
+    stamp: [[70.42, 71, 71.5, 72, 75.42, 76.58], [at(land), ...then(land, D.stamp.steps), at(land + D.stamp.holdMs), at(land + D.stamp.holdMs + D.stamp.popMs)]],
+    register: [[70.83, 71.83], [at(land + D.register.waitMs), at(land + D.register.waitMs + D.register.snapMs)]],
+    ring: [[70.42, 72.25], [at(land), at(land + D.ring.ms)]],
+    note: [[68.33, 69.58, 89.58, 90.58], [at(T.replace + D.note.at), ...then(T.replace + D.note.at, [D.note.inMs, D.note.holdMs, D.note.outMs])]],
     push: [[65.83, 66.5, 67.08], [at(T.returnKey), ...then(T.returnKey, PANEL.pressMs)]],
     swipe: [[26.67, 28.75], [at(T.lands), at(T.lands + PANEL.swipeMs)]],
     fly: [[20.83, 26.67, 54.17, 60], [at(T.flyOut), at(T.flyOut + B.flightMs), at(T.flyHome), at(T.flyHome + B.flightMs)]],
@@ -400,6 +498,10 @@ const flap = stylex.keyframes({
   // and still out after the last is home.
   const last = Math.max(...B.items.map((b) => b.after ?? 0));
   if (T.lands !== T.flyOut + B.flightMs || T.flyOut < T.panelPops + PANEL.popMs[0] + PANEL.popMs[1] || T.flyHome + last + B.flightMs > T.returnKey) throw new Error('Garden: the butterflies no longer fit between the panel opening and Return');
+  // The flight's Bézier is the rig's parabola, worked out from DONE.
+  const dy = D.stampAt[1] - D.from[1], b = -D.lift / dy;
+  const bezier = `cubic-bezier(0.3333, ${(b / 3).toFixed(4)}, 0.6667, ${((b + 1) / 3).toFixed(4)})`;
+  if (bezier !== 'cubic-bezier(0.3333, -3.4286, 0.6667, -3.0952)') throw new Error(`Garden: the fall's flight should be ${bezier}`);
   // The rays must come round whole, or they would jump when the loop does.
   if (T.loop % (SUN.notchMs * 16) !== 0) throw new Error('Garden: the sun must turn a whole number of times a loop');
 }
@@ -483,6 +585,27 @@ const g = stylex.create({
   // Its tone names, hidden under 1024px (the rest is the Panel's own `tabs`).
   tabs: { display: { default: 'flex', '@media (max-width: 1023px)': 'none' }, alignItems: 'baseline', gap: 'clamp(14px, 2.6vw, 30px)', flexWrap: 'wrap', paddingBottom: 10, position: 'relative', zIndex: 1 },
   hints: { display: { default: 'flex', '@media (max-width: 1440px)': 'none' }, alignItems: 'center', gap: 18, flexWrap: 'wrap' },
+  // Return (DONE): the fall leaving the bloom and flying, its trail, the stamp, Iris's note.
+  leave: { animationName: { default: leave, [STILL]: 'none' }, ...loops },
+  flyAcross: { animationName: { default: flyAcross, [STILL]: 'none' }, ...loops },
+  flyArc: { animationName: { default: flyArc, [STILL]: 'none' }, ...loops },
+  flySpin: { opacity: 0, animationName: { default: flySpin, [STILL]: 'none' }, ...loops },
+  svg: { position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' },
+  dot: { opacity: 0, animationName: { default: dot, [STILL]: 'none' }, animationDelay: 'var(--at)', ...loops },
+  stampAt: { position: 'absolute', aspectRatio: '1' },
+  stamp: { scale: '0', animationName: { default: stamp, [STILL]: 'none' }, ...loops },
+  register: { animationName: { default: register, [STILL]: 'none' }, ...loops },
+  ringOut: { animationName: { default: ringOut, [STILL]: 'none' }, ...loops },
+  ringThin: { animationName: { default: ringThin, [STILL]: 'none' }, ...loops },
+  // Iris's note for a replace, as the app's Toast draws it, laid out at the panel's width and
+  // scaled with it, its foot on the panel's; under 1024px, where the panel opened over the bloom,
+  // halfway up where the panel was, clear of the bloom.
+  noteAt: { left: 'calc(var(--px) - var(--pw))', top: { default: 'var(--py)', '@media (max-width: 1023px)': 'calc(var(--py) - var(--pw) * var(--pr) * 0.5)' }, width: 'var(--pw)', height: 0 },
+  noteFit: { position: 'absolute', left: 0, bottom: 0, width: 'var(--pn)', display: 'flex', justifyContent: 'center', transformOrigin: '0 100%', scale: 'tan(atan2(var(--pw), var(--pn)))' },
+  note: { display: 'flex', alignItems: 'center', gap: 12, paddingBlock: 10, paddingInline: 16, whiteSpace: 'nowrap', boxShadow: DEPTH.shadow, opacity: 0, animationName: { default: note, [STILL]: 'none' }, ...loops },
+  noteLead: { position: 'relative', isolation: 'isolate', fontFamily: font.brush, fontSize: 24, lineHeight: 1, color: ink.i12 },
+  noteMarker: { position: 'absolute', left: -3, right: -3, bottom: -2, height: 8, zIndex: -1, rotate: '-1.2deg' },
+  noteDetail: { position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: ink.i11 },
   // Round Replace, to take the press at Return.
   push: { display: 'inline-block', '--press': PANEL.pressScale, animationName: { default: push, [STILL]: 'none' }, ...loops },
 
@@ -525,6 +648,99 @@ function Part({ name, at, stretch = 1 }: { name: FlowerPart; at: readonly number
     </div>
   );
 }
+/** Where the flying fall is at `f` (0 → 1 over its flight), in the rig's points: the app's parabola. */
+const flight = (f: number) => [DONE.from[0] + (DONE.stampAt[0] - DONE.from[0]) * f, DONE.from[1] + (DONE.stampAt[1] - DONE.from[1]) * f * f - DONE.lift * f * (1 - f)];
+/** The trail's pen dots along the flight, each with the share of the flight it starts at. */
+const TRAIL = (() => {
+  const n = 600, pts = Array.from({ length: n + 1 }, (_, i) => ({ f: i / n, p: flight(i / n) }));
+  const dots: { f: number; from: number[]; to: number[] }[] = [];
+  let run = 0, start: (typeof pts)[number] | null = pts[0];
+  for (let i = 1; i <= n; i++) {
+    run += Math.hypot(pts[i].p[0] - pts[i - 1].p[0], pts[i].p[1] - pts[i - 1].p[1]);
+    if (start && run >= DONE.dash) (dots.push({ f: start.f, from: start.p, to: pts[i].p }), (start = null), (run = 0));
+    else if (!start && run >= DONE.gap) (start = pts[i]), (run = 0);
+  }
+  return dots;
+})();
+const r1 = (v: number) => +v.toFixed(2);
+/** The stamp's box, in the rig's points round where it lands: room for the ring it throws. */
+const STAMP_BOX = 50;
+const stampBlot = svgUrl('-25 -25 50 50', "<ellipse rx='13' ry='9.5'/><ellipse cx='14.2' cy='6.8' rx='2.2' ry='1.8'/>");
+
+/** The fall flown onto the text and the stamp it lands as (DONE), in the flower's room. */
+function Done() {
+  const D = DONE, R = FLOWER.room, ring = D.ring;
+  return (
+    <>
+      <svg viewBox={`${R.left} ${R.top} ${R.width} ${R.height}`} stroke="rgb(42 26 22)" strokeWidth={1.5} strokeLinecap="round" {...stylex.props(g.svg)}>
+        {TRAIL.map((d, i) => (
+          <line key={i} x1={r1(d.from[0])} y1={r1(d.from[1])} x2={r1(d.to[0])} y2={r1(d.to[1])} {...stylex.props(g.dot)} style={vars({ '--at': ms(d.f * D.flyMs) })} />
+        ))}
+      </svg>
+      <div {...stylex.props(g.fill, g.flyAcross)} style={vars({ '--dx': pct(D.stampAt[0] - D.from[0], R.width) })}>
+        <div {...stylex.props(g.fill, g.flyArc)} style={vars({ '--dy': pct(D.stampAt[1] - D.from[1], R.height) })}>
+          <div {...stylex.props(g.fill, g.flySpin)} style={{ ...on(D.from), ...vars({ '--spin': `${D.spin}deg`, '--shrink': D.shrink }) }}>
+            <Part name="fall-2" at={HEAD} />
+          </div>
+        </div>
+      </div>
+      <div
+        {...stylex.props(g.stampAt)}
+        style={{ left: pct(D.stampAt[0] - STAMP_BOX / 2 - R.left, R.width), top: pct(D.stampAt[1] - STAMP_BOX / 2 - R.top, R.height), width: pct(STAMP_BOX, R.width), rotate: `${D.stamp.tilt}deg` }}
+      >
+        <div {...stylex.props(g.fill, g.stamp)} data-done-stamp style={vars({ '--from': D.stamp.from, '--over': D.stamp.over, '--under': D.stamp.under })}>
+          <svg viewBox="-25 -25 50 50" {...stylex.props(g.svg)}>
+            <g {...stylex.props(g.ringOut)} style={vars({ '--grow': (ring.r + ring.grow) / ring.r })}>
+              <ellipse rx={ring.r} ry={ring.r * 0.8} fill="none" stroke="rgb(240 134 176)" strokeWidth={0} {...stylex.props(g.ringThin)} style={vars({ '--w': 3.4 })} />
+              {Array.from({ length: ring.spokes }, (_, k) => {
+                const a = (k / ring.spokes) * Math.PI * 2 + 0.3, c = Math.cos(a), s = Math.sin(a) * 0.8;
+                return <line key={k} x1={r1(c * (ring.r + 2))} y1={r1(s * (ring.r + 2))} x2={r1(c * (ring.r + 6))} y2={r1(s * (ring.r + 6))} stroke="rgb(42 26 22)" strokeWidth={0} strokeLinecap="round" {...stylex.props(g.ringThin)} style={vars({ '--w': 1.8 })} />;
+              })}
+            </g>
+          </svg>
+          <div {...stylex.props(g.fill)} style={{ scale: String(D.stamp.size) }}>
+            <svg viewBox="-25 -25 50 50" {...stylex.props(g.svg)}>
+              <ellipse rx={13} ry={9.5} fill="rgb(255 252 249)" />
+            </svg>
+            <div {...stylex.props(g.fill, g.register)} style={vars({ '--rx': pct(D.register.from[0], STAMP_BOX), '--ry': pct(D.register.from[1], STAMP_BOX), '--gx': pct(D.register.to[0], STAMP_BOX), '--gy': pct(D.register.to[1], STAMP_BOX) })}>
+              <Printed mask={stampBlot} color="pink" />
+            </div>
+            <svg viewBox="-25 -25 50 50" {...stylex.props(g.svg)}>
+              <ellipse rx={13} ry={9.5} fill="none" stroke="rgb(42 26 22)" strokeWidth={1.8} />
+              <path d="M-7,0 L-1.5,5 Q2.5,-1.5 9.5,-7" fill="none" stroke="rgb(42 26 22)" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/** Iris's note once the fix is in, as the app's Toast says it by your text. */
+function DoneNote() {
+  return (
+    <div {...stylex.props(g.layer, g.noteAt)}>
+      <div {...stylex.props(g.noteFit)}>
+        <div {...stylex.props(panel.sheet, g.note)} data-done-note>
+          <span {...stylex.props(panel.grain)} />
+          <span style={{ position: 'relative', display: 'inline-flex' }}>
+            <HandTick size={18} />
+          </span>
+          <span {...stylex.props(g.noteLead)}>
+            <span aria-hidden {...stylex.props(g.noteMarker)}>
+              <Printed mask={markerMask(seedOf('replaced'))} color="pink" />
+            </span>
+            replaced
+          </span>
+          <span {...stylex.props(g.noteDetail)}>
+            Undo with <KeyRow keys={['⌘', 'Z']} />
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** A swing either side of rest, `lag` behind the stem's. */
 const swings = (deg: number, oneWay: number, lag = 0) => vars({ '--deg': `${deg}deg`, '--ms': ms(oneWay), '--lag': ms(-oneWay * 2 + lag) });
 
@@ -629,6 +845,7 @@ export function Garden() {
             </Panel>
           </div>
         </div>
+        <DoneNote />
         {landing.map(butterfly)}
       </Depth>
 
@@ -647,7 +864,7 @@ export function Garden() {
       >
         {/* The far side of the earth, behind the stem and leaf: the ground lies back in depth. */}
         <Part name="ground-back" at={[0, 0]} />
-        <div {...stylex.props(g.fill, g.open)} style={{ ...on(FLOWER.leafAt), ...vars({ '--open': `${FLOWER.leafFlick}deg`, '--shut': `${FLOWER.leafFlick * FLOWER.shiverBack}deg`, '--swell': 1, '--at': '0ms' }) }}>
+        <div {...stylex.props(g.fill, g.open)} style={{ ...on(FLOWER.leafAt), ...vars({ '--open': `${FLOWER.leafFlick}deg`, '--swell': 1, '--at': '0ms' }) }}>
           <div {...stylex.props(g.fill, g.swing)} style={{ ...on(FLOWER.leafAt), ...swings(FLOWER.leaf.deg, FLOWER.leaf.ms, FLOWER.leaf.lagMs) }}>
             <Part name="leaf" at={FLOWER.leafAt} />
           </div>
@@ -659,9 +876,16 @@ export function Garden() {
               <div {...stylex.props(g.fill, g.swing)} style={{ ...on(HEAD), ...swings(FLOWER.head.deg, FLOWER.head.ms, FLOWER.head.lagMs) }}>
                 {FLOWER.bloom.map((b, i) =>
                   'open' in b ? (
-                    <div key={b.part} {...stylex.props(g.fill, g.open)} style={{ ...on(HEAD), ...vars({ '--open': `${b.open}deg`, '--shut': `${b.open * FLOWER.shiverBack}deg`, '--swell': b.swell, '--at': ms(b.ring * FLOWER.openGap) }) }}>
+                    <div key={b.part} {...stylex.props(g.fill, g.open)} style={{ ...on(HEAD), ...vars({ '--open': `${b.open}deg`, '--swell': b.swell, '--at': ms(b.ring * FLOWER.openGap) }) }}>
                       <div {...stylex.props(g.fill, g.swing)} style={{ ...on(HEAD), ...swings(b.breathe, b.ms, i * 230) }}>
-                        <Part name={b.part} at={HEAD} />
+                        {b.part === 'fall-2' ? (
+                          // The front fall: it flies off at Return and grows back (DONE).
+                          <div {...stylex.props(g.fill, g.leave)} style={on(HEAD)}>
+                            <Part name={b.part} at={HEAD} />
+                          </div>
+                        ) : (
+                          <Part name={b.part} at={HEAD} />
+                        )}
                       </div>
                     </div>
                   ) : (
@@ -675,6 +899,7 @@ export function Garden() {
           </div>
         </div>
         <Part name="ground" at={[0, 0]} />
+        <Done />
       </div>
     </div>
   );
