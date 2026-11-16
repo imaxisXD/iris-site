@@ -94,13 +94,9 @@ pnpm deploy         # by hand: build and `wrangler deploy` (needs `wrangler logi
 
 ## Deploying
 
-Every push to `main` deploys itself (`.github/workflows/deploy.yml`): GitHub Actions installs,
-typechecks, builds, serves the page with `wrangler dev` and runs `pnpm check` against it in
-headless Chromium, and only then runs `wrangler deploy` to the `iris-site` Worker. A pull request
-runs the same build and checks without deploying. The workflow needs two repository secrets,
-`CLOUDFLARE_API_TOKEN` (the "Edit Cloudflare Workers" template) and `CLOUDFLARE_ACCOUNT_ID`.
-
-`check` and `shoot` use the Chromium that Playwright keeps in `~/Library/Caches/ms-playwright`.
+Cloudflare builds and deploys every push to `main` itself (Workers Builds, connected to this
+repo in the `iris-site` Worker's Settings › Builds): `pnpm run build`, then `npx wrangler deploy`.
+Nothing runs `pnpm check` first, so run it locally (with `pnpm dev` up) before pushing.
 
 ## What's on the page
 
