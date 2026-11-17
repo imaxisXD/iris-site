@@ -114,7 +114,7 @@ const NOTE: { words: Word[]; tones: string[]; app: string } = {
  *   desk    (1024 to 1440px) the same without the hints, so it is laid out narrower; from
  *           `scale.at1280` to `scale.at1440` between those widths, and under 1280px as wide
  *           as the room between the Download button's two lines and the bloom.
- *   narrow  (under 1024px) simpler: its tone names are hidden too, leaving the message, "into"
+ *   narrow  (under 1024px) simpler: its tone names are hidden too, leaving the message, the app
  *           and Replace, so it can be laid out narrow and shown at a size to read. The
  *           cover's words leave no room beside the bloom there, so it opens over the bloom,
  *           its right edge at the box's, as wide as fits clear of the words.

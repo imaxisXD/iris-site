@@ -250,7 +250,7 @@ for (const box of $$<HTMLElement>('[data-fit-panel]')) {
 }
 
 // ── Section 03's panel where the room is short (Page.tsx, Tones) ─────────────────────
-// Where its footer would wrap, it drops its key hints (`data-compact`), so "into" the app and
+// Where its footer would wrap, it drops its key hints (`data-compact`), so the app and
 // Replace keep to one line, as the app's footer does; on a phone, where even its tone names
 // wouldn't fit as they are, it's laid out `data-phone-panel` wide and zoomed to the room
 // (`data-zoomed`).
@@ -771,7 +771,6 @@ if (press && pressJson && iris) {
   const text = q('[data-press-text]');
   const good = q('[data-press-good]');
   const keys = q('[data-press-keys]');
-  const into = q('[data-press-into]');
   const where = q('[data-press-where]');
   const icon = q<HTMLImageElement>('[data-press-icon]');
   const replaceWrap = q('[data-press-replace-wrap]');
@@ -885,11 +884,10 @@ if (press && pressJson && iris) {
       text.animate([{ opacity: 0, translate: `0 ${PANEL_MOTION.in.from}px` }, { opacity: 1, translate: '0 0' }], { duration: PANEL_MOTION.in.ms, delay: PANEL_MOTION.in.delay, easing: 'cubic-bezier(0.23, 1, 0.32, 1)', fill: 'backwards' });
       swipeOn(text, PANEL_MOTION.in.delay + 70);
     }
-    // The footer as the app's (PanelFooter): "looks good", "nothing to change in" and Done for
-    // Fix, which found nothing; else the keys, "into" and Replace.
+    // The footer as the app's (PanelFooter): "looks good", the app and Done for Fix, which
+    // found nothing; else the keys, the app and Replace.
     good.hidden = !fix;
     keys.hidden = fix;
-    into.textContent = fix ? 'nothing to change in' : 'into';
     replaceWrap.toggleAttribute('data-fix-clean', fix);
   };
 

@@ -167,11 +167,11 @@
 }
 /* Done, in Replace's place when Fix found nothing (Panel.tsx, data-fix-clean). */
 /* The ⌃ ⌥ G panel never says "Replaced" (section 03's does), so its button is only as wide as
-   Replace or Done, and on a phone "nothing to change in" and Done stay together on one line. */
+   Replace or Done, and on a phone the app and Done stay together on one line. */
 [data-press] [data-label-done] { display: none; }
 [data-press][data-compact] :has(> [data-press-replace-wrap]) { flex-wrap: nowrap; }
-/* On a phone, Fix that found nothing says just "looks good" and Done: no "nothing to change in". */
-[data-press][data-compact]:has([data-fix-clean]) :has(> [data-press-into]) { display: none; }
+/* On a phone, Fix that found nothing says just "looks good" and Done: the app's tape goes too. */
+[data-press][data-compact]:has([data-fix-clean]) [data-press-into] { display: none; }
 [data-label-clean] { visibility: hidden; }
 [data-fix-clean] [data-label-now] { visibility: hidden; }
 [data-fix-clean] [data-label-clean] { visibility: visible; }

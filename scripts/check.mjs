@@ -313,7 +313,7 @@ for (const width of [320, 390, 520, 820]) {
     let tonesWrap = false;
     for (const t of tabs) (t.click(), (tonesWrap ||= twoRows(tabs)));
     const foot = [...p.querySelectorAll('[data-panel-keys] button, [data-replace-wrap]')];
-    const into = p.querySelector('[data-replace-wrap]').parentElement.firstElementChild; // "into" and the app's tape
+    const into = p.querySelector('[data-replace-wrap]').parentElement.firstElementChild; // the app's tape
     const box = p.closest('[data-phone-panel]');
     const msg = p.querySelector('[role="tabpanel"]:not([hidden])');
     return { tonesWrap, footWraps: twoRows([...foot, into]), text: parseFloat(getComputedStyle(msg).fontSize) * (Number(box.querySelector(':scope > div').style.zoom) || 1) };

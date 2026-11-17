@@ -1,7 +1,7 @@
 // Iris's panel, the one the app opens by your text (PanelView.swift), drawn once for the whole
 // site: section 03's tones, the panel ⌃ ⌥ G opens on the page, and anywhere else it shows.
 // Tone names over a strong pen rule, the message, a faint rule, then the footer: the keys (or
-// a note such as "looks good") on the left; "into" the app on a strip of tape with the app's
+// a note such as "looks good") on the left; the app on a strip of tape with the app's
 // icon stuck on its corner, and Replace with its ↵ chip, on the right.
 //
 // It only draws. The page script (client.ts) chooses tones, swaps the message and springs the
@@ -123,7 +123,7 @@ export function MessageStack({ children, sizers }: { children: ReactNode; sizers
 }
 
 type Data = Record<string, string | boolean | number | undefined>;
-/** How wide the panel is laid out, in px, for its footer (the keys, "into" the app, Replace)
+/** How wide the panel is laid out, in px, for its footer (the keys, the app, Replace)
  *  to sit on one line, as the app's does. Lay it out at this width and scale it down to the
  *  size wanted (CSS `zoom`); never let it lay out narrower, or the footer wraps. To fit one to
  *  its box, wrap it in `data-fit-panel` > a 720px child: client.ts sets the zoom from the box's
@@ -142,7 +142,7 @@ export type PanelProps = {
   app: { name: string; icon?: string };
   /** Footer note in place of the keys ("looks good"), shown or hidden by the script. */
   good?: boolean;
-  /** Hooks for the script, on the panel, the tablist, the keys, "into", the tape's name and Replace. */
+  /** Hooks for the script, on the panel, the tablist, the keys, the app's tape, the tape's name and Replace. */
   hooks?: { root?: Data; tabs?: Data; next?: Data; keys?: Data; good?: Data; into?: Data; where?: Data; replaceWrap?: Data; replace?: Data; icon?: Data };
   /** What sits beside Replace while it says "replaced". */
   after?: ReactNode;
@@ -195,8 +195,8 @@ export function Panel({ tabs, tab, children, app, good = false, hooks = {}, afte
           </span>
         </div>
         <div {...stylex.props(panel.right)}>
-          <span {...stylex.props(panel.into)}>
-            <span {...hooks.into}>{good ? 'nothing to change in' : 'into'}</span>
+          {/* The app on its tape, no words before it, as the app's panel shows it. */}
+          <span {...stylex.props(panel.into)} {...hooks.into}>
             <span {...stylex.props(panel.tape, !!app.icon && panel.taped)}>
               <Printed mask={tapeMask} color="tape" />
               <img src={app.icon ? `/app/${app.icon}.png` : ''} hidden={!app.icon} alt="" width={26} height={26} loading="lazy" decoding="async" {...stylex.props(panel.sticker)} {...hooks.icon} />
