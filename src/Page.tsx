@@ -23,7 +23,8 @@ import {
 } from './parts';
 import { Footer } from './Footer';
 import { FactStage, type FactLook, MacCorner, PanelScene } from './Backdrop';
-import { CHAPTERS, Desk, WALL } from './Desk';
+import { Bud, CHAPTERS, Desk, doneCss, Flight, FLOWER_PX, ON_FOOT, SHUT_MS, WALL } from './Desk';
+import { DONE, LANDS, SaysNote } from './Done';
 import { Pattern } from './Patterns';
 import { Garden } from './Garden';
 import { draft, issues, links, month, pageTones, pressTones, tones } from './content';
@@ -54,9 +55,12 @@ const s = stylex.create({
   pressBody: { position: 'relative', maxHeight: '42vh', overflowY: 'auto' },
   // Takes focus when it opens (as the app's panel does), so Tab, Return and Esc are its keys;
   // the focus is the panel itself, so no ring is drawn round it.
-  press: { position: 'absolute', zIndex: 30, top: 0, left: 0, ':focus': { outline: 'none' }, ':focus-visible': { outline: 'none' } },
+  press: { position: 'absolute', zIndex: 30, top: 0, left: 0, pointerEvents: 'auto', ':focus': { outline: 'none' }, ':focus-visible': { outline: 'none' } },
+  // Everything Iris shows on the page, in the page's own coordinates (client.ts places each part).
+  pressIris: { position: 'absolute', zIndex: 30, top: 0, left: 0, width: 0, height: 0, pointerEvents: 'none' },
+  pressAt: { position: 'absolute', top: 0, left: 0 },
+  pressNote: { zIndex: 31 },
   pressScale: { width: 720, zoom: 0.76 }, // 720: Panel.tsx's PANEL_LAYOUT
-  toast: { position: 'fixed', zIndex: 31, left: '50%', bottom: 28, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8, paddingBlock: 10, paddingInline: 16, backgroundColor: ink.paper, color: ink.i12, fontSize: 13, whiteSpace: 'nowrap', boxShadow: '0 1px 1px rgb(42 26 22 / 0.08), 0 12px 28px -12px rgb(42 26 22 / 0.45)' },
   psst: { position: 'fixed', zIndex: 20, right: 16, bottom: 16, display: 'flex', alignItems: 'center', gap: 8, paddingBlock: 8, paddingInline: 14, backgroundColor: ink.paper, color: ink.i12, fontFamily: font.brush, fontSize: 20, lineHeight: 1.1, transform: 'rotate(-2deg)', boxShadow: '0 1px 1px rgb(42 26 22 / 0.08), 0 12px 28px -12px rgb(42 26 22 / 0.45)', maxWidth: 'calc(100vw - 32px)' },
 
   // Layout
@@ -1243,41 +1247,59 @@ export function Page() {
 }
 
 // ── ⌃ ⌥ G on the page ─────────────────────────────────────────────────────────────────
-// Press the keys anywhere and the page does what Iris does: the keys go down, the flower grows
-// by the paragraph you're reading and the panel opens on it. Fix finds nothing ("looks good":
-// the page is already fine); Tab tries the tones, Return puts one on the page, ⌘Z takes it
-// back, Esc closes. The words are written by hand (content.ts): no model runs here. With Iris
-// installed the keys never reach the page; Iris takes them, so the try-it box gets the real thing.
+// Press the keys anywhere and the page does what Iris does, as the app plays it: the keys go
+// down, Iris's flower grows as a bud by the paragraph you're reading, opens, and its panel
+// unrolls out of the bloom above the paragraph (PanelLayout: below when there's no room). Fix
+// finds nothing ("looks good", Done ↵ closes it); Tab tries the tones, Return puts one on the
+// page and plays the app's Done (the panel goes, the fall lands as a stamp, "replaced", Undo
+// with ⌘Z, the flower sinks); ⌘Z takes it back; Esc folds the panel back into the flower,
+// which sinks. Iris's notes sit by the paragraph, as the app's do by your text box. The words
+// are written by hand (content.ts): no model runs here. With Iris installed the keys never
+// reach the page; Iris takes them, so the try-it box gets the real thing.
 const pressNames = ['Fix', ...pressTones];
+const PRESS_DONE_CSS = doneCss({
+  on: '[data-press-iris][data-at~="done"]',
+  layer: '[data-press-iris][data-at~="done"]',
+  shut: '[data-press-iris][data-at~="shut"]',
+});
 function PressPanel() {
   return (
     <>
       <script type="application/json" data-press-tones dangerouslySetInnerHTML={{ __html: JSON.stringify({ tones: pressTones, pageTones }).replace(/</g, '\\u003c') }} />
-      <div data-press hidden role="dialog" aria-label="Iris" tabIndex={-1} {...stylex.props(s.press)}>
-        {/* Laid out at the panel's own width and scaled down to fit (client.ts sets the zoom),
-            so its footer stays on one line. */}
-        <div data-press-scale {...stylex.props(s.pressScale)}>
-        <Panel
-          tabs={pressNames}
-          tab={(i) => ({ 'data-press-tab': i })}
-          app={{ name: 'this page' }}
-          good
-          seed={93}
-          hooks={{ good: { 'data-press-good': true }, keys: { 'data-press-keys': true }, next: { 'data-press-next': true }, into: { 'data-press-into': true }, where: { 'data-press-where': true }, icon: { 'data-press-icon': true }, replaceWrap: { 'data-press-replace-wrap': true }, replace: { 'data-press-replace': '' } }}
-        >
-          <div data-press-body {...stylex.props(s.pressBody)}>
-            <p data-press-text aria-live="polite" {...stylex.props(panel.message)} />
-          </div>
-        </Panel>
+      <style dangerouslySetInnerHTML={{ __html: PRESS_DONE_CSS }} />
+      <div data-press-iris data-at="" data-flower={JSON.stringify({ ...FLOWER_PX, shutMs: SHUT_MS, lands: LANDS, stampMs: DONE.stamp.holdMs + DONE.stamp.popMs, sinkMs: LANDS + DONE.sink.afterMs + DONE.sink.ms, panelMs: DONE.panelMs, note: DONE.note })} {...stylex.props(s.pressIris)}>
+        {/* Iris's flower, its foot where the script puts it: the paper's left, on the paragraph's top edge. */}
+        <div aria-hidden data-press-flower {...stylex.props(s.pressAt)}>
+          <Bud place={ON_FOOT} />
+          <Flight place={ON_FOOT} />
         </div>
-        {/* The marks, as Panel.tsx styles them, for the script to copy onto each version. */}
-        <template data-press-marks>
-          <del {...stylex.props(panel.gone)} />
-          <ins {...stylex.props(panel.added)} />
-        </template>
-      </div>
-      <div data-press-note hidden role="status" {...stylex.props(s.toast)}>
-        <HandTick size={16} /> <span data-press-note-text />
+        <div data-press hidden role="dialog" aria-label="Iris" tabIndex={-1} {...stylex.props(s.press)}>
+          {/* Laid out at the panel's own width and scaled down to fit (client.ts sets the zoom),
+              so its footer stays on one line. */}
+          <div data-press-scale {...stylex.props(s.pressScale)}>
+          <Panel
+            tabs={pressNames}
+            tab={(i) => ({ 'data-press-tab': i })}
+            app={{ name: 'this page' }}
+            good
+            seed={93}
+            hooks={{ good: { 'data-press-good': true }, keys: { 'data-press-keys': true }, next: { 'data-press-next': true }, into: { 'data-press-into': true }, where: { 'data-press-where': true }, icon: { 'data-press-icon': true }, replaceWrap: { 'data-press-replace-wrap': true }, replace: { 'data-press-replace': '' } }}
+          >
+            <div data-press-body {...stylex.props(s.pressBody)}>
+              <p data-press-text aria-live="polite" {...stylex.props(panel.message)} />
+            </div>
+          </Panel>
+          </div>
+          {/* The marks, as Panel.tsx styles them, for the script to copy onto each version. */}
+          <template data-press-marks>
+            <del {...stylex.props(panel.gone)} />
+            <ins {...stylex.props(panel.added)} />
+          </template>
+        </div>
+        {/* Iris's note by the paragraph (the app's Toast), its words put in by the script. */}
+        <div aria-hidden data-press-note hidden {...stylex.props(s.pressAt, s.pressNote)}>
+          <SaysNote />
+        </div>
       </div>
       <span data-press-said role="status" {...stylex.props(s.srOnly)} />
       <div data-press-psst hidden aria-hidden {...stylex.props(s.psst)}>

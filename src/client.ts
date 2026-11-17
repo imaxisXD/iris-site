@@ -87,6 +87,64 @@ const overlay = (of: HTMLElement) => {
 /** A keycap row pressed for a beat. */
 const tapKeys = (el: Element) => $$<HTMLElement>('kbd', el).forEach((k) => k.animate([{ transform: 'none' }, { transform: PANEL_MOTION.key.down }, { transform: 'none' }], { duration: PANEL_MOTION.key.ms, easing: 'ease-out' }));
 
+// ── Iris's notes by your text (Done.tsx, SaysNote: the app's Toast, Message and FloatingNote) ──
+// One note for the page. It says one of the app's messages, in the app's words, right-aligned on
+// the top edge of the text it's about (FloatingNote.origin: 14px past its right, 4px down into
+// it), or just above the pointer when there's no text; always on screen. In 150ms, held 2.4s,
+// out 120ms (DS.Motion.fast, toastHold). Screen readers hear it.
+type Says = { kind: 'success' | 'neutral' | 'warning'; lead: string; detail: string; keys?: 'undo' | 'open' };
+const SAYS = {
+  replaced: { kind: 'success', lead: 'replaced', detail: 'Undo with', keys: 'undo' },
+  looksGood: { kind: 'success', lead: 'looks good', detail: 'Nothing to fix.' },
+  checking: { kind: 'neutral', lead: 'checking…', detail: 'Reading the box you’re in.' },
+  nothingToRead: { kind: 'warning', lead: 'nothing to read', detail: 'Click in a text box or select text, then press', keys: 'open' },
+} satisfies Record<string, Says>;
+const saysAt = document.querySelector<HTMLElement>('[data-press-note]');
+const saysNote = saysAt?.querySelector<HTMLElement>('[data-says]');
+const said = document.querySelector<HTMLElement>('[data-press-said]');
+const NOTE = { inMs: 150, holdMs: 2400, outMs: 120 };
+let saysAnim: Animation | null = null, saysTimer = 0;
+/** For screen readers, what Iris says. */
+const irisSaid = (msg: string) => {
+  if (!said) return;
+  said.textContent = '';
+  requestAnimationFrame(() => (said.textContent = msg));
+};
+/** Iris says `m` by `at.box` (or at `at.foot`: centred, its foot there; or above `at.point`). */
+const irisSays = (m: Says, at: { box?: DOMRect; foot?: [number, number]; point?: [number, number] }, delay = 0, hold = NOTE.holdMs) => {
+  if (!saysAt || !saysNote) return;
+  saysAnim?.cancel();
+  clearTimeout(saysTimer);
+  saysNote.dataset.kind = m.kind;
+  saysNote.querySelector('[data-says-lead]')!.textContent = m.lead;
+  saysNote.querySelector('[data-says-detail]')!.textContent = m.detail;
+  $$<HTMLElement>('[data-says-keys]', saysNote).forEach((k) => (k.hidden = k.dataset.saysKeys !== m.keys));
+  saysAt.hidden = false;
+  const w = saysNote.offsetWidth, h = saysNote.offsetHeight;
+  const p = at.point ?? [innerWidth / 2, innerHeight / 2];
+  let x = at.box ? at.box.right - w + 14 : at.foot ? at.foot[0] - w / 2 : p[0] - w / 2;
+  let y = at.box ? at.box.top + 4 - h : at.foot ? at.foot[1] - h : p[1] - 8 - h;
+  x = Math.max(EDGE_NOTE, Math.min(x, innerWidth - EDGE_NOTE - w));
+  y = Math.max(EDGE_NOTE, Math.min(y, innerHeight - EDGE_NOTE - h));
+  saysAt.style.left = `${x + scrollX}px`;
+  saysAt.style.top = `${y + scrollY}px`;
+  irisSaid(`Iris: ${m.lead}. ${m.detail}${m.keys === 'undo' ? ' command Z' : m.keys === 'open' ? ' control option G' : ''}`);
+  const gone = () => (saysAt.hidden = true);
+  if (still) {
+    saysNote.style.opacity = '1';
+    if (hold !== Infinity) saysTimer = window.setTimeout(gone, delay + NOTE.inMs + hold + NOTE.outMs);
+    return;
+  }
+  if (hold === Infinity) {
+    saysAnim = saysNote.animate([{ opacity: 0 }, { opacity: 1 }], { duration: NOTE.inMs, delay, fill: 'both' });
+    return;
+  }
+  const total = NOTE.inMs + hold + NOTE.outMs;
+  saysAnim = saysNote.animate([{ opacity: 0 }, { opacity: 1, offset: NOTE.inMs / total }, { opacity: 1, offset: (NOTE.inMs + hold) / total }, { opacity: 0 }], { duration: total, delay, fill: 'both' });
+  saysAnim.onfinish = gone;
+};
+const EDGE_NOTE = 8;
+
 const panel = document.querySelector<HTMLElement>('[data-panel]');
 if (panel) {
   const tabEls = $$<HTMLElement>('[data-tab]', panel);
@@ -700,9 +758,12 @@ const SPRING = 'linear(0, 0.13 4%, 0.46 12%, 0.8 21%, 1.01 31%, 1.07 39%, 1.06 4
 
 const press = document.querySelector<HTMLElement>('[data-press]');
 const pressJson = document.querySelector('[data-press-tones]');
-if (press && pressJson) {
+const iris = document.querySelector<HTMLElement>('[data-press-iris]');
+if (press && pressJson && iris) {
   type Words = { tones: string[]; pageTones: Record<string, Record<string, string>> };
   const data = JSON.parse(pressJson.textContent!) as Words;
+  /** The flower's reach round its foot and Done's times (Page.tsx, from Desk.tsx and Done.tsx). */
+  const F = JSON.parse(iris.dataset.flower!) as { left: number; right: number; height: number; headroom: number; sinkMs: number; lands: number; stampMs: number; shutMs: number; panelMs: number; note: { at: number } };
   const names = ['Fix', ...data.tones];
   const q = <T extends HTMLElement>(sel: string, root: ParentNode = press) => root.querySelector<T>(sel)!;
   const tabEls = $$<HTMLElement>('[data-press-tab]', press);
@@ -714,12 +775,9 @@ if (press && pressJson) {
   const where = q('[data-press-where]');
   const icon = q<HTMLImageElement>('[data-press-icon]');
   const replaceWrap = q('[data-press-replace-wrap]');
-  const note = q('[data-press-note]', document);
-  const noteText = q('[data-press-note-text]', document);
-  const said = q('[data-press-said]', document);
+  const flowerAt = q('[data-press-flower]', document);
   const psst = q('[data-press-psst]', document);
   const scale = q('[data-press-scale]');
-  const replaceBtn = q('[data-press-replace]');
   const markTpl = q<HTMLTemplateElement>('[data-press-marks]').content;
   const goneClass = markTpl.querySelector('del')!.className, addedClass = markTpl.querySelector('ins')!.className;
   /** A version marked as Iris marks it, against the paragraph as written. */
@@ -736,13 +794,24 @@ if (press && pressJson) {
     });
     return f;
   };
-  /** Its scale: the panel's own (0.76), or less where the window is narrower. Narrow, without
-   *  the key hints (a phone has no keys), so it's laid out narrower and stays readable. */
-  const fit = () => {
+  // The app's PanelLayout: the paper 10px off the text, never nearer the screen's edge than 8px,
+  // and room on its left for the flower (its reach, and 10px), which stands beside it.
+  const GAP = 10, EDGE = 8, ROOM = F.right + 10, LOWEST = EDGE + F.left + ROOM;
+  /** Where the text column leaves no room for the flower beside the paper (a phone), Iris keeps
+   *  inside the column instead, so nothing runs past the text's edges: the paper exactly as wide
+   *  as the paragraph, and the flower on the paragraph's top left, the paper unrolling out of
+   *  its bloom above it (below the paragraph, when there's no room above). */
+  const narrow = (r: DOMRect) => r.left < LOWEST;
+  /** Its scale: the panel's own (0.76), or less to fit its room: beside the flower, or on a
+   *  phone the paragraph's width. Narrow, without the key hints (a phone has no keys), so it's
+   *  laid out narrower and stays readable. */
+  const fit = (r: DOMRect) => {
     const compact = innerWidth < 600, layout = compact ? 440 : 720;
+    const room = narrow(r) ? Math.min(r.right, innerWidth - EDGE) - r.left : innerWidth - EDGE - LOWEST;
     press.toggleAttribute('data-compact', compact);
     scale.style.width = `${layout}px`;
-    scale.style.zoom = String(Math.min(0.76, (innerWidth - 32) / layout));
+    // On a phone, exactly the paragraph's width, so its edges are the text's.
+    scale.style.zoom = String(narrow(r) && compact ? room / layout : Math.min(0.76, room / layout));
   };
 
   // Replace would type into the browser, so the tape names it, with its icon, as the app does.
@@ -759,20 +828,13 @@ if (press && pressJson) {
   let current = 0;
   let opener: HTMLElement | null = null;
   let pressed = false;
+  /** Where Iris is: nothing on the page, the bud growing and opening, the panel open, or going
+   *  (Done after Replace, or closed: folding back into the flower, which sinks). */
+  let phase: 'idle' | 'opening' | 'open' | 'done' | 'shut' = 'idle';
+  let timers: number[] = [];
+  const later = (ms: number, f: () => void) => timers.push(window.setTimeout(f, ms));
+  const beats = (at: string) => (iris.dataset.at = at);
   const undo: { el: HTMLElement; html: string }[] = [];
-  const smooth: ScrollBehavior = still ? 'auto' : 'smooth';
-
-  const say = (msg: string) => {
-    said.textContent = '';
-    requestAnimationFrame(() => (said.textContent = msg));
-  };
-  let noteTimer = 0;
-  const toast = (msg: string) => {
-    noteText.textContent = msg;
-    note.hidden = false;
-    clearTimeout(noteTimer);
-    noteTimer = window.setTimeout(() => (note.hidden = true), 3600);
-  };
 
   // Every ⌃ ⌥ G on screen goes down with your fingers.
   const capRows = $$<HTMLElement>('[role="img"][aria-label="control option G"]');
@@ -798,6 +860,8 @@ if (press && pressJson) {
     }
     return best;
   };
+  let pointer: [number, number] | null = null;
+  addEventListener('pointermove', (e) => (pointer = [e.clientX, e.clientY]), { passive: true });
 
   const original = (el: HTMLElement) => el.textContent!.trim().replace(/\s+/g, ' ');
   const choose = (i: number) => {
@@ -811,7 +875,7 @@ if (press && pressJson) {
     });
     const fix = i === 0;
     // The version on screen goes as the new one comes, as in section 03's panel (PANEL_MOTION).
-    const moving = !still && !press.hidden && text.childNodes.length > 0;
+    const moving = !still && phase === 'open' && text.childNodes.length > 0;
     if (moving) {
       const g = overlay(text);
       g.animate([{ opacity: 1, translate: '0 0' }, { opacity: 0, translate: `0 ${PANEL_MOTION.out.lift}px` }], { duration: PANEL_MOTION.out.ms, easing: 'ease-in', fill: 'forwards' }).finished.then(() => g.remove());
@@ -821,27 +885,54 @@ if (press && pressJson) {
       text.animate([{ opacity: 0, translate: `0 ${PANEL_MOTION.in.from}px` }, { opacity: 1, translate: '0 0' }], { duration: PANEL_MOTION.in.ms, delay: PANEL_MOTION.in.delay, easing: 'cubic-bezier(0.23, 1, 0.32, 1)', fill: 'backwards' });
       swipeOn(text, PANEL_MOTION.in.delay + 70);
     }
-    // The footer as the app's: "looks good" and "nothing to change in" for Fix, else the keys
-    // and Replace.
+    // The footer as the app's (PanelFooter): "looks good", "nothing to change in" and Done for
+    // Fix, which found nothing; else the keys, "into" and Replace.
     good.hidden = !fix;
     keys.hidden = fix;
     into.textContent = fix ? 'nothing to change in' : 'into';
-    replaceWrap.hidden = fix;
+    replaceWrap.toggleAttribute('data-fix-clean', fix);
   };
 
-  const place = (r: DOMRect) => {
-    const w = press.getBoundingClientRect().width || Math.min(547, innerWidth - 32);
-    press.style.left = `${Math.max(16, Math.min(r.left, innerWidth - w - 16)) + scrollX}px`;
-    press.style.top = `${r.bottom + scrollY + 16}px`;
+  /** The panel and the flower laid out by the paragraph as the app's PanelLayout does it: the
+   *  paper above the text (below when there's no room), its left edge in line with the text's
+   *  but far enough in for the flower; the flower to its left, its foot on the text's top edge
+   *  (below: its bloom level with the paper's top); the paper unrolls from the bloom's head.
+   *  On a phone (narrow), all of it inside the text column, the flower under the paper. */
+  const layout = (r: DOMRect) => {
+    const w = press.offsetWidth, h = press.offsetHeight;
+    let x: number, y: number, foot: number[];
+    if (narrow(r)) {
+      const tall = F.height + GAP; // the flower standing between the text and the paper
+      const above = r.top - 2 - tall - h >= EDGE ? true : r.bottom + GAP + tall + h <= innerHeight - EDGE ? false : r.top >= innerHeight - r.bottom;
+      x = r.left;
+      y = above ? r.top - 2 - tall - h : r.bottom + GAP + tall;
+      foot = [r.left + F.left, above ? r.top - 2 : y - 2];
+    } else {
+      const above = r.top - GAP - h >= EDGE ? true : r.bottom + GAP + h <= innerHeight - EDGE ? false : r.top >= innerHeight - r.bottom;
+      x = Math.max(EDGE, Math.min(Math.max(r.left, LOWEST), innerWidth - EDGE - w));
+      y = Math.max(EDGE, Math.min(above ? r.top - GAP - h : r.bottom + GAP, innerHeight - EDGE - h));
+      foot = [x - ROOM, above ? y + h + GAP - 2 : y + F.height];
+    }
+    press.style.left = `${x + scrollX}px`;
+    press.style.top = `${y + scrollY}px`;
+    press.style.transformOrigin = `${Math.round(foot[0] - x)}px ${Math.round(foot[1] - F.headroom - y)}px`;
+    flowerAt.style.left = `${foot[0] + scrollX}px`;
+    flowerAt.style.top = `${foot[1] + scrollY}px`;
+  };
+  /** Back to nothing on the page at once. */
+  const reset = () => {
+    timers.forEach(clearTimeout);
+    timers = [];
+    beats('');
+    press.hidden = true;
+    phase = 'idle';
   };
   const open = (t: { el: HTMLElement; key: string }) => {
+    reset();
     target = t;
-    if (press.hidden) opener = document.activeElement as HTMLElement | null;
-    closing?.cancel();
+    opener = document.activeElement as HTMLElement | null;
     press.hidden = false;
-    replaceBtn.removeAttribute('data-done');
-    fit();
-    place(t.el.getBoundingClientRect());
+    fit(t.el.getBoundingClientRect());
     // Room for the longest version of this paragraph, so changing tone never moves anything.
     body.style.minHeight = '';
     let room = 0;
@@ -854,63 +945,84 @@ if (press && pressJson) {
     body.style.minHeight = `${Math.ceil(room)}px`;
     text.replaceChildren();
     choose(0);
-    // The panel takes focus, not a tab: Tab, Return and Esc are its keys, as in the app.
-    press.focus({ preventScroll: true });
-    press.scrollIntoView({ block: 'nearest', behavior: smooth });
-    say('Iris: looks good, nothing to fix. Tab for tones, Return to replace, Escape to close.');
-    if (!still) press.animate([{ opacity: 0, transform: 'translateY(-6px) scale(0.98)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: SPRING });
+    layout(t.el.getBoundingClientRect());
+    const shown = () => {
+      phase = 'open';
+      // The panel takes focus, not a tab: Tab, Return and Esc are its keys, as in the app.
+      press.focus({ preventScroll: true });
+      irisSaid('Iris: looks good, nothing to fix. Tab for tones, Return to replace, Escape to close.');
+    };
+    phase = 'opening';
+    if (still) return beats('bud bloom panel'), shown();
+    // As the app plays it (PanelMotion): the bud grows and stands a moment, opens, and the
+    // paper unrolls out of the bloom a beat after.
+    requestAnimationFrame(() => beats('bud'));
+    later(500, () => beats('bud bloom'));
+    later(750, () => (beats('bud bloom panel'), shown()));
   };
-  // It folds away as it came: up a little and out (140ms).
-  let closing: Animation | null = null;
-  const close = () => {
-    if (press.hidden || closing) return;
+  /** Closed without replacing (Esc, Done, a click away): the paper folds back down into the
+   *  flower, which folds and sinks. Nothing is pasted. */
+  const dismiss = () => {
+    if (phase !== 'opening' && phase !== 'open') return;
     target = null;
-    opener?.focus?.({ preventScroll: true });
-    const done = () => ((press.hidden = true), (closing = null));
-    if (still) return done();
-    closing = press.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-4px) scale(0.98)' }], { duration: 140, easing: 'ease-in' });
-    closing.onfinish = done;
-    closing.oncancel = () => (closing = null);
+    if (phase === 'open') opener?.focus?.({ preventScroll: true });
+    timers.forEach(clearTimeout);
+    timers = [];
+    if (still) return reset();
+    phase = 'shut';
+    beats('bud bloom shut');
+    later(200, () => (press.hidden = true));
+    later(F.shutMs + 60, reset);
   };
-  const flash = (el: HTMLElement) => {
-    if (!still) el.animate([{ backgroundColor: 'rgb(240 134 176 / 0.45)' }, { backgroundColor: 'rgb(240 134 176 / 0)' }], { duration: 1400, easing: 'ease-out' });
-  };
+  /** Replace: the tone goes on the page and Iris plays the app's Done (Done.tsx): the panel goes
+   *  at once, the flower's front fall lands on the paragraph's edge as a stamp with a tick,
+   *  Iris says "replaced" by it, and the flower folds and sinks. */
   const replace = () => {
-    if (!target || current === 0) return;
+    if (phase !== 'open' || !target) return;
+    if (current === 0) return dismiss(); // Done: Fix found nothing, so nothing is pasted
     undo.push({ el: target.el, html: target.el.innerHTML });
     target.el.textContent = data.pageTones[target.key][names[current]];
-    flash(target.el);
-    toast(`${names[current]}, on the page. ⌘Z puts it back.`);
-    // Replace turns over to "Replaced" (as in section 03), then the panel folds away.
-    replaceBtn.setAttribute('data-done', '');
-    if (!still) replaceBtn.animate([{ scale: 1 }, { scale: PANEL_MOTION.press.scale, offset: 0.3 }, { scale: 1 }], { duration: PANEL_MOTION.press.ms, easing: PANEL_MOTION.press.ease });
-    const t = target;
-    setTimeout(() => target === t && close(), still ? 0 : 520);
+    const box = target.el.getBoundingClientRect();
+    target = null;
+    opener?.focus?.({ preventScroll: true });
+    phase = 'done';
+    irisSays(SAYS.replaced, { box }, still ? 0 : F.note.at);
+    if (still) return reset();
+    beats('bud bloom done');
+    later(F.panelMs + 20, () => (press.hidden = true));
+    later(Math.max(F.sinkMs, F.lands + F.stampMs) + 60, reset);
   };
   const go = (shift: boolean) => {
     pressed = true;
     psst.hidden = true;
     pressKeys();
-    if (shift) return toast('Quick Fix: nothing to fix. This page was already fine.');
+    const t = nearest();
+    // Quick Fix: Iris checks the paragraph and, finding nothing, says so by it (the app's).
+    if (shift) {
+      if (!t) return irisSays(SAYS.nothingToRead, { point: pointer ?? undefined });
+      const box = t.el.getBoundingClientRect();
+      irisSays(SAYS.checking, { box }, 0, Infinity);
+      return void window.setTimeout(() => irisSays(SAYS.looksGood, { box: t.el.getBoundingClientRect() }), still ? 0 : 700);
+    }
     // At the foot, the keys play its reveal again.
     if (replayFoot?.()) return;
-    const t = nearest();
-    if (!t) return toast('looks good: nothing to fix here');
+    if (phase === 'opening' || phase === 'open') return; // Iris is already here
+    if (!t) return irisSays(SAYS.nothingToRead, { point: pointer ?? undefined });
     open(t);
   };
   const step = (dir: number) => choose((current + dir + names.length) % names.length);
 
-  tabEls.forEach((t, i) => t.addEventListener('click', () => choose(i)));
+  tabEls.forEach((t, i) => t.addEventListener('click', () => phase === 'open' && choose(i)));
   q('[data-press-next]').addEventListener('click', (e) => {
     tapKeys(e.currentTarget as Element);
-    step(1);
+    if (phase === 'open') step(1);
   });
   q('[data-press-replace]').addEventListener('click', (e) => {
     e.preventDefault();
     replace();
   });
   addEventListener('pointerdown', (e) => {
-    if (!press.hidden && !press.contains(e.target as Node)) close();
+    if ((phase === 'open' || phase === 'opening') && !press.contains(e.target as Node)) dismiss();
   });
   // No keyboard (a phone): the keys on the page are the shortcut.
   for (const row of capRows) {
@@ -926,25 +1038,24 @@ if (press && pressJson) {
       go(e.shiftKey);
       return;
     }
-    if (!press.hidden) {
+    if (phase === 'opening' || phase === 'open') {
       if (e.key === 'Escape') {
         e.preventDefault();
-        close();
+        dismiss();
       } else if (e.key === 'Tab' || e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
         e.preventDefault();
-        step(e.key === 'ArrowLeft' || (e.key === 'Tab' && e.shiftKey) ? -1 : 1);
+        if (phase === 'open') step(e.key === 'ArrowLeft' || (e.key === 'Tab' && e.shiftKey) ? -1 : 1);
       } else if (e.key === 'Enter') {
         e.preventDefault();
         replace();
       }
       return;
     }
+    // ⌘Z in "your app" (the page) takes the paste back, as your app's own Undo does: Iris says nothing.
     if (e.metaKey && !e.shiftKey && e.key.toLowerCase() === 'z' && !field && undo.length) {
       e.preventDefault();
       const u = undo.pop()!;
       u.el.innerHTML = u.html;
-      flash(u.el);
-      toast('Put back.');
     }
   });
 

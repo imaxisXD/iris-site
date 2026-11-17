@@ -134,6 +134,27 @@
   [data-desk], [data-desk] *, [data-desk-bud] { transition: none !important; animation: none !important; }
 }
 
+/* ── ⌃ ⌥ G on the page (Page.tsx, PressPanel; client.ts sets data-at on [data-press-iris] to the
+   beats reached: bud, bloom, panel; then done (Replace) or shut (Esc, Done ↵, a click away)).
+   The flower is How it works' (Desk.tsx, Bud); the panel unrolls out of its bloom as the app's
+   (PanelMotion): from a sliver at the flower's head, turned a little, on a quick spring, solid
+   almost at once; at Replace it goes at once; closed, it folds back down into the flower. ── */
+[data-press-iris][data-at~="bud"] [data-desk-bud] { scale: 1; opacity: 1; transition: scale 620ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 160ms ease, --open 380ms ease; }
+[data-press-iris][data-at~="bloom"] [data-desk-bud] { --open: 1; transition: scale 620ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 160ms ease, --open 700ms cubic-bezier(0.34, 1.5, 0.64, 1); }
+[data-press] { opacity: 0; scale: 0.22 0.04; rotate: -4deg; }
+[data-press-iris][data-at~="panel"] [data-press] { opacity: 1; scale: 1; rotate: 0deg; transition: opacity 70ms linear, scale 340ms cubic-bezier(0.34, 1.22, 0.64, 1), rotate 340ms cubic-bezier(0.34, 1.22, 0.64, 1); }
+[data-press-iris][data-at~="done"] [data-press] { opacity: 0; scale: 0.98; rotate: 0deg; transition: opacity 100ms linear, scale 100ms linear; }
+[data-press-iris][data-at~="shut"] [data-press] { opacity: 0; scale: 0.22 0.04; rotate: -4deg; transition: scale 180ms ease-in, rotate 180ms ease-in, opacity 120ms ease-in 80ms; }
+@media (prefers-reduced-motion: reduce) {
+  [data-press-iris], [data-press-iris] * { transition: none !important; animation: none !important; }
+}
+/* Iris's note (Done.tsx, SaysNote): the mark for its kind; a problem's word in red pen, no marker. */
+[data-says][data-kind="success"] [data-says-mark="success"],
+[data-says][data-kind="neutral"] [data-says-mark="neutral"],
+[data-says][data-kind="warning"] [data-says-mark="warning"] { display: inline-flex !important; }
+[data-says][data-kind="warning"] [data-says-marker] { display: none; }
+[data-says][data-kind="warning"] [data-says-lead] { color: rgb(217 67 46); }
+
 /* Replace, pressed: its label turns over, "Replace ↵" up and out, "✓ Replaced" up and in, in
    the same place (client.ts sets data-done for a moment). */
 [data-label-now], [data-label-done], [data-chip] { transition: opacity 160ms ease, translate 320ms cubic-bezier(0.23, 1, 0.32, 1), scale 200ms ease; }
@@ -144,6 +165,16 @@
 @media (prefers-reduced-motion: reduce) {
   [data-label-now], [data-label-done], [data-chip] { transition: opacity 120ms ease; translate: none !important; }
 }
+/* Done, in Replace's place when Fix found nothing (Panel.tsx, data-fix-clean). */
+/* The ⌃ ⌥ G panel never says "Replaced" (section 03's does), so its button is only as wide as
+   Replace or Done, and on a phone "nothing to change in" and Done stay together on one line. */
+[data-press] [data-label-done] { display: none; }
+[data-press][data-compact] :has(> [data-press-replace-wrap]) { flex-wrap: nowrap; }
+/* On a phone, Fix that found nothing says just "looks good" and Done: no "nothing to change in". */
+[data-press][data-compact]:has([data-fix-clean]) :has(> [data-press-into]) { display: none; }
+[data-label-clean] { visibility: hidden; }
+[data-fix-clean] [data-label-now] { visibility: hidden; }
+[data-fix-clean] [data-label-clean] { visibility: visible; }
 
 /* The ⌃ ⌥ G panel on a narrow window: no key hints (client.ts). */
 [data-press][data-compact] [data-press-keys] { display: none !important; }

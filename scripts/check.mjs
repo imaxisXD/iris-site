@@ -157,15 +157,28 @@ for (const reduce of [false, true]) {
   }
   ok((await footHeight()) === h0, `and the foot never changes height (${h0}px)`);
 
-  // ⌃ ⌥ G on the page: the panel opens on the paragraph you're reading.
+  // ⌃ ⌥ G on the page, as the app plays it: the bud grows by the paragraph you're reading and
+  // opens, and the panel unrolls out of it, above the paragraph (below with no room), never over it.
   await page.goto(url, { waitUntil: 'networkidle' });
   const lede = page.locator('[data-tones="lede"]');
   const ledeWas = await lede.textContent();
+  const at = () => page.locator('[data-press-iris]').getAttribute('data-at');
+  const opened = () => page.waitForFunction(() => document.querySelector('[data-press-iris]').dataset.at.includes('panel'), null, { timeout: 5000 });
   await page.keyboard.press('Control+Alt+KeyG');
-  await page.waitForTimeout(400);
+  if (!reduce) {
+    await page.waitForTimeout(100);
+    const early = await at();
+    ok(early.includes('bud') && !early.includes('panel'), `⌃⌥G grows Iris's bud first, before the panel ("${early}")`);
+  }
+  await opened();
+  await page.waitForTimeout(450);
   const panelOpen = () => page.locator('[data-press]').isVisible();
-  ok(await panelOpen(), '⌃⌥G on the page opens Iris\'s panel');
+  ok(await panelOpen(), '⌃⌥G on the page opens Iris\'s panel out of the bloom');
+  const pr = await page.locator('[data-press]').boundingBox(), lr = await lede.boundingBox(), fr = await page.locator('[data-press-flower]').boundingBox();
+  ok(pr.y + pr.height <= lr.y + 1 || pr.y >= lr.y + lr.height - 1, 'beside the paragraph, not over it');
+  ok(fr.x < pr.x + 40 && pr.x >= lr.x - 1, 'with the flower at its left, and nothing left of the text where there\'s no room for it');
   ok(await page.locator('[data-press-good]').isVisible(), 'and Fix says "looks good"');
+  ok(await page.locator('[data-press] [data-label-clean]').evaluate((el) => getComputedStyle(el).visibility === 'visible'), 'and its button says Done, as the app\'s does when Fix found nothing');
   await page.keyboard.press('Tab');
   await page.waitForTimeout(500);
   ok((await page.locator('[data-press-text] ins').count()) > 0, 'a tone shows its changes marked, as the panel does');
@@ -175,17 +188,30 @@ for (const reduce of [false, true]) {
   for (let i = 0; i < 4; i++) await page.keyboard.press('Tab');
   ok((await page.locator('[data-press-tab][aria-selected="true"]').textContent()).includes('Funny'), 'Tab moves through the tones to Funny');
   await page.keyboard.press('Enter');
-  await page.waitForTimeout(800);
-  ok((await lede.textContent()) !== ledeWas && !(await panelOpen()), 'Return puts the tone on the page');
+  await page.waitForTimeout(reduce ? 200 : 600);
+  const said = await page.locator('[data-says]').evaluate((el) => [...el.querySelectorAll('[data-says-lead], [data-says-detail], [data-says-keys]:not([hidden])')].map((e) => e.textContent).join(' '));
+  ok((await lede.textContent()) !== ledeWas && !(await panelOpen()), 'Return puts the tone on the page, and the panel goes at once');
+  ok(said === 'replaced Undo with ⌘Z', `and Iris says what the app's does by it ("${said}")`);
+  if (!reduce) ok((await at()).includes('done'), 'and plays the app\'s Done: the stamp and the flower sinking');
+  await page.waitForTimeout(1600);
+  ok((await at()) === '', 'and the flower has gone after');
   await page.keyboard.press('Meta+z');
-  ok((await lede.textContent()) === ledeWas, '⌘Z puts it back');
+  ok((await lede.textContent()) === ledeWas, '⌘Z puts it back, and Iris says nothing (your app undoes it)');
+  await page.waitForTimeout(2500);
   await page.keyboard.press('Control+Alt+KeyG');
-  await page.waitForTimeout(200);
+  await opened();
   ok(await page.evaluate(() => document.activeElement?.hasAttribute('data-press')), 'the panel takes focus, not a tab');
   await page.keyboard.press('Escape');
+  if (!reduce) ok((await at()).includes('shut'), 'Esc folds the panel back into the flower, which sinks');
   await page.waitForTimeout(250);
   ok(!(await panelOpen()), 'Esc closes the panel');
   ok(await page.evaluate(() => document.activeElement?.hasAttribute('data-press') || document.activeElement === document.body), 'focus came back after Esc');
+  await page.waitForTimeout(600);
+  await page.keyboard.press('Control+Alt+KeyG');
+  await opened();
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(300);
+  ok(!(await panelOpen()) && (await lede.textContent()) === ledeWas, 'on Fix, Return is Done: it closes and puts nothing on the page');
 
   // Make it yours: picking a page on the list turns the Settings window to it; ↓ moves on.
   const yoursPage = () => page.locator('#yours [data-yours-page][data-shown="true"]').getAttribute('id');
@@ -214,6 +240,23 @@ for (const reduce of [false, true]) {
   const download = await page.getByRole('link', { name: 'Download Iris' }).first().getAttribute('href');
   ok(download?.endsWith('/Iris.zip'), 'Download Iris points at the latest release');
   ok(errors.length === 0, `no errors in the console${errors.length ? ': ' + errors.join(' | ') : ''}`);
+  await page.close();
+}
+
+// On a phone ⌃ ⌥ G's panel keeps to the paragraph's column: its edges are the text's, and the
+// flower stands on the text's top left, inside the column too.
+for (const width of [320, 390]) {
+  const page = await browser.newPage({ viewport: { width, height: 800 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+  await page.goto(url, { waitUntil: 'load' });
+  await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; const el = document.querySelector('[data-tones="private"]'); scrollTo(0, el.getBoundingClientRect().top + scrollY - 500); });
+  await page.keyboard.press('Control+Alt+KeyG');
+  await page.waitForTimeout(300);
+  const r = await page.evaluate(() => {
+    const R = (s) => document.querySelector(s).getBoundingClientRect();
+    const t = R('[data-tones="private"]'), p = R('[data-press]'), b = R('[data-press] [data-press-replace]');
+    return { left: Math.abs(p.left - t.left), right: Math.abs(p.right - t.right), button: b.right <= p.right + 0.5 };
+  });
+  ok(r.left < 1 && r.right < 1 && r.button, `at ${width}px ⌃⌥G's panel lines up with the paragraph's edges, its button inside it`);
   await page.close();
 }
 

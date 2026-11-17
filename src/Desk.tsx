@@ -137,12 +137,15 @@ const d = stylex.create({
   text: { gridArea: '1 / 1' },
   caret: { display: 'inline-block', width: 1.5, height: '1.15em', marginLeft: 1, verticalAlign: '-0.2em', backgroundColor: 'rgb(30 26 24)' },
   // ── Iris ──
-  bud: { position: 'absolute', zIndex: 4, width: BUD.width, aspectRatio: BUD_SHAPE, left: BUD.foot.left, bottom: BUD_BOTTOM },
+  budBox: { position: 'absolute', zIndex: 4, width: BUD.width, aspectRatio: BUD_SHAPE },
+  bud: { left: BUD.foot.left, bottom: BUD_BOTTOM },
+  // Its box with its foot on the point it's put at (Bud's and Flight's `place` elsewhere).
+  onFoot: { left: -BUD.width * (-BUD.room.left / BUD.room.width), top: `${-((-BUD.room.top) / BUD.room.width) * BUD.width}px` },
   fill: { position: 'absolute', inset: 0 },
   part: { position: 'absolute', backgroundRepeat: 'no-repeat' },
   // Done (Done.tsx): the plant sinks into the ground at its foot, so it's cut off there.
   ground: { position: 'absolute', inset: 0, clipPath: `inset(-200% -200% ${pct(BUD.room.height + BUD.room.top, BUD.room.height)} -200%)` },
-  flight: { position: 'absolute', zIndex: 4, width: BUD.width, aspectRatio: BUD_SHAPE, left: BUD.foot.left, bottom: BUD_BOTTOM, pointerEvents: 'none' },
+  flight: { position: 'absolute', zIndex: 4, width: BUD.width, aspectRatio: BUD_SHAPE, pointerEvents: 'none' },
   svg: { position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' },
   hidden: { opacity: 0 },
   stampAt: { position: 'absolute', aspectRatio: '1' },
@@ -188,10 +191,12 @@ function Part({ name, at }: { name: FlowerPart; at: readonly number[] }) {
     </div>
   );
 }
-function Bud() {
+/** Iris's flower: a bud that opens, nods, flicks its front fall and folds and sinks (Done). `place`
+ *  puts its box (BUD.room, BUD.width wide) where it stands; by default at a text box's corner. */
+export function Bud({ place = d.bud }: { place?: stylex.StyleXStyles }) {
   const head = [0, -flower.stem] as const, foot = `50% ${pct(-BUD.room.top, BUD.room.height)}`;
   return (
-    <div {...stylex.props(d.bud)} data-desk-bud data-dd="fold" style={{ transformOrigin: foot }}>
+    <div {...stylex.props(d.budBox, place)} data-desk-bud data-dd="fold" style={{ transformOrigin: foot }}>
       <div {...stylex.props(d.ground)}>
         <div {...stylex.props(d.fill)} data-dd="sink">
           <div {...stylex.props(d.fill)} data-dd="nod" style={{ transformOrigin: foot }}>
@@ -221,11 +226,11 @@ const FROM = [0, -flower.stem + DONE.fallBelowHead];
 const FLIGHT = flightOf(FROM, DONE.stampAt);
 const TRAIL = trailOf(FLIGHT);
 const r1 = (v: number) => +v.toFixed(2);
-function Flight() {
+export function Flight({ place = d.bud }: { place?: stylex.StyleXStyles }) {
   const R = BUD.room, D = DONE;
   const at = ([x, y]: readonly number[]) => `${pct(x - R.left, R.width)} ${pct(y - R.top, R.height)}`;
   return (
-    <div {...stylex.props(d.flight)} style={{ '--open': 1 } as React.CSSProperties}>
+    <div {...stylex.props(d.flight, place)} style={{ '--open': 1 } as React.CSSProperties}>
       <svg viewBox={`${R.left} ${R.top} ${R.width} ${R.height}`} stroke="rgb(42 26 22)" strokeWidth={1.5} strokeLinecap="round" {...stylex.props(d.svg)}>
         {TRAIL.map((t, i) => (
           <line key={i} x1={r1(t.from[0])} y1={r1(t.from[1])} x2={r1(t.to[0])} y2={r1(t.to[1])} {...stylex.props(d.hidden)} data-dd="dot" style={{ '--at': `${Math.round(D.flyFrom + t.f * D.flyMs)}ms` } as React.CSSProperties} />
@@ -254,12 +259,17 @@ function Flight() {
  * reaches Replace (s5), in the app on screen and Done's layer over its box; off (back to
  * hidden) as soon as it isn't; held while the desk is paused or scrolled away (client.ts sets
  * data-paused). */
-const DONE_CSS = (() => {
-  const D = DONE, on = '[data-desk][data-at~="s5"] [data-on="true"]', layer = '[data-desk][data-at~="s5"] [data-desk-done]';
+/** Done's CSS for one place: `on` matches the flower when Replace has been pressed, `layer` its
+ *  flight and stamp, `shut` the flower when it's closed without replacing (it folds and sinks,
+ *  no flight, no stamp), `paused` when its clock holds. */
+export function doneCss({ on, layer, shut, paused }: { on: string; layer: string; shut?: string; paused?: string }) {
+  const D = DONE;
   const stampMs = D.stamp.holdMs + D.stamp.popMs, [a, b, c] = D.stamp.steps;
   const p = (v: number, of: number) => `${+((v / of) * 100).toFixed(2)}%`;
   const noteMs = D.note.inMs + D.note.holdMs + D.note.outMs;
   const depth = pct(flower.stem * D.sink.depth, BUD.room.height);
+  // Closed without replacing: the app's dismissed Done (IrisRig: shutAt 0.04 s).
+  const shutAt = 40;
   return [
     `@keyframes dd-gone{to{opacity:0}}`,
     `@keyframes dd-fold{from{--open:1}to{--open:${BUD.closed}}}`,
@@ -275,8 +285,6 @@ const DONE_CSS = (() => {
     `@keyframes dd-thin{from{stroke-width:var(--w)}to{stroke-width:0}}`,
     `@keyframes dd-register{from{translate:var(--rx) var(--ry)}to{translate:var(--gx) var(--gy)}}`,
     `@keyframes dd-note{0%{opacity:0}${p(D.note.inMs, noteMs)},${p(D.note.inMs + D.note.holdMs, noteMs)}{opacity:1}100%{opacity:0}}`,
-    // The panel goes at once.
-    `${on} [data-desk-panel]{opacity:0;scale:0.98;transition:opacity ${D.panelMs}ms linear,scale ${D.panelMs}ms linear}`,
     `${on} [data-dd="front"]{animation:dd-gone 1ms linear ${D.flyFrom}ms forwards}`,
     `${on} [data-dd="nod"]{animation:dd-nod ${D.nod.ms}ms ease-in-out}`,
     `${on} [data-dd="fold"]{animation:dd-fold ${D.fold.ms}ms ease-in-out ${LANDS}ms forwards}`,
@@ -291,9 +299,29 @@ const DONE_CSS = (() => {
     `${layer} [data-dd="thin"]{animation:dd-thin ${D.ring.ms}ms cubic-bezier(0.2,0.8,0.3,1) ${LANDS}ms forwards}`,
     `${layer} [data-dd="register"]{animation:dd-register ${D.register.snapMs}ms cubic-bezier(0.3,1.5,0.5,1) ${LANDS + D.register.waitMs}ms both}`,
     `${layer} [data-dd="note"]{animation:dd-note ${noteMs}ms linear ${D.note.at}ms forwards}`,
-    `[data-desk][data-paused] [data-dd]{animation-play-state:paused!important}`,
+    ...(shut
+      ? [
+          `${shut} [data-dd="fold"]{animation:dd-fold ${D.fold.ms}ms ease-in-out ${shutAt}ms forwards}`,
+          `${shut} [data-dd="squash"]{animation:dd-squash ${D.fold.squashMs}ms ease-in-out ${shutAt}ms}`,
+          `${shut} [data-dd="sink"]{animation:dd-sink ${D.sink.ms}ms ease-in ${shutAt + D.sink.afterMs}ms forwards}`,
+        ]
+      : []),
+    ...(paused ? [`${paused} [data-dd]{animation-play-state:paused!important}`] : []),
   ].join('\n');
+}
+/** Where Bud and Flight stand when put on a point: their foot on it. */
+export const ON_FOOT = d.onFoot;
+/** The flower's reach round its foot, in px at the size Bud draws it: the app's (IrisRig.reach,
+ *  PanelLayout.Flower), for laying the panel and the flower out as the app does. */
+export const FLOWER_PX = (() => {
+  const k = BUD.width / BUD.room.width;
+  return { left: Math.round(37 * k), right: Math.round(42 * k), height: Math.round(100 * k), headroom: Math.round(flower.stem * k), stampAt: DONE.stampAt.map((v) => +(v * k).toFixed(1)) };
 })();
+/** How long a closed flower takes to fold and sink, ms. */
+export const SHUT_MS = 40 + DONE.sink.afterMs + DONE.sink.ms;
+const DONE_CSS =
+  doneCss({ on: '[data-desk][data-at~="s5"] [data-on="true"]', layer: '[data-desk][data-at~="s5"] [data-desk-done]', paused: '[data-desk][data-paused]' }) +
+  `\n[data-desk][data-at~="s5"] [data-on="true"] [data-desk-panel]{opacity:0;scale:0.98;rotate:0deg;transition:opacity ${DONE.panelMs}ms linear,scale ${DONE.panelMs}ms linear}`;
 
 /** The box being written in: the reply as written (caret at its end), and as fixed (pasted,
  *  as the app does it: nothing marks Iris's words in your app); Iris's flower at its corner

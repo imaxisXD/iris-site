@@ -85,7 +85,15 @@ const st = stylex.create({
   noteLead: { position: 'relative', isolation: 'isolate', fontFamily: font.brush, fontSize: 24, lineHeight: 1, color: ink.i12 },
   noteMarker: { position: 'absolute', left: -3, right: -3, bottom: -2, height: 8, zIndex: -1, rotate: '-1.2deg' },
   noteDetail: { position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: ink.i11 },
+  // A note that says any of Iris's messages (SaysNote): its mark, its word's colour and marker,
+  // and its keys follow data-kind and data-keys (client.ts sets them with the words).
+  mark: { position: 'relative', display: 'none', alignItems: 'center', justifyContent: 'center' },
+  bloom: { width: 30, height: 30, marginBlock: -3, objectFit: 'cover', objectPosition: '50% 0' },
+  problem: { width: 24, height: 24, fontFamily: font.brush, fontSize: 20, lineHeight: 1, color: ink.red },
+  ring: { position: 'absolute', inset: -2, overflow: 'visible' },
 });
+/** Iris's kinds of note, as the app draws their marks (ToastMark). */
+export type NoteKind = 'success' | 'neutral' | 'warning';
 
 type Hook = Record<string, unknown>;
 /** Our own classes and a place's hook on one element: their class names joined, not one over the other. */
@@ -142,6 +150,46 @@ export function ReplacedNote({ motion, hook }: { motion?: stylex.StyleXStyles; h
       </span>
       <span {...stylex.props(st.noteDetail)}>
         Undo with <KeyRow keys={['⌘', 'Z']} />
+      </span>
+    </div>
+  );
+}
+
+/** One note that can say any of Iris's messages by your text (the app's Toast): a pink tick for
+ *  done, the iris's bloom for working or a quiet note, a red ring round "?" for a problem; the
+ *  lead in brush on the pink marker (red pen, no marker, for a problem); the detail; keys. The
+ *  page draws it once and the script puts the words in (data-kind, data-keys, the lead and the
+ *  detail), so a new message never adds markup. */
+export function SaysNote({ motion, hook }: { motion?: stylex.StyleXStyles; hook?: Hook }) {
+  return (
+    <div {...stylex.props(panel.sheet, st.note, motion)} data-says data-kind="success" data-keys="" {...hook}>
+      <span {...stylex.props(panel.grain)} />
+      <span {...stylex.props(st.mark)} data-says-mark="success">
+        <HandTick size={18} />
+      </span>
+      <span {...stylex.props(st.mark)} data-says-mark="neutral">
+        <img src="/img/hero-flower-240.webp" alt="" width={30} height={30} loading="lazy" decoding="async" {...stylex.props(st.bloom)} />
+      </span>
+      <span {...stylex.props(st.mark, st.problem)} data-says-mark="warning">
+        ?
+        <svg viewBox="-12 -12 24 24" {...stylex.props(st.ring)} fill="none" stroke="rgb(217 67 46)" strokeWidth={1.8} strokeLinecap="round">
+          <path d="M9.6,-3.4 C11.2,3.6 5.6,10.4 -1.2,10.6 C-8.4,10.8 -11.6,4 -10.4,-2.4 C-9.2,-8.8 -2.6,-11.2 3,-9.8 C6.6,-8.8 9.4,-6.2 10.2,-3" />
+        </svg>
+      </span>
+      <span {...stylex.props(st.noteLead)} data-says-leadbox>
+        <span aria-hidden {...stylex.props(st.noteMarker)} data-says-marker>
+          <Printed mask={markerMask(seedOf('replaced'))} color="pink" />
+        </span>
+        <span data-says-lead>replaced</span>
+      </span>
+      <span {...stylex.props(st.noteDetail)}>
+        <span data-says-detail>Undo with</span>
+        <span data-says-keys="undo" hidden>
+          <KeyRow keys={['⌘', 'Z']} />
+        </span>
+        <span data-says-keys="open" hidden>
+          <KeyRow keys={['⌃', '⌥', 'G']} />
+        </span>
       </span>
     </div>
   );

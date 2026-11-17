@@ -204,15 +204,18 @@ export function Panel({ tabs, tab, children, app, good = false, hooks = {}, afte
             </span>
           </span>
           {after}
-          <span hidden={good} {...hooks.replaceWrap}>
-            {/* Its label turns over to "Replaced" once pressed (client.ts, global.css); both
-                share one place, so the button never changes size. */}
+          <span data-fix-clean={good ? '' : undefined} {...hooks.replaceWrap}>
+            {/* The one button: Replace, or Done when Fix found nothing (the app's PanelFooter:
+                it closes and pastes nothing; the script sets data-fix-clean). In section 03
+                Replace's label turns over to "Replaced" once pressed (client.ts, global.css).
+                All three share one place, so the button never changes size. */}
             <BrushButton hint={<span role="img" aria-label="Return" data-chip {...stylex.props(panel.chip)}>↵</span>} data={{ ...(hooks.replace as Record<string, string>) }}>
               <span {...stylex.props(panel.labels)}>
                 <span data-label-now {...stylex.props(panel.label)}>Replace</span>
                 <span data-label-done aria-hidden {...stylex.props(panel.label)}>
                   <HandTick size={16} color="rgb(255 252 249)" /> Replaced
                 </span>
+                <span data-label-clean {...stylex.props(panel.label)}>Done</span>
               </span>
             </BrushButton>
           </span>
