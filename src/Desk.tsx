@@ -13,7 +13,7 @@
 // the app on screen `data-on`; global.css turns those into motion.
 import * as stylex from '@stylexjs/stylex';
 import type React from 'react';
-import { diff } from './content';
+import { DONE, flightBezier, flightOf, LANDS, NOTE_GONE, ReplacedNote, STAMP_BOX, StampFace, trailOf } from './Done';
 import { flower, type FlowerPart } from './fableFlower';
 import { Marks, Panel, panel } from './Panel';
 import { KeyRow } from './parts';
@@ -31,11 +31,14 @@ import { font, ink, tex } from './tokens.stylex';
  * 1800ms   the bud opens
  * 2050ms   the panel unfolds out of it, marking the fixes          (Read)
  * 4600ms   ↵ goes down; Replace is pressed                          (Replace)
- * 4800ms   the panel folds back into the flower
- * 5000ms   the fixed words land in the box, Iris's words in pink
- * 5700ms   the flower goes; the pink fades out (1.2s)
- * 6600ms   the next app
+ * 4800ms   Done, as the app plays it and the cover does (Done.tsx): the panel goes at once
+ *          and the fix is in the box; the flower nods and flicks its front fall up and over
+ *          onto the box's top edge, where it lands as a stamp with a tick (5200ms); Iris's
+ *          note sits on the box's top right: ✓ replaced, Undo with ⌘ Z (4950 → 7620ms);
+ *          the flower folds back into its bud and sinks (5200 → 5560ms); the stamp pops (5940ms)
+ * 7900ms   the next app
  * ───────────────────────────────────────────────────────── */
+const REPLACE = 4800;
 export const TIMING = {
   typeFrom: 200,   // the last words start typing in
   typeTo:   820,   // and are all there
@@ -43,10 +46,10 @@ export const TIMING = {
   bud:      1300,  // the flower grows, a closed bud
   panel:    1800,  // the bud opens; the panel follows it out (PANEL_AFTER, in global.css: 250ms)
   enter:    4600,  // ↵ down, Replace pressed
-  replace:  4800,  // the panel folds back into the flower
-  land:     5000,  // the fixed words land in the box, in pink
-  wilt:     5700,  // the flower goes, the pink fades
-  next:     6600,  // the next app comes forward
+  replace:  REPLACE,                                                   // Done: the panel goes, the flower plays the app's Done
+  land:     REPLACE,                                                   // the fix is in the box as the panel goes
+  wilt:     REPLACE + LANDS + DONE.sink.afterMs + DONE.sink.ms + 40,   // the flower has sunk
+  next:     REPLACE + NOTE_GONE + 280,                                 // the note has gone, a breath, the next app
 };
 /** How many letters of each reply type in before the shortcut: its last word or two. */
 export const TYPED = 18;
@@ -137,6 +140,19 @@ const d = stylex.create({
   bud: { position: 'absolute', zIndex: 4, width: BUD.width, aspectRatio: BUD_SHAPE, left: BUD.foot.left, bottom: BUD_BOTTOM },
   fill: { position: 'absolute', inset: 0 },
   part: { position: 'absolute', backgroundRepeat: 'no-repeat' },
+  // Done (Done.tsx): the plant sinks into the ground at its foot, so it's cut off there.
+  ground: { position: 'absolute', inset: 0, clipPath: `inset(-200% -200% ${pct(BUD.room.height + BUD.room.top, BUD.room.height)} -200%)` },
+  flight: { position: 'absolute', zIndex: 4, width: BUD.width, aspectRatio: BUD_SHAPE, left: BUD.foot.left, bottom: BUD_BOTTOM, pointerEvents: 'none' },
+  svg: { position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' },
+  hidden: { opacity: 0 },
+  stampAt: { position: 'absolute', aspectRatio: '1' },
+  stamp: { position: 'absolute', inset: 0, scale: '0' },
+  // Iris's note, as the app puts it by the text box: right-aligned on its top edge
+  // (FloatingNote.origin: 14 past its right, 4 down into it), at the panel's size.
+  noteAt: { position: 'absolute', zIndex: 5, right: -14, bottom: 'calc(100% - 4px)', zoom: 0.8 },
+  // Done's layer: one for the desk, laid over the text box of the app on screen (client.ts
+  // sets --bx, --by, --bw, --bh, in canvas px), above every window.
+  doneAt: { position: 'absolute', zIndex: 2, left: 'calc(var(--bx, 0) * 1px)', top: 'calc(var(--by, 0) * 1px)', width: 'calc(var(--bw, 0) * 1px)', height: 'calc(var(--bh, 0) * 1px)', pointerEvents: 'none' },
   panel: { position: 'absolute', zIndex: 3, left: -10, fontFamily: font.mono },
   // The panel at the app's own proportions, a little smaller than the page's: wide enough that its
   // keys, the app's name and Replace sit on one line.
@@ -173,22 +189,117 @@ function Part({ name, at }: { name: FlowerPart; at: readonly number[] }) {
   );
 }
 function Bud() {
-  const head = [0, -flower.stem] as const;
+  const head = [0, -flower.stem] as const, foot = `50% ${pct(-BUD.room.top, BUD.room.height)}`;
   return (
-    <div {...stylex.props(d.bud)} data-desk-bud style={{ transformOrigin: `50% ${pct(-BUD.room.top, BUD.room.height)}` }}>
-      <Part name="leaf" at={[-3, 0]} />
-      <Part name="stem" at={[0, 0]} />
-      {BUD.bloom.map((name) => (
-        <Part key={name} name={name} at={head} />
-      ))}
+    <div {...stylex.props(d.bud)} data-desk-bud data-dd="fold" style={{ transformOrigin: foot }}>
+      <div {...stylex.props(d.ground)}>
+        <div {...stylex.props(d.fill)} data-dd="sink">
+          <div {...stylex.props(d.fill)} data-dd="nod" style={{ transformOrigin: foot }}>
+            <div {...stylex.props(d.fill)} data-dd="squash" style={{ transformOrigin: foot }}>
+              <Part name="leaf" at={[-3, 0]} />
+              <Part name="stem" at={[0, 0]} />
+              {BUD.bloom.map((name) =>
+                name === 'fall-2' ? (
+                  // The front fall: it flies off at Return (Done).
+                  <div key={name} {...stylex.props(d.fill)} data-dd="front">
+                    <Part name={name} at={head} />
+                  </div>
+                ) : (
+                  <Part key={name} name={name} at={head} />
+                ),
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-/** The box being written in: the reply as written (caret at its end), and as fixed, with the
- *  words Iris put in in pink; Iris's flower at its corner and its panel out of the flower. */
+/* Done, in the bud's room: the front fall's flight and trail, and the stamp it lands as. */
+const FROM = [0, -flower.stem + DONE.fallBelowHead];
+const FLIGHT = flightOf(FROM, DONE.stampAt);
+const TRAIL = trailOf(FLIGHT);
+const r1 = (v: number) => +v.toFixed(2);
+function Flight() {
+  const R = BUD.room, D = DONE;
+  const at = ([x, y]: readonly number[]) => `${pct(x - R.left, R.width)} ${pct(y - R.top, R.height)}`;
+  return (
+    <div {...stylex.props(d.flight)} style={{ '--open': 1 } as React.CSSProperties}>
+      <svg viewBox={`${R.left} ${R.top} ${R.width} ${R.height}`} stroke="rgb(42 26 22)" strokeWidth={1.5} strokeLinecap="round" {...stylex.props(d.svg)}>
+        {TRAIL.map((t, i) => (
+          <line key={i} x1={r1(t.from[0])} y1={r1(t.from[1])} x2={r1(t.to[0])} y2={r1(t.to[1])} {...stylex.props(d.hidden)} data-dd="dot" style={{ '--at': `${Math.round(D.flyFrom + t.f * D.flyMs)}ms` } as React.CSSProperties} />
+        ))}
+      </svg>
+      <div {...stylex.props(d.fill)} data-dd="across" style={{ '--dx': pct(D.stampAt[0] - FROM[0], R.width) } as React.CSSProperties}>
+        <div {...stylex.props(d.fill)} data-dd="arc" style={{ '--dy': pct(D.stampAt[1] - FROM[1], R.height) } as React.CSSProperties}>
+          <div {...stylex.props(d.fill, d.hidden)} data-dd="spin" style={{ transformOrigin: at(FROM) }}>
+            <Part name="fall-2" at={[0, -flower.stem]} />
+          </div>
+        </div>
+      </div>
+      <div
+        {...stylex.props(d.stampAt)}
+        style={{ left: pct(D.stampAt[0] - STAMP_BOX / 2 - R.left, R.width), top: pct(D.stampAt[1] - STAMP_BOX / 2 - R.top, R.height), width: pct(STAMP_BOX, R.width), rotate: `${D.stamp.tilt}deg` }}
+      >
+        <div {...stylex.props(d.stamp)} data-dd="stamp">
+          <StampFace hooks={{ ringOut: { 'data-dd': 'ring' }, ringThin: { 'data-dd': 'thin' }, register: { 'data-dd': 'register' } }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* Done's motion on the desk: each part's animation, from Done.tsx's numbers, on once the turn
+ * reaches Replace (s5), in the app on screen and Done's layer over its box; off (back to
+ * hidden) as soon as it isn't; held while the desk is paused or scrolled away (client.ts sets
+ * data-paused). */
+const DONE_CSS = (() => {
+  const D = DONE, on = '[data-desk][data-at~="s5"] [data-on="true"]', layer = '[data-desk][data-at~="s5"] [data-desk-done]';
+  const stampMs = D.stamp.holdMs + D.stamp.popMs, [a, b, c] = D.stamp.steps;
+  const p = (v: number, of: number) => `${+((v / of) * 100).toFixed(2)}%`;
+  const noteMs = D.note.inMs + D.note.holdMs + D.note.outMs;
+  const depth = pct(flower.stem * D.sink.depth, BUD.room.height);
+  return [
+    `@keyframes dd-gone{to{opacity:0}}`,
+    `@keyframes dd-fold{from{--open:1}to{--open:${BUD.closed}}}`,
+    `@keyframes dd-squash{0%,100%{scale:1}50%{scale:1 ${D.fold.squash}}}`,
+    `@keyframes dd-nod{0%,100%{rotate:0deg}25%{rotate:${D.nod.back}deg}65%{rotate:${D.nod.forward}deg}}`,
+    `@keyframes dd-sink{to{translate:0 ${depth}}}`,
+    `@keyframes dd-across{to{translate:var(--dx) 0}}`,
+    `@keyframes dd-arc{to{translate:0 var(--dy)}}`,
+    `@keyframes dd-spin{0%{opacity:1;rotate:0deg;scale:1}99.9%{opacity:1;rotate:${D.spin}deg;scale:${D.shrink}}100%{opacity:0;rotate:${D.spin}deg;scale:${D.shrink}}}`,
+    `@keyframes dd-dot{0%,99%{opacity:1}100%{opacity:0}}`,
+    `@keyframes dd-stamp{0%{scale:${D.stamp.from};animation-timing-function:cubic-bezier(0.2,0.8,0.3,1)}${p(a, stampMs)}{scale:${D.stamp.over};animation-timing-function:ease-in-out}${p(a + b, stampMs)}{scale:${D.stamp.under};animation-timing-function:ease-in-out}${p(a + b + c, stampMs)},${p(D.stamp.holdMs, stampMs)}{scale:1;animation-timing-function:cubic-bezier(0.55,0,1,0.45)}100%{scale:0}}`,
+    `@keyframes dd-ring{from{scale:1}to{scale:var(--grow)}}`,
+    `@keyframes dd-thin{from{stroke-width:var(--w)}to{stroke-width:0}}`,
+    `@keyframes dd-register{from{translate:var(--rx) var(--ry)}to{translate:var(--gx) var(--gy)}}`,
+    `@keyframes dd-note{0%{opacity:0}${p(D.note.inMs, noteMs)},${p(D.note.inMs + D.note.holdMs, noteMs)}{opacity:1}100%{opacity:0}}`,
+    // The panel goes at once.
+    `${on} [data-desk-panel]{opacity:0;scale:0.98;transition:opacity ${D.panelMs}ms linear,scale ${D.panelMs}ms linear}`,
+    `${on} [data-dd="front"]{animation:dd-gone 1ms linear ${D.flyFrom}ms forwards}`,
+    `${on} [data-dd="nod"]{animation:dd-nod ${D.nod.ms}ms ease-in-out}`,
+    `${on} [data-dd="fold"]{animation:dd-fold ${D.fold.ms}ms ease-in-out ${LANDS}ms forwards}`,
+    `${on} [data-dd="squash"]{animation:dd-squash ${D.fold.squashMs}ms ease-in-out ${LANDS}ms}`,
+    `${on} [data-dd="sink"]{animation:dd-sink ${D.sink.ms}ms ease-in ${LANDS + D.sink.afterMs}ms forwards}`,
+    `${layer} [data-dd="across"]{animation:dd-across ${D.flyMs}ms linear ${D.flyFrom}ms both}`,
+    `${layer} [data-dd="arc"]{animation:dd-arc ${D.flyMs}ms ${flightBezier(FROM, D.stampAt)} ${D.flyFrom}ms both}`,
+    `${layer} [data-dd="spin"]{animation:dd-spin ${D.flyMs}ms linear ${D.flyFrom}ms forwards}`,
+    `${layer} [data-dd="dot"]{animation:dd-dot ${D.flyMs / 2}ms linear var(--at) forwards}`,
+    `${layer} [data-dd="stamp"]{animation:dd-stamp ${stampMs}ms linear ${LANDS}ms forwards}`,
+    `${layer} [data-dd="ring"]{animation:dd-ring ${D.ring.ms}ms cubic-bezier(0.2,0.8,0.3,1) ${LANDS}ms both}`,
+    `${layer} [data-dd="thin"]{animation:dd-thin ${D.ring.ms}ms cubic-bezier(0.2,0.8,0.3,1) ${LANDS}ms forwards}`,
+    `${layer} [data-dd="register"]{animation:dd-register ${D.register.snapMs}ms cubic-bezier(0.3,1.5,0.5,1) ${LANDS + D.register.waitMs}ms both}`,
+    `${layer} [data-dd="note"]{animation:dd-note ${noteMs}ms linear ${D.note.at}ms forwards}`,
+    `[data-desk][data-paused] [data-dd]{animation-play-state:paused!important}`,
+  ].join('\n');
+})();
+
+/** The box being written in: the reply as written (caret at its end), and as fixed (pasted,
+ *  as the app does it: nothing marks Iris's words in your app); Iris's flower at its corner
+ *  and its panel out of the flower. Done's flight, stamp and note are drawn once for the
+ *  desk, over the box on screen (DoneAt). */
 function TextBox({ app, xstyle, style }: { app: App; xstyle?: stylex.StyleXStyles; style?: React.CSSProperties }) {
-  const fixed = diff(app.draft, app.fixed).filter((s) => s.kind !== 'gone');
   return (
     <div {...stylex.props(d.box2, xstyle)} style={style} data-desk-box>
       <div {...stylex.props(d.texts)}>
@@ -197,17 +308,7 @@ function TextBox({ app, xstyle, style }: { app: App; xstyle?: stylex.StyleXStyle
           <span {...stylex.props(d.caret)} data-desk-caret />
         </span>
         <span {...stylex.props(d.text)} data-desk-fixed>
-          {fixed.map((s, i) => {
-            const space = i > 0 && !/^[^\w]/.test(s.text) ? ' ' : '';
-            return s.kind === 'same' ? (
-              <span key={i}>{space + s.text}</span>
-            ) : (
-              <span key={i}>
-                {space}
-                <span data-desk-new>{s.text}</span>
-              </span>
-            );
-          })}
+          {app.fixed}
         </span>
       </div>
       <Bud />
@@ -463,6 +564,7 @@ function Wallpaper() {
 export function Desk() {
   return (
     <div {...stylex.props(d.box)}>
+      <style dangerouslySetInnerHTML={{ __html: DONE_CSS }} />
       <div {...stylex.props(d.bezel)}>
         <div {...stylex.props(d.screen)} data-desk-screen>
           <Wallpaper />
@@ -492,6 +594,12 @@ export function Desk() {
                 <Screen app={a} />
               </div>
             ))}
+            <div {...stylex.props(d.doneAt)} data-desk-done>
+              <Flight />
+              <div {...stylex.props(d.noteAt)}>
+                <ReplacedNote motion={d.hidden} hook={{ 'data-dd': 'note' }} />
+              </div>
+            </div>
             <div {...stylex.props(d.slip)} data-desk-slip="press">
               <span {...stylex.props(d.slipKeys)}>
                 <KeyRow keys={['⌃', '⌥', 'G']} />

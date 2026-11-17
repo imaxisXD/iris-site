@@ -383,10 +383,12 @@ if (desk && chapterList) {
     follow();
   };
   const follow = () => {
+    const box = apps[shownApp < 0 ? 0 : shownApp].querySelector<HTMLElement>('[data-desk-box]')!;
+    let x = 0, y = 0;
+    for (let el: HTMLElement | null = box; el && el !== desk; el = el.offsetParent as HTMLElement | null) (x += el.offsetLeft), (y += el.offsetTop);
+    // Done's flight, stamp and note (Desk.tsx, DoneAt) go over this app's text box.
+    for (const [k, v] of [['--bx', x], ['--by', y], ['--bw', box.offsetWidth], ['--bh', box.offsetHeight]] as const) desk.style.setProperty(k, String(v));
     if (!phone.matches) return desk.style.setProperty('--cx', '0');
-    const box = apps[shownApp < 0 ? 0 : shownApp].querySelector<HTMLElement>('[data-desk-box]');
-    let x = 0;
-    for (let el: HTMLElement | null = box; el && el !== desk; el = el.offsetParent as HTMLElement | null) x += el.offsetLeft;
     // From just left of the flower (70px left of the box) to past the panel's right edge.
     desk.style.setProperty('--cx', String(Math.max(0, Math.min(C.width - C.phone, x - 74))));
   };
@@ -433,6 +435,8 @@ if (desk && chapterList) {
       cancelAnimationFrame(raf);
       raf = 0;
     }
+    // Done's parts run as CSS animations from the beat; they hold when the clock does.
+    desk.toggleAttribute('data-paused', !playing || !seen);
     if (toggle) toggle.textContent = playing ? 'Pause' : 'Play';
   };
   toggle?.addEventListener('click', () => {
@@ -960,4 +964,21 @@ if (press && pressJson) {
       setTimeout(() => (psst.hidden = true), 9000);
     }).observe(cover);
   }
+}
+
+// ── Send to my Mac (parts.tsx, GetIris) ───────────────────────────────────────────────
+// On a phone or tablet the button hands this page to the share sheet, so it can go to a Mac
+// by AirDrop, Messages or Mail. Called straight from the tap, as the share sheet needs. If
+// the person closes the sheet, nothing more happens; if there's no share sheet, or it can't
+// open, the link's own email to yourself does.
+for (const send of document.querySelectorAll<HTMLAnchorElement>('[data-send-to-mac]')) {
+  send.addEventListener('click', (e) => {
+    if (!navigator.share) return;
+    e.preventDefault();
+    navigator
+      .share({ title: 'Iris', text: 'Iris fixes your grammar and changes your tone, on your Mac.', url: location.origin + location.pathname })
+      .catch((err: DOMException) => {
+        if (err.name !== 'AbortError') location.href = send.href;
+      });
+  });
 }

@@ -76,7 +76,7 @@ import { flower } from './fableFlower';
 import type { FlowerPart } from './fableFlower';
 import { Panel, panel } from './Panel';
 import { KeyRow } from './parts';
-import { HandTick, markerMask, Printed, seedOf, svgUrl } from './pen';
+import { DONE as APP_DONE, flightOf, ReplacedNote, STAMP_BOX, StampFace, trailOf } from './Done';
 import { font, ink } from './tokens.stylex';
 
 const TIMING = {
@@ -190,17 +190,10 @@ const FLOWER = {
  * spokes and snaps into register, holds and pops away. The app's flower then folds and sinks;
  * the cover's stays and grows its fall back. Iris's note is the app's Toast for a replace. */
 const DONE = {
-  flyFrom: 60, flyMs: 340,
-  from: [0, -flower.stem * FLOWER.stretch + 16],   // the front fall, hanging under the head
-  stampAt: [-64, -19],                            // the app's (reach.right + 22, −19), mirrored: the cover's text is left of the flower
-  lift: 360,
-  spin: 360, shrink: 0.85,
-  dash: 2.5, gap: 4,                              // the trail's pen dots, along the way
-  stamp: { tilt: -12, size: 1.15, holdMs: 600, popMs: 140, from: 0.55, over: 1.1, under: 0.97, steps: [70, 60, 60] },
-  register: { from: [4.4, 3.9], to: [1.4, 1.4], waitMs: 50, snapMs: 120 },   // the stamp's pink off the line, in its points
-  ring: { r: 16, grow: 5, ms: 220, spokes: 7 },
-  regrowAt: 1800, regrowMs: 320,
-  note: { at: 150, inMs: 150, holdMs: 2400, outMs: 120 },   // shown once pasted; DS.Motion.fast, DS.Motion.toastHold
+  ...APP_DONE,
+  from: [0, -flower.stem * FLOWER.stretch + APP_DONE.fallBelowHead],   // the front fall, hanging under the head
+  stampAt: [-APP_DONE.stampAt[0], APP_DONE.stampAt[1]],                 // the app's, mirrored: the cover's text is left of the flower
+  regrowAt: 1800, regrowMs: 320,                                         // the cover's flower stays and grows its fall back
 };
 
 /* Depth. The cover is a scene, not a sheet of stickers: five planes, back to front. A plane
@@ -225,10 +218,12 @@ const SUN = {
   size: 162,                        // before its plane's scale: as big as the foot's sun
   halo: { color: 'rgb(170 200 240)', reach: '-55%', ink: 0.16 },   // the foot's soft pale-blue halo, at its daytime strength
   // Its centre: on top, high above the flower in the open sky beside the headline, the highest
-  // thing in the garden. On a phone, beside the bloom, to its right.
+  // thing in the garden. On a phone it stays up in the sky too: above the panel's top right
+  // corner, beside the keys and "in any text box", and all of it on the screen (it's 50px
+  // across there, so 40px in from the edge keeps its rays clear of it).
   wide:   ['57.6cqw', '-54.8cqw'],
   narrow: ['57.6cqw', '-55cqw'],                                                            // under 1024px
-  phone:  ['calc(100cqw - 22px)', '70cqw'],                                                // 760px and under
+  phone:  ['calc(100cqw - 40px)', '-75cqw'],                                               // 760px and under
   notchMs: 375,                     // the rays move a sixteenth of a turn at a time
   beam: 1.2, beamMs: [150, 350],    // the rays as the garden wakes
   cheer: 1.28, cheerMs: [150, 450], // and at Return
@@ -602,10 +597,7 @@ const g = stylex.create({
   // halfway up where the panel was, clear of the bloom.
   noteAt: { left: 'calc(var(--px) - var(--pw))', top: { default: 'var(--py)', '@media (max-width: 1023px)': 'calc(var(--py) - var(--pw) * var(--pr) * 0.5)' }, width: 'var(--pw)', height: 0 },
   noteFit: { position: 'absolute', left: 0, bottom: 0, width: 'var(--pn)', display: 'flex', justifyContent: 'center', transformOrigin: '0 100%', scale: 'tan(atan2(var(--pw), var(--pn)))' },
-  note: { display: 'flex', alignItems: 'center', gap: 12, paddingBlock: 10, paddingInline: 16, whiteSpace: 'nowrap', boxShadow: DEPTH.shadow, opacity: 0, animationName: { default: note, [STILL]: 'none' }, ...loops },
-  noteLead: { position: 'relative', isolation: 'isolate', fontFamily: font.brush, fontSize: 24, lineHeight: 1, color: ink.i12 },
-  noteMarker: { position: 'absolute', left: -3, right: -3, bottom: -2, height: 8, zIndex: -1, rotate: '-1.2deg' },
-  noteDetail: { position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: ink.i11 },
+  note: { boxShadow: DEPTH.shadow, opacity: 0, animationName: { default: note, [STILL]: 'none' }, ...loops },
   // Round Replace, to take the press at Return.
   push: { display: 'inline-block', '--press': PANEL.pressScale, animationName: { default: push, [STILL]: 'none' }, ...loops },
 
@@ -649,23 +641,10 @@ function Part({ name, at, stretch = 1 }: { name: FlowerPart; at: readonly number
   );
 }
 /** Where the flying fall is at `f` (0 → 1 over its flight), in the rig's points: the app's parabola. */
-const flight = (f: number) => [DONE.from[0] + (DONE.stampAt[0] - DONE.from[0]) * f, DONE.from[1] + (DONE.stampAt[1] - DONE.from[1]) * f * f - DONE.lift * f * (1 - f)];
+const flight = flightOf(DONE.from, DONE.stampAt);
 /** The trail's pen dots along the flight, each with the share of the flight it starts at. */
-const TRAIL = (() => {
-  const n = 600, pts = Array.from({ length: n + 1 }, (_, i) => ({ f: i / n, p: flight(i / n) }));
-  const dots: { f: number; from: number[]; to: number[] }[] = [];
-  let run = 0, start: (typeof pts)[number] | null = pts[0];
-  for (let i = 1; i <= n; i++) {
-    run += Math.hypot(pts[i].p[0] - pts[i - 1].p[0], pts[i].p[1] - pts[i - 1].p[1]);
-    if (start && run >= DONE.dash) (dots.push({ f: start.f, from: start.p, to: pts[i].p }), (start = null), (run = 0));
-    else if (!start && run >= DONE.gap) (start = pts[i]), (run = 0);
-  }
-  return dots;
-})();
+const TRAIL = trailOf(flight);
 const r1 = (v: number) => +v.toFixed(2);
-/** The stamp's box, in the rig's points round where it lands: room for the ring it throws. */
-const STAMP_BOX = 50;
-const stampBlot = svgUrl('-25 -25 50 50', "<ellipse rx='13' ry='9.5'/><ellipse cx='14.2' cy='6.8' rx='2.2' ry='1.8'/>");
 
 /** The fall flown onto the text and the stamp it lands as (DONE), in the flower's room. */
 function Done() {
@@ -689,27 +668,7 @@ function Done() {
         style={{ left: pct(D.stampAt[0] - STAMP_BOX / 2 - R.left, R.width), top: pct(D.stampAt[1] - STAMP_BOX / 2 - R.top, R.height), width: pct(STAMP_BOX, R.width), rotate: `${D.stamp.tilt}deg` }}
       >
         <div {...stylex.props(g.fill, g.stamp)} data-done-stamp style={vars({ '--from': D.stamp.from, '--over': D.stamp.over, '--under': D.stamp.under })}>
-          <svg viewBox="-25 -25 50 50" {...stylex.props(g.svg)}>
-            <g {...stylex.props(g.ringOut)} style={vars({ '--grow': (ring.r + ring.grow) / ring.r })}>
-              <ellipse rx={ring.r} ry={ring.r * 0.8} fill="none" stroke="rgb(240 134 176)" strokeWidth={0} {...stylex.props(g.ringThin)} style={vars({ '--w': 3.4 })} />
-              {Array.from({ length: ring.spokes }, (_, k) => {
-                const a = (k / ring.spokes) * Math.PI * 2 + 0.3, c = Math.cos(a), s = Math.sin(a) * 0.8;
-                return <line key={k} x1={r1(c * (ring.r + 2))} y1={r1(s * (ring.r + 2))} x2={r1(c * (ring.r + 6))} y2={r1(s * (ring.r + 6))} stroke="rgb(42 26 22)" strokeWidth={0} strokeLinecap="round" {...stylex.props(g.ringThin)} style={vars({ '--w': 1.8 })} />;
-              })}
-            </g>
-          </svg>
-          <div {...stylex.props(g.fill)} style={{ scale: String(D.stamp.size) }}>
-            <svg viewBox="-25 -25 50 50" {...stylex.props(g.svg)}>
-              <ellipse rx={13} ry={9.5} fill="rgb(255 252 249)" />
-            </svg>
-            <div {...stylex.props(g.fill, g.register)} style={vars({ '--rx': pct(D.register.from[0], STAMP_BOX), '--ry': pct(D.register.from[1], STAMP_BOX), '--gx': pct(D.register.to[0], STAMP_BOX), '--gy': pct(D.register.to[1], STAMP_BOX) })}>
-              <Printed mask={stampBlot} color="pink" />
-            </div>
-            <svg viewBox="-25 -25 50 50" {...stylex.props(g.svg)}>
-              <ellipse rx={13} ry={9.5} fill="none" stroke="rgb(42 26 22)" strokeWidth={1.8} />
-              <path d="M-7,0 L-1.5,5 Q2.5,-1.5 9.5,-7" fill="none" stroke="rgb(42 26 22)" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
+          <StampFace hooks={{ ringOut: stylex.props(g.ringOut), ringThin: stylex.props(g.ringThin), register: stylex.props(g.register) }} />
         </div>
       </div>
     </>
@@ -721,21 +680,7 @@ function DoneNote() {
   return (
     <div {...stylex.props(g.layer, g.noteAt)}>
       <div {...stylex.props(g.noteFit)}>
-        <div {...stylex.props(panel.sheet, g.note)} data-done-note>
-          <span {...stylex.props(panel.grain)} />
-          <span style={{ position: 'relative', display: 'inline-flex' }}>
-            <HandTick size={18} />
-          </span>
-          <span {...stylex.props(g.noteLead)}>
-            <span aria-hidden {...stylex.props(g.noteMarker)}>
-              <Printed mask={markerMask(seedOf('replaced'))} color="pink" />
-            </span>
-            replaced
-          </span>
-          <span {...stylex.props(g.noteDetail)}>
-            Undo with <KeyRow keys={['⌘', 'Z']} />
-          </span>
-        </div>
+        <ReplacedNote motion={g.note} />
       </div>
     </div>
   );

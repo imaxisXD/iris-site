@@ -228,10 +228,12 @@ export function crossMask(seed: number) {
 // end, only the middle stretches with the words (DESIGN.md, "The next step").
 const slab = (() => {
   const r = rng(1009);
-  const lt = 5 + r(), lb = 36 - r();
-  const left = svgUrl('0 0 18 42', `<path d='M18,${f(lt)}C9,${f(lt - 0.6)} 2.6,6 1.6,13C0.8,19 0.9,27 2,31C3.4,36 9,${f(lb + 0.6)} 18,${f(lb)}Z'/>`);
+  r(), r(); // the left end once drew its own heights; kept so the rest of the slab looks the same
   const top = drift(r, 0, 300, 5, 1.6, 30);
   const bottom = drift(r, 300, 0, 36.5, 1.6, 30);
+  // The left end meets the middle where its edges start, so there's no step at the join.
+  const lt = top[0][1], lb = bottom[bottom.length - 1][1];
+  const left = svgUrl('0 0 18 42', `<path d='M18,${f(lt)}C9,${f(lt - 0.6)} 2.6,6 1.6,13C0.8,19 0.9,27 2,31C3.4,36 9,${f(lb + 0.6)} 18,${f(lb)}Z'/>`);
   let holes = '';
   for (let k = 0; k < 7; k++) {
     const x = r() * 280, y = k % 2 ? 7.6 + r() * 1.5 : 32 + r() * 2, l = 14 + r() * 36;
@@ -254,6 +256,15 @@ const slab = (() => {
   return { left, middle, right };
 })();
 export const slabMasks = slab;
+/** The slab as one shape on one printed layer: its two ends at their own widths and the middle
+ *  stretched between them, a pixel under each end. Printed as three pieces, each restarted the
+ *  screen's grid and left a hairline where they met, so the middle read darker than its ends. */
+export const slabStyle = (leftWidth: number, rightWidth: number): CSSProperties => {
+  const image = `${slab.left}, ${slab.middle}, ${slab.right}`;
+  const size = `${leftWidth}px 100%, calc(100% - ${leftWidth + rightWidth - 2}px) 100%, ${rightWidth}px 100%`;
+  const position = `0 0, ${leftWidth - 1}px 0, 100% 0`;
+  return { maskImage: image, WebkitMaskImage: image, maskSize: size, WebkitMaskSize: size, maskPosition: position, WebkitMaskPosition: position, maskRepeat: 'no-repeat', WebkitMaskRepeat: 'no-repeat' };
+};
 
 // ── Pen marks (strokes) ───────────────────────────────────────────────────────────────
 /** The printed pen arrow: a straight shaft pressed in and lifted off, two barbs from the tip. */

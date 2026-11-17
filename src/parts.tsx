@@ -2,7 +2,8 @@
 import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
 import assets from './assets.json';
-import { HandRect, PenArrow, PenRule, Printed, markerMask, ribbonMask, rng, seedOf, slabMasks, type InkName } from './pen';
+import { links } from './content';
+import { HandRect, PenArrow, PenRule, Printed, markerMask, ribbonMask, rng, seedOf, slabMasks, slabStyle, type InkName } from './pen';
 import { font, ink, tex } from './tokens.stylex';
 
 const MOBILE = '@media (max-width: 760px)';
@@ -426,27 +427,14 @@ const bt = stylex.create({
   layer: { position: 'absolute', inset: 0, display: 'flex', pointerEvents: 'none' },
   rose: { transform: 'translate(-2.5px, -2px)', zIndex: -2, opacity: 0.85 },
   inkLayer: { zIndex: -1 },
-  cap: { position: 'relative', flex: 'none' },
-  mid: { position: 'relative', flex: 1 },
   label: { position: 'relative' },
   hint: { position: 'relative', display: 'inline-flex' },
   reset: { borderWidth: 0, backgroundColor: 'transparent', fontFamily: 'inherit', cursor: 'pointer' },
 });
 /** The next step: one loaded stroke of a dry brush in espresso, rose printed off register. */
 export function BrushButton({ href, children, hint, id, download, data }: { href?: string; children: ReactNode; hint?: ReactNode; id?: string; download?: boolean; data?: Record<string, string> }) {
-  const pass = (color: InkName) => (
-    <>
-      <span {...stylex.props(bt.cap)} style={{ width: 18 }}>
-        <Printed mask={slabMasks.left} color={color} />
-      </span>
-      <span {...stylex.props(bt.mid)}>
-        <Printed mask={slabMasks.middle} color={color} />
-      </span>
-      <span {...stylex.props(bt.cap)} style={{ width: 36 }}>
-        <Printed mask={slabMasks.right} color={color} />
-      </span>
-    </>
-  );
+  // One shape per pass, so the screen runs on unbroken from end to end.
+  const pass = (color: InkName) => <Printed mask={slabMasks.middle} color={color} style={slabStyle(18, 36)} />;
   const face = (
     <>
       <span aria-hidden {...stylex.props(bt.layer, bt.rose)} data-rose>
@@ -469,6 +457,44 @@ export function BrushButton({ href, children, hint, id, download, data }: { href
     <a href={href} id={id} {...stylex.props(bt.primary)} data-brush {...(download ? { download: '' } : {})} {...data}>
       {face}
     </a>
+  );
+}
+
+// ── Getting Iris ──────────────────────────────────────────────────────────────────────
+// Iris runs on a Mac, so a phone or tablet can't use the download. Where there's no pointer
+// that hovers (the same test as the foot's "psst"), Download Iris becomes Send to my Mac: the
+// share sheet (AirDrop, Messages, Mail), or with no share sheet or no script an email to
+// yourself. The swap is CSS, so nothing changes after the page shows, and the hidden one is
+// out of reach.
+const TOUCH = '@media not all and (hover: hover) and (pointer: fine)';
+const gi = stylex.create({
+  mac: { display: { default: 'contents', [TOUCH]: 'none' } },
+  touch: { display: { default: 'none', [TOUCH]: 'contents' } },
+});
+/** Shown on a Mac, or anything with a mouse or trackpad. */
+export const OnMac = ({ children }: { children: ReactNode }) => <span {...stylex.props(gi.mac)}>{children}</span>;
+/** Shown on a phone or tablet. */
+export const OnTouch = ({ children }: { children: ReactNode }) => <span {...stylex.props(gi.touch)}>{children}</span>;
+const sendToMac = `mailto:?subject=${encodeURIComponent('Iris, for my Mac')}&body=${encodeURIComponent(`Download Iris on your Mac: ${links.download}\n\nMore about Iris: ${links.code}`)}`;
+/** The page's one action: Download Iris on a Mac, Send to my Mac on a phone or tablet. `ribbon`
+ *  underlines Download it here instead, as the links beside it are. */
+export function GetIris({ ribbon }: { ribbon?: InkName }) {
+  return (
+    <>
+      <OnMac>
+        <BrushButton href={links.download} download>
+          Download Iris
+        </BrushButton>
+      </OnMac>
+      <OnTouch>
+        <BrushButton href={sendToMac} data={{ 'data-send-to-mac': '' }}>
+          Send to my Mac
+        </BrushButton>
+        <PenLink href={links.download} out={false} ribbon={ribbon}>
+          Download it here instead
+        </PenLink>
+      </OnTouch>
+    </>
   );
 }
 

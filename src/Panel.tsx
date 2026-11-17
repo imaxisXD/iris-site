@@ -180,7 +180,8 @@ export function Panel({ tabs, tab, children, app, good = false, hooks = {}, afte
             <span aria-hidden {...stylex.props(panel.goodMarker)}>
               <Printed mask={markerMask(seedOf('looks good'))} color="pink" />
             </span>
-            <HandTick size={16} /> looks good
+            {/* A green pen tick, the one green in Iris (PanelView: DS.Hue.green). */}
+            <HandTick size={16} color="rgb(30 140 85)" /> looks good
           </span>
           {notice && <span data-panel-notice {...stylex.props(panel.notice)}>{notice}</span>}
           <span hidden={good || !!notice} {...stylex.props(panel.hints)} {...hooks.keys}>

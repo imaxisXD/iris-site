@@ -4,12 +4,14 @@ import type React from 'react';
 import { crossMask, HandArrow, HandRect, HandTick, markerMask, PenArrow, penLine, PenRule, Printed, ringMask, rng, seedOf, svgUrl } from './pen';
 import {
   AppName,
-  BrushButton,
+  GetIris,
   GhostWord,
   HandWord,
   InkLabel,
   KeyRow,
   Marked,
+  OnMac,
+  OnTouch,
   PageTitle,
   PenLink,
   Picture,
@@ -372,9 +374,7 @@ function Cover() {
               ))}
             </p>
             <div {...stylex.props(s.cta)}>
-              <BrushButton href={links.download} download>
-                Download Iris
-              </BrushButton>
+              <GetIris />
               <span {...stylex.props(s.ctaMeta)}>
                 Free and open source
                 <br />
@@ -383,7 +383,10 @@ function Cover() {
             </div>
             <div {...stylex.props(s.keysNote)}>
               <KeyRow keys={['⌃', '⌥', 'G']} labeled />
-              <span {...stylex.props(s.keysWords)}>in any text box</span>
+              <span {...stylex.props(s.keysWords)}>
+                <OnMac>in any text box</OnMac>
+                <OnTouch>on your Mac, in any text box</OnTouch>
+              </span>
             </div>
           </div>
         </div>
@@ -953,9 +956,7 @@ function Install() {
         <div {...stylex.props(s.installHead)}>
           <PageTitle id="install-title" lines={['Get', 'Iris']} small />
           <div {...stylex.props(s.cta)}>
-            <BrushButton href={links.download} download>
-              Download Iris
-            </BrushButton>
+            <GetIris />
             <PenLink href={links.source}>Build it from source</PenLink>
           </div>
         </div>

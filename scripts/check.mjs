@@ -306,6 +306,83 @@ for (const width of [320, 390, 520, 820]) {
   ok(await covered(true), 'and this check sees the rings when they are on top');
   await page.close();
 }
+// A phone or tablet can't run Iris: its button sends the page to a Mac instead (parts.tsx,
+// GetIris). The share sheet gets the page's address; closing it does nothing more; with no
+// share sheet the link's own email to yourself goes. On the cover the sun stays on the screen.
+for (const mode of ['shares', 'closed', 'none']) {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+  await ctx.addInitScript((mode) => {
+    window.__shared = [];
+    if (mode === 'none') return void delete Navigator.prototype.share;
+    Navigator.prototype.share = function (d) {
+      window.__shared.push(d);
+      return mode === 'closed' ? Promise.reject(new DOMException('closed', 'AbortError')) : Promise.resolve();
+    };
+  }, mode);
+  const page = await ctx.newPage();
+  await page.goto(url + '#install', { waitUntil: 'load' });
+  if (mode === 'shares') {
+    ok(!(await page.getByRole('link', { name: 'Download Iris' }).count()), 'on a phone there is no Download Iris button');
+    ok((await page.getByRole('link', { name: 'Send to my Mac' }).count()) === 3, 'but Send to my Mac, on the cover, at Install and at the foot');
+    ok((await page.getByRole('link', { name: 'Download it here instead' }).first().getAttribute('href'))?.endsWith('/Iris.zip'), 'and Download it here instead still gets the zip');
+    const sun = await page.evaluate(() => document.querySelector('img[src="/sprite/sun-face.png"]').getBoundingClientRect().right);
+    ok(sun <= 390, `the cover's sun is all on the screen (its right edge at ${Math.round(sun)}px)`);
+  }
+  const res = await page.evaluate(async () => {
+    const a = [...document.querySelectorAll('[data-send-to-mac]')].find((e) => e.getClientRects().length);
+    let prevented;
+    addEventListener('click', (e) => { prevented = e.defaultPrevented; e.preventDefault(); }, { once: true });
+    a.click();
+    await new Promise((r) => setTimeout(r, 300));
+    return { prevented, shared: window.__shared, href: a.getAttribute('href') };
+  });
+  if (mode === 'shares') ok(res.prevented && res.shared.length === 1 && res.shared[0].url === new URL(url).origin + new URL(url).pathname, `Send to my Mac shares the page, without the #install ("${res.shared[0]?.url}")`);
+  if (mode === 'closed') ok(res.prevented && res.shared.length === 1, 'closing the share sheet does nothing more');
+  if (mode === 'none') ok(!res.prevented && res.href.startsWith('mailto:'), 'with no share sheet, it writes an email to yourself');
+  await ctx.close();
+}
+// How it works ends each app's turn as the app (and the cover) do (Done.tsx): the panel goes at
+// once, the front fall lands on the box's edge as a stamp with a tick, Iris's note says
+// "replaced", Undo with ⌘Z, the flower sinks, and nothing of it is left when the next app comes.
+// Under Reduce Motion the panel just stays open.
+for (const reduce of [false, true]) {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 860 }, reducedMotion: reduce ? 'reduce' : 'no-preference' });
+  await page.goto(url, { waitUntil: 'load' });
+  await page.evaluate(() => document.querySelector('[data-desk-screen]').scrollIntoView({ block: 'center' }));
+  const look = () =>
+    page.evaluate(() => {
+      const desk = document.querySelector('[data-desk]'), app = desk.querySelector('[data-desk-app][data-on="true"]');
+      const cs = (el) => getComputedStyle(el);
+      return {
+        panel: +cs(app.querySelector('[data-desk-panel]')).opacity,
+        stamp: cs(desk.querySelector('[data-desk-done] [data-dd="stamp"]')).scale,
+        note: +cs(desk.querySelector('[data-desk-done] [data-done-note]')).opacity,
+        words: desk.querySelector('[data-desk-done] [data-done-note]').textContent,
+        fixed: cs(app.querySelector('[data-desk-fixed]')).visibility,
+        noteBox: desk.querySelector('[data-desk-done] [data-done-note]').getBoundingClientRect(),
+        box: app.querySelector('[data-desk-box]').getBoundingClientRect(),
+      };
+    });
+  if (reduce) {
+    await page.waitForTimeout(800);
+    const r = await look();
+    ok(r.panel === 1 && r.note === 0 && r.stamp === '0', 'under Reduce Motion How it works holds the panel open, with no stamp or note');
+    await page.close();
+    continue;
+  }
+  await page.waitForFunction(() => document.querySelector('[data-desk]').dataset.at.includes('s5'), null, { timeout: 30000, polling: 'raf' });
+  await page.click('[data-moment-toggle]');
+  const seek = (ms) => page.evaluate((ms) => { for (const a of document.querySelector('[data-desk]').getAnimations({ subtree: true })) if (a.animationName !== 'desk-caret') (a.pause(), (a.currentTime = ms)); }, ms);
+  await seek(700);
+  const done = await look();
+  ok(done.panel === 0 && Math.abs(parseFloat(done.stamp) - 1) < 0.05 && done.note === 1 && done.fixed === 'visible', `How it works ends as the app does: the panel gone, the fix in, the stamp down (${done.stamp}) and Iris's note up`);
+  ok(done.words === 'replacedUndo with ⌘Z', `and the note says what the app's does ("${done.words}")`);
+  ok(Math.abs(done.noteBox.right - done.box.right) < 30 && done.noteBox.bottom <= done.box.top + 8, 'and it sits on the text box\'s top right edge, as the app puts it, not over the text');
+  await seek(4000);
+  const after = await look();
+  ok(after.note === 0 && after.stamp === '0', 'and the stamp and the note are gone before the next app');
+  await page.close();
+}
 await browser.close();
 if (failed) {
   console.log(`\n${failed} check(s) failed`);
