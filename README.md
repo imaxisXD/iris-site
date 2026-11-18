@@ -70,8 +70,8 @@ the code.
   "coming soon", each line with its drawn computer (`OsIcon`). Windows' status, requirements and
   its button (Follow it on GitHub) live in one place, `windows` in `src/content.ts`: change them
   there when the beta is out.
-- **Questions** (`Questions` in `src/Page.tsx`) is a zine's letters page: what someone asks
-  before they download on the left, Iris's answer on the right, a short lead in brush as Iris
+- **Questions** (`Questions` in `src/Page.tsx`) folds: one question open at a time (`<details name>`, no script needed), the first open to start, the title beside them. Each is what someone asks
+  before they download; Iris answers with a short lead in brush as it
   talks in its notes, then the plain answer. It's where What's new was: the shelf of versions
   is off for now, but `WhatsNew` still builds it (and its checks are commented out in
   `scripts/check.mjs`), so putting it back is one line in `Page`.

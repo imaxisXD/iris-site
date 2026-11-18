@@ -65,10 +65,17 @@ for (const reduce of [false, true]) {
   // Questions, where What's new was, and nothing links to What's new any more.
   const questions = await page.locator('#questions [data-question]').count();
   ok(questions >= 6, `Questions answers ${questions} questions`);
+  const openOnes = () => page.locator('#questions [data-question][open]');
+  ok((await openOnes().count()) === 1 && (await page.locator('#questions [data-question]').first().getAttribute('open')) !== null, 'the first question starts open, and only it');
+  const second = page.locator('#questions [data-question] > summary').nth(1);
+  await second.scrollIntoViewIfNeeded();
+  await second.click();
+  ok((await openOnes().count()) === 1 && (await page.locator('#questions [data-question]').nth(1).getAttribute('open')) !== null, 'opening another question folds the first');
+  ok(await page.locator('#questions [data-question]').nth(1).locator('[data-question-answer]').isVisible(), 'and shows Iris’s answer');
   ok(!(await page.locator('a[href="#new"]').count()), 'nothing links to the hidden What’s new');
   ok((await page.locator('a[href="#questions"]').count()) === 2, 'the cover and the foot link to Questions');
   // Every Download Iris says which computers, each with its drawn computer.
-  ok((await page.locator('img[src="/app/mac.png"]').count()) >= 3 && (await page.locator('img[src="/app/windows.png"]').count()) >= 3, 'the Mac and Windows are drawn beside their names');
+  ok((await page.locator('img[src^="/app/mac.png"]').count()) >= 3 && (await page.locator('img[src^="/app/windows.png"]').count()) >= 3, 'the Mac and Windows are drawn beside their names');
 
   // How it works: the desk (Desk.tsx) plays its apps in turn while it's on screen.
   const desk = page.locator('[data-desk]');

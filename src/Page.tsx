@@ -1253,25 +1253,43 @@ function WhatsNew() {
 
 // ── 09 Questions ──────────────────────────────────────────────────────────────────────
 // What someone asks before they download, answered the way Iris talks in its notes: a short
-// lead in brush, first person and lowercase, then the plain answer (DESIGN.md, "Voice"). Laid
-// out like a zine's letters page: the question on the left, Iris's answer on the right, a pen
-// rule under each. Every fact is the app's own (its README and Settings).
+// lead in brush, first person and lowercase, then the plain answer (DESIGN.md, "Voice"). Every
+// fact is the app's own (its README and Settings).
+// The questions fold: one open at a time (<details name>, so it works without the script and
+// from the keyboard), the first open to start, the title beside them on a wide screen. A pen
+// chevron turns as one opens, and the answer rises in (global.css), still under Reduce Motion.
 // What's new (the shelf of versions) is off for now: WhatsNew above still builds it.
 const qa = stylex.create({
-  list: { margin: 0, padding: 0, display: 'flex', flexDirection: 'column' },
-  row: {
+  grid: {
     display: 'grid',
-    gridTemplateColumns: 'minmax(0, 5fr) minmax(0, 7fr)',
-    gap: '10px clamp(24px, 5vw, 80px)',
-    paddingBlock: 'clamp(22px, 2.6vw, 30px)',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'bottom',
-    backgroundSize: '100% 6px',
+    gridTemplateColumns: 'minmax(0, 4fr) minmax(0, 8fr)',
+    gap: 'clamp(32px, 5vw, 80px)',
+    alignItems: 'start',
     [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' },
   },
-  q: { margin: 0, display: 'flex', alignItems: 'baseline', gap: 14, fontSize: 'clamp(15px, 1.4vw, 17px)', fontWeight: 560, lineHeight: 1.45, color: ink.i12 },
+  list: { display: 'flex', flexDirection: 'column' },
+  item: { backgroundRepeat: 'no-repeat', backgroundPosition: 'bottom', backgroundSize: '100% 6px' },
+  q: {
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: 14,
+    paddingBlock: 18,
+    paddingInline: 8,
+    marginInline: -8,
+    cursor: 'pointer',
+    listStyle: 'none',
+    fontSize: 'clamp(15px, 1.4vw, 17px)',
+    fontWeight: 560,
+    lineHeight: 1.45,
+    color: ink.i12,
+    backgroundColor: { default: 'transparent', [HOVER]: { default: 'transparent', ':hover': 'rgb(42 26 22 / 0.04)' } },
+    transitionProperty: 'background-color',
+    transitionDuration: '150ms',
+  },
   no: { flex: 'none', minWidth: '2.2ch', fontSize: 12, fontWeight: 400, letterSpacing: '0.08em', color: ink.pinkText },
-  a: { margin: 0, display: 'flex', flexDirection: 'column', gap: 8, [NARROW]: { paddingLeft: 'calc(2.2ch + 14px)' } },
+  text: { flex: 1 },
+  chev: { flex: 'none', alignSelf: 'center', width: 16, height: 10, transitionProperty: 'rotate', transitionDuration: '220ms', transitionTimingFunction: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
+  a: { display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 'calc(2.2ch + 14px)', paddingBottom: 24, paddingRight: 30 },
   lead: { fontFamily: font.brush, fontSize: 'clamp(22px, 2vw, 26px)', lineHeight: 1.1, color: ink.i12 },
   detail: { fontSize: 14, lineHeight: 1.7, color: ink.i11, maxWidth: '58ch' },
 });
@@ -1336,21 +1354,27 @@ function Questions() {
     <section id="questions" aria-labelledby="questions-title" {...stylex.props(s.spread)}>
       <div {...stylex.props(s.wrap, s.stack)} style={{ gap: 'clamp(32px, 5vw, 56px)' }}>
         <RunningHead seed={91} cols={['Questions', 'Answered by Iris']} />
-        <PageTitle id="questions-title" lines={['You ask', 'Iris answers']} small />
-        <dl {...stylex.props(qa.list)}>
-          {QUESTIONS.map((it, i) => (
-            <div key={it.q} {...stylex.props(qa.row)} style={{ backgroundImage: penLine(120 + i) }} data-question>
-              <dt {...stylex.props(qa.q)}>
-                <span aria-hidden {...stylex.props(qa.no)}>{String(i + 1).padStart(2, '0')}</span>
-                {it.q}
-              </dt>
-              <dd {...stylex.props(qa.a)}>
-                <span {...stylex.props(qa.lead)}>{it.lead}</span>
-                <span {...stylex.props(qa.detail)}>{it.a}</span>
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <div {...stylex.props(qa.grid)}>
+          <PageTitle id="questions-title" lines={['You ask', 'Iris answers']} small />
+          <div {...stylex.props(qa.list)}>
+            <PenRule seed={119} />
+            {QUESTIONS.map((it, i) => (
+              <details key={it.q} name="iris-questions" open={i === 0} {...stylex.props(qa.item)} style={{ backgroundImage: penLine(120 + i) }} data-question>
+                <summary {...stylex.props(qa.q)}>
+                  <span aria-hidden {...stylex.props(qa.no)}>{String(i + 1).padStart(2, '0')}</span>
+                  <span {...stylex.props(qa.text)}>{it.q}</span>
+                  <svg aria-hidden viewBox="0 0 16 10" {...stylex.props(qa.chev)} data-question-chevron>
+                    <path d="M1.8,2.4C4.4,4.6 6.2,6.4 8.1,8.1C10,6.3 11.9,4.5 14.2,2.2" fill="none" stroke="rgb(42 26 22)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </summary>
+                <div {...stylex.props(qa.a)} data-question-answer>
+                  <span {...stylex.props(qa.lead)}>{it.lead}</span>
+                  <span {...stylex.props(qa.detail)}>{it.a}</span>
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

@@ -51,6 +51,17 @@
 [data-fly-cursor] { cursor: none; }
 [data-fly-cursor] a, [data-fly-cursor] button { cursor: pointer; }
 
+/* Questions: the questions fold (Page.tsx). No browser marker; the pen chevron turns instead,
+   and an answer rises in as it opens. Under Reduce Motion it simply shows. */
+[data-question] > summary::-webkit-details-marker { display: none; }
+[data-question][open] [data-question-chevron] { rotate: 180deg; }
+[data-question][open] [data-question-answer] { animation: question-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes question-in { from { opacity: 0; translate: 0 -6px; } }
+@media (prefers-reduced-motion: reduce) {
+  [data-question][open] [data-question-answer] { animation: none; }
+  [data-question-chevron] { transition: none !important; }
+}
+
 /* How it works: the steps not playing step back (client.ts sets data-active), still easy to
    read: dimmer than the one playing, never faint. */
 [data-chapter][data-active="false"] { opacity: 0.62; }

@@ -1,6 +1,9 @@
 // The parts of an Iris page, as DESIGN.md names them, for the web.
 import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import assets from './assets.json';
 import { links, windows } from './content';
 import { HandRect, PenArrow, PenRule, Printed, markerMask, ribbonMask, rng, seedOf, slabMasks, slabStyle, type InkName } from './pen';
@@ -562,8 +565,12 @@ const os = stylex.create({
 /** The two computers Iris is for, drawn by Iris's pen (scripts/app-icons.mjs), never their
  *  makers' logos: the Mac warm, its menu bar and Dock; the Windows PC blue, its taskbar and
  *  Start. Decoration beside the computer's name, so screen readers skip it. */
+// /app/* is cached for a week, so each picture's address carries a stamp of its contents: a
+// redrawn computer shows at once instead of the old one from the cache.
+const stamped = (file: string) =>
+  `${file}?v=${createHash('sha1').update(readFileSync(path.resolve(import.meta.dirname ?? '.', '../public', file.slice(1)))).digest('hex').slice(0, 8)}`;
 export function OsIcon({ os: name, size = 22 }: { os: 'mac' | 'windows'; size?: number }) {
-  return <img src={`/app/${name}.png`} alt="" width={size} height={size} decoding="async" {...stylex.props(os.icon)} />;
+  return <img src={stamped(`/app/${name}.png`)} alt="" width={size} height={size} decoding="async" {...stylex.props(os.icon)} />;
 }
 /** What's said beside every Download Iris: the price, then which computers. The button gets the
  *  Mac's app, so the Mac line says so; Windows is coming. */
