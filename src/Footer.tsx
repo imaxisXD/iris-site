@@ -400,7 +400,7 @@ export function Footer() {
           </div>
           <nav aria-label="More about Iris" {...stylex.props(f.links)}>
             <PenLink ribbon="paper" out={false} href="#install">Install</PenLink>
-            <PenLink ribbon="paper" out={false} href="#new">What's new</PenLink>
+            <PenLink ribbon="paper" out={false} href="#questions">Questions</PenLink>
             <PenLink ribbon="paper" out={false} href="#private">Privacy</PenLink>
             <PenLink ribbon="paper" href={links.code}>The code</PenLink>
             <PenLink ribbon="paper" href={links.problem}>Report a problem</PenLink>

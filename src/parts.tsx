@@ -554,17 +554,28 @@ export function BetaStamp({ seed = 7 }: { seed?: number }) {
 
 const pf = stylex.create({
   line: { display: 'block' },
-  windows: { display: 'inline-flex', alignItems: 'center', gap: '0 6px', flexWrap: 'wrap' },
+  os: { display: 'flex', alignItems: 'center', gap: '0 7px', flexWrap: 'wrap' },
 });
+const os = stylex.create({
+  icon: { display: 'inline-block', flex: 'none', verticalAlign: 'middle' },
+});
+/** The two computers Iris is for, drawn by Iris's pen (scripts/app-icons.mjs), never their
+ *  makers' logos: the Mac warm, its menu bar and Dock; the Windows PC blue, its taskbar and
+ *  Start. Decoration beside the computer's name, so screen readers skip it. */
+export function OsIcon({ os: name, size = 22 }: { os: 'mac' | 'windows'; size?: number }) {
+  return <img src={`/app/${name}.png`} alt="" width={size} height={size} decoding="async" {...stylex.props(os.icon)} />;
+}
 /** What's said beside every Download Iris: the price, then which computers. The button gets the
  *  Mac's app, so the Mac line says so; Windows is coming. */
 export function Platforms() {
   return (
     <>
       <span {...stylex.props(pf.line)}>Free and open source</span>
-      <span {...stylex.props(pf.line)}>For Mac: macOS 15 or later, Apple silicon</span>
-      <span {...stylex.props(pf.line, pf.windows)}>
-        Windows <BetaStamp /> {windows.status}
+      <span {...stylex.props(pf.os)}>
+        <OsIcon os="mac" /> For Mac: macOS 15 or later, Apple silicon
+      </span>
+      <span {...stylex.props(pf.os)}>
+        <OsIcon os="windows" /> Windows <BetaStamp /> {windows.status}
       </span>
     </>
   );

@@ -12,6 +12,7 @@ import {
   KeyRow,
   Marked,
   OnMac,
+  OsIcon,
   OnTouch,
   PageTitle,
   PenButton,
@@ -367,7 +368,7 @@ function Cover() {
               <a href="#moment" {...stylex.props(s.navLink)}>How it works</a>
               <a href="#private" {...stylex.props(s.navLink)}>Privacy</a>
               <a href="#install" {...stylex.props(s.navLink)}>Install</a>
-              <a href="#new" {...stylex.props(s.navLink)}>What's new</a>
+              <a href="#questions" {...stylex.props(s.navLink)}>Questions</a>
             </nav>
           </div>
           <div {...stylex.props(s.coverBody)}>
@@ -998,12 +999,14 @@ function Install() {
         <div {...stylex.props(s.installFoot)}>
           <div {...stylex.props(s.needs)}>
             <div {...stylex.props(s.needGroup)}>
-              <h3 id="needs-mac" {...stylex.props(s.needTitle)}>On a Mac</h3>
+              <h3 id="needs-mac" {...stylex.props(s.needTitle)}>
+                <OsIcon os="mac" size={44} /> On a Mac
+              </h3>
               <dl aria-labelledby="needs-mac" {...stylex.props(s.specs)}>{rows(mac, 85)}</dl>
             </div>
             <div {...stylex.props(s.needGroup)}>
               <h3 id="needs-windows" {...stylex.props(s.needTitle)}>
-                On Windows <BetaStamp seed={93} />
+                <OsIcon os="windows" size={44} /> On Windows <BetaStamp seed={93} />
               </h3>
               <dl aria-labelledby="needs-windows" {...stylex.props(s.specs)}>{rows(win, 91)}</dl>
               {windows.action && (
@@ -1248,6 +1251,111 @@ function WhatsNew() {
 }
 
 
+// ── 09 Questions ──────────────────────────────────────────────────────────────────────
+// What someone asks before they download, answered the way Iris talks in its notes: a short
+// lead in brush, first person and lowercase, then the plain answer (DESIGN.md, "Voice"). Laid
+// out like a zine's letters page: the question on the left, Iris's answer on the right, a pen
+// rule under each. Every fact is the app's own (its README and Settings).
+// What's new (the shelf of versions) is off for now: WhatsNew above still builds it.
+const qa = stylex.create({
+  list: { margin: 0, padding: 0, display: 'flex', flexDirection: 'column' },
+  row: {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0, 5fr) minmax(0, 7fr)',
+    gap: '10px clamp(24px, 5vw, 80px)',
+    paddingBlock: 'clamp(22px, 2.6vw, 30px)',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'bottom',
+    backgroundSize: '100% 6px',
+    [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' },
+  },
+  q: { margin: 0, display: 'flex', alignItems: 'baseline', gap: 14, fontSize: 'clamp(15px, 1.4vw, 17px)', fontWeight: 560, lineHeight: 1.45, color: ink.i12 },
+  no: { flex: 'none', minWidth: '2.2ch', fontSize: 12, fontWeight: 400, letterSpacing: '0.08em', color: ink.pinkText },
+  a: { margin: 0, display: 'flex', flexDirection: 'column', gap: 8, [NARROW]: { paddingLeft: 'calc(2.2ch + 14px)' } },
+  lead: { fontFamily: font.brush, fontSize: 'clamp(22px, 2vw, 26px)', lineHeight: 1.1, color: ink.i12 },
+  detail: { fontSize: 14, lineHeight: 1.7, color: ink.i11, maxWidth: '58ch' },
+});
+const QUESTIONS: { q: string; lead: string; a: React.ReactNode }[] = [
+  {
+    q: 'What does Iris do?',
+    lead: 'i fix your writing, in any app',
+    a: (
+      <>
+        Iris is a free alternative to Grammarly that runs on your own computer. Press <KeyRow keys={['⌃', '⌥', 'G']} /> in any text box and it fixes your spelling, grammar and punctuation, or rewrites your message as Professional, Friendly, Shorter, Clearer or Funny.
+      </>
+    ),
+  },
+  { q: 'Is it really free?', lead: 'yes. all of it', a: 'No trial, no paid plan and no account. Iris is open source under the MIT license, so anyone can read the code.' },
+  {
+    q: 'Does what I write leave my computer?',
+    lead: 'never. i live on your computer',
+    a: 'The model runs on your own computer, so your words are never sent anywhere. There’s no server and no tracking, and once the model is downloaded Iris works offline.',
+  },
+  {
+    q: 'Which apps does it work in?',
+    lead: 'anywhere you can type',
+    a: 'Slack, Mail, Messages, Notes, Chrome, Safari and any other app with a text box. There’s nothing to install in each one. Select some text first to fix just that part.',
+  },
+  {
+    q: 'Will it change how I sound?',
+    lead: 'only what’s wrong',
+    a: (
+      <>
+        Fix corrects mistakes and leaves your words, your style and your casual “hey” alone. @mentions, links, code and the names you add are never touched. Nothing changes until you press Return, and <KeyRow keys={['⌘', 'Z']} /> in your app takes it back.
+      </>
+    ),
+  },
+  {
+    q: 'Can I write in Hindi or Hinglish?',
+    lead: 'yes, and i’ll answer in english',
+    a: 'Write in Hindi, or Hindi typed in English letters, and Fix turns it into English, with what you wrote shown beside it.',
+  },
+  {
+    q: 'Will it slow my computer down?',
+    lead: 'not while you’re not using me',
+    a: 'While it’s ready, the model takes about 3 to 4 GB of memory. When you haven’t used Iris for a while it frees that memory by itself, and you choose how long in Settings.',
+  },
+  {
+    q: 'How do I get updates?',
+    lead: 'one click, from the menu bar',
+    a: 'Choose Check for Updates… in Iris’s menu in the menu bar. Iris downloads the new version and reopens itself.',
+  },
+  {
+    q: 'Is there a Windows version?',
+    lead: 'not yet. it’s on its way',
+    a: (
+      <>
+        Windows is coming as a beta. What a PC will need is under <a href="#install">Install</a>, and you can follow along on <a href={links.code}>GitHub</a>.
+      </>
+    ),
+  },
+];
+
+function Questions() {
+  return (
+    <section id="questions" aria-labelledby="questions-title" {...stylex.props(s.spread)}>
+      <div {...stylex.props(s.wrap, s.stack)} style={{ gap: 'clamp(32px, 5vw, 56px)' }}>
+        <RunningHead seed={91} cols={['Questions', 'Answered by Iris']} />
+        <PageTitle id="questions-title" lines={['You ask', 'Iris answers']} small />
+        <dl {...stylex.props(qa.list)}>
+          {QUESTIONS.map((it, i) => (
+            <div key={it.q} {...stylex.props(qa.row)} style={{ backgroundImage: penLine(120 + i) }} data-question>
+              <dt {...stylex.props(qa.q)}>
+                <span aria-hidden {...stylex.props(qa.no)}>{String(i + 1).padStart(2, '0')}</span>
+                {it.q}
+              </dt>
+              <dd {...stylex.props(qa.a)}>
+                <span {...stylex.props(qa.lead)}>{it.lead}</span>
+                <span {...stylex.props(qa.detail)}>{it.a}</span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
+  );
+}
+
 export function Page() {
   return (
     <>
@@ -1263,7 +1371,9 @@ export function Page() {
         <Yours />
         <MenuBar />
         <Install />
-        <WhatsNew />
+        {/* What's new (the shelf of versions) is off for now; WhatsNew above still builds it. */}
+        {/* <WhatsNew /> */}
+        <Questions />
       </main>
       </div>
       <Footer />

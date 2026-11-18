@@ -52,15 +52,23 @@ for (const reduce of [false, true]) {
   await page.waitForTimeout(3600);
   ok((await shown()) === before, 'a panel someone touched stays on their tone');
 
-  // The shelf of versions.
-  const books = page.locator('[data-issue]');
-  const n = await books.count();
-  ok(n >= 2, `the shelf has ${n} versions`);
-  const oldest = books.first();
-  await oldest.click();
-  const no = await oldest.getAttribute('data-issue');
-  ok(await page.locator(`[data-facts="${no}"]`).isVisible(), 'clicking an older issue shows its changes');
-  ok((await page.locator('[data-facts]:not([hidden])').count()) === 1, 'one issue at a time');
+  // The shelf of versions is off for now (Page.tsx keeps WhatsNew); put these back with it.
+  // const books = page.locator('[data-issue]');
+  // const n = await books.count();
+  // ok(n >= 2, `the shelf has ${n} versions`);
+  // const oldest = books.first();
+  // await oldest.click();
+  // const no = await oldest.getAttribute('data-issue');
+  // ok(await page.locator(`[data-facts="${no}"]`).isVisible(), 'clicking an older issue shows its changes');
+  // ok((await page.locator('[data-facts]:not([hidden])').count()) === 1, 'one issue at a time');
+
+  // Questions, where What's new was, and nothing links to What's new any more.
+  const questions = await page.locator('#questions [data-question]').count();
+  ok(questions >= 6, `Questions answers ${questions} questions`);
+  ok(!(await page.locator('a[href="#new"]').count()), 'nothing links to the hidden What’s new');
+  ok((await page.locator('a[href="#questions"]').count()) === 2, 'the cover and the foot link to Questions');
+  // Every Download Iris says which computers, each with its drawn computer.
+  ok((await page.locator('img[src="/app/mac.png"]').count()) >= 3 && (await page.locator('img[src="/app/windows.png"]').count()) >= 3, 'the Mac and Windows are drawn beside their names');
 
   // How it works: the desk (Desk.tsx) plays its apps in turn while it's on screen.
   const desk = page.locator('[data-desk]');

@@ -12,7 +12,7 @@ the code.
   (`src/render.tsx`). No React, no hydration, no framework in the browser.
 - **StyleX** for every style (`@stylexjs/unplugin` in Vite). Its atomic CSS is inlined into
   the page with `src/global.css` (fonts, the paper, base rules), about 18 KB.
-- **About 10 KB of script** (`src/client.ts`): the tone tabs, the shelf of versions, the
+- **About 10 KB of script** (`src/client.ts`): the tone tabs, the shelf of versions (off for now), the
   video and its Pause button, the cover's garden, the foot's sign-off, and ⌃ ⌥ G on the
   page. Everything still reads without it.
 - **The cover's garden is a storyboard** (`src/Garden.tsx`, first drawn by a Fable 5.2
@@ -44,7 +44,8 @@ the code.
   its sprites (`RisoArt.print`). `scripts/art.mjs` prints the backdrops behind the panels
   (flat riso plates with Iris's flower and ghost words) and the menu bar Mac's desktop;
   `scripts/app-icons.mjs` draws the apps the page names (Slack, Mail, Notes, 1Password…) in
-  Iris's pen and riso, in their own colours. The results are committed, so a build never needs Iris.
+  Iris's pen and riso, in their own colours, and the two computers Iris is for: a silver laptop
+  with Apple's apple on its screen, and a graphite one with Windows' four blue panes. The results are committed, so a build never needs Iris.
 - **How it works is drawn, not recorded** (`src/Desk.tsx`): the top left corner of a Mac on a
   torn pink sheet, its desktop a green plate with loops and brush-stroke flowers. Slack, Mail,
   Messages, Notes, Chrome and Safari take turns, simply drawn, each with a made-up reply in its
@@ -66,8 +67,14 @@ the code.
 - **Windows is coming, as a beta.** Every Download Iris says which computers it's for
   (`Platforms` in `src/parts.tsx`): the button gets the Mac's app, and Windows wears a stamped
   "beta" (`BetaStamp`: a hollow rubber stamp in ink through the screen, never a pill) with
-  "coming soon". Windows' status, requirements and its button (Follow it on GitHub) live in one
-  place, `windows` in `src/content.ts`: change them there when the beta is out.
+  "coming soon", each line with its drawn computer (`OsIcon`). Windows' status, requirements and
+  its button (Follow it on GitHub) live in one place, `windows` in `src/content.ts`: change them
+  there when the beta is out.
+- **Questions** (`Questions` in `src/Page.tsx`) is a zine's letters page: what someone asks
+  before they download on the left, Iris's answer on the right, a short lead in brush as Iris
+  talks in its notes, then the plain answer. It's where What's new was: the shelf of versions
+  is off for now, but `WhatsNew` still builds it (and its checks are commented out in
+  `scripts/check.mjs`), so putting it back is one line in `Page`.
 - **The foot** (`src/Footer.tsx`) waits under the page, pinned to the bottom of the window;
   at the end the page lifts off it like a sheet, and it comes forward out of the page's
   shade. It's the sky with the IRIS wordmark, big and cut off by the page's edge, drawn as
@@ -86,7 +93,7 @@ SEO 100. About 310 KB for the first view, 0 ms blocking time.
 pnpm install
 pnpm dev            # build, serve with wrangler dev on :8788, rebuild on save and reload the page
 pnpm build          # dist/ (SITE_URL=https://… for the canonical link and share card)
-pnpm check          # use the built page in headless Chromium: tones, keys, shelf, video
+pnpm check          # use the built page in headless Chromium: tones, keys, questions, video
 pnpm shoot          # full-page screenshots at 1440 and 390 into /tmp/iris-shots
 pnpm garden         # the cover's garden at set times, and under Reduce Motion, into /tmp/iris-garden
 pnpm typecheck
@@ -115,8 +122,9 @@ Nothing runs `pnpm check` first, so run it locally (with `pnpm dev` up) before p
 | Privacy | The pink plate: the model runs on your Mac |
 | Make it yours | Iris's Settings window on a green sheet; pick Tones, Words, Apps or Shortcuts to turn its page |
 | Menu bar | A Mac's corner with Iris's menu open under its flower; setup in three steps |
-| Install | Download, drag to Applications, open it once; the specs, and why macOS asks |
-| What's new | Each version an issue on a shelf, from Iris's Changelog.md |
+| Install | Download, drag to Applications, open it once; what a Mac and a Windows PC need, and why macOS asks |
+| Questions | You ask, Iris answers: what it does, free, private, which apps, updates, Windows |
+| What's new | Off for now (`WhatsNew` still builds it): each version an issue on a shelf, from Iris's Changelog.md |
 | Foot | Go write something: download, links, and IRIS with the sun and butterflies on it |
 
 The zine itself (`design-reference/` in the Iris checkout) is someone else's work and never

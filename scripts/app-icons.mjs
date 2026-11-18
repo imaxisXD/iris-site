@@ -1,4 +1,5 @@
-// Draws the apps the page names (Slack, Mail, Messages, Notes, Chrome, Safari, TextEdit) the
+// Draws the apps the page names (Slack, Mail, Messages, Notes, Chrome, Safari, TextEdit), and
+// the two computers Iris is for (a Mac and a Windows PC), the
 // way Iris draws its own icons: a wobbly espresso pen line, a crema shadow plate under the
 // colour, and each colour printed off register through Iris's riso screen (RisoArt.print: a
 // 4×4 Bayer threshold with a little noise; grey sets the dot density). Each app keeps its own
@@ -39,6 +40,10 @@ const C = {
   safariBlue: [26, 140, 255],
   safariRed: [235, 64, 52],
   textEdit: [70, 70, 80],
+  // The two computers.
+  macSilver: [196, 198, 204],
+  winGraphite: [92, 96, 108],
+  winBlue: [0, 103, 192],
 };
 
 const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
@@ -216,6 +221,46 @@ const icons = [];
     line(pen(T) + pen(pageD, 2.4) + pen(nib, 2) + pen('M30,58L26,63', 2.2)),
   ])]);
   void page;
+}
+
+// ── The two computers Iris is for ─────────────────────────────────────────────────────
+// One laptop each, told apart by the logo on its screen: the Mac silver with Apple's apple in
+// ink, the Windows PC graphite with Windows' four panes in its blue. Drawn by Iris's pen and
+// printed through the riso screen, like every icon here.
+const lid = 'M11,14Q11,10 15,10L65,10Q69,10 69,14L69,55L11,55Z';
+const screen = 'M16,15L64,15L64,51L16,51Z';
+const base = 'M3,56L77,56Q76.4,62 71,64L9,64Q3.6,62 3,56Z';
+const notch = 'M32,56.4Q40,59.4 48,56.4';
+const laptop = lid + base;
+// Mac: the apple, its bite on the right and its leaf on top.
+{
+  const apple =
+    'M40,25.9C37.6,24.4 33,24.2 30.8,27.2C28,31 28.8,38 31.6,42.4C33.2,44.9 35.2,46.6 37.2,45.8' +
+    'C38.5,45.3 39,45 40,45C41,45 41.6,45.3 43,45.8C45,46.6 47.2,44.8 48.8,42.2C49.7,40.8 50.3,39.4 50.6,38.2' +
+    'C45.6,37.6 43.8,34.6 44.4,31.6C44.8,29.6 46.6,28.4 49.3,28.1C47.6,25.2 44.4,24.5 42.6,25.1C41.6,25.4 40.9,25.9 40,25.9Z';
+  const leaf = 'M40.3,24C40.1,20.8 42.2,18.4 45.4,18C45.6,21.2 43.5,23.6 40.3,24Z';
+  icons.push(['mac', 'Mac', await print('mac', 18, [
+    ...shadow(laptop),
+    colour(C.macSilver, fill(lid, 45) + fill(base, 45)),
+    { ink: INK.paper, svg: fill(screen, 0), noise: 0 },
+    { ink: INK.espresso, svg: `<g transform="translate(40 33) scale(1.3) translate(-40 -32.5)">${fill(apple, 0) + fill(leaf, 0)}</g>`, noise: 0 },
+    line(pen(lid, 3.2) + pen(base, 3.2) + pen(screen, 1.4) + pen(notch, 1.8)),
+  ])]);
+}
+// Windows: four panes in Windows' blue.
+{
+  // Laid on the print's own dots (44 across the 80-point canvas), so each pane prints solid:
+  // six dots a side, one dot between them.
+  const dot = 80 / DOTS, at = (n) => f(n * dot);
+  const panes = [[15, 12], [22, 12], [15, 19], [22, 19]].map(([cx, cy]) =>
+    `M${at(cx)},${at(cy)}L${at(cx + 6)},${at(cy)}L${at(cx + 6)},${at(cy + 6)}L${at(cx)},${at(cy + 6)}Z`).join('');
+  icons.push(['windows', 'Windows', await print('windows', 19, [
+    ...shadow(laptop),
+    colour(C.winGraphite, fill(lid, 35) + fill(base, 35)),
+    { ink: INK.paper, svg: fill(screen, 0), noise: 0 },
+    colour(C.winBlue, fill(panes, 0)),
+    line(pen(lid, 3.2) + pen(base, 3.2) + pen(screen, 1.4) + pen(notch, 1.8)),
+  ])]);
 }
 
 // ── The sheet to look at: every icon big, then at the sizes the page would use ─────────
