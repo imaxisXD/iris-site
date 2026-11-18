@@ -10,17 +10,24 @@ export const links = {
 };
 
 // ── Windows ───────────────────────────────────────────────────────────────────────────
-// Iris's interface is being rebuilt so it can run on Windows, but there's no Windows build or
-// download yet, and the Mac's model engine doesn't run there. So the page says only what's
-// true: Windows is coming, as a beta. Everything about it lives here, so it changes in one place.
-// DRAFT: the ⟨…⟩ values are placeholders until they're decided.
+// Iris's interface is being rebuilt in GPUI so it can run on Windows, and its models come as
+// GGUF for Windows too (Hugging Face, ImAXISOG/iris-gemma-4-*-it-gguf), but there's no Windows
+// download yet. So the page says Windows is coming, as a beta, and what it will need: the memory
+// is the models' own rule (Best quality on 16 GB, Lighter on 8 GB, as on a Mac); Windows 10 or
+// 11, 64-bit, is what GPUI runs on; Intel or AMD only until an Arm build has been tried.
+// Everything about Windows lives here, so it changes in one place when the beta is out.
 export const windows = {
   /** Said after "Windows" and its beta stamp, by every Download Iris. */
-  status: '⟨coming soon⟩',
-  /** The Windows requirements, once they're settled. Empty says "to be announced". */
-  requirements: [] as [string, string][],
+  status: 'coming soon',
+  /** What a Windows PC needs. Empty says "to be announced". */
+  requirements: [
+    ['Windows', '10 or 11, 64-bit'],
+    ['Processor', 'Intel or AMD'],
+    ['Memory', 'Best quality from 16 GB, Lighter with 8 GB'],
+    ['Disk', 'About 5 GB for the model'],
+  ] as [string, string][],
   /** The Windows action under its requirements; null leaves it out. Never a second brush button. */
-  action: { label: '⟨Windows button⟩', href: '#install' } as { label: string; href: string } | null,
+  action: { label: 'Follow it on GitHub', href: links.code } as { label: string; href: string } | null,
 };
 
 // ── The panel's example ───────────────────────────────────────────────────────────────

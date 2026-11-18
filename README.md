@@ -61,7 +61,13 @@ the code.
 - **Install is a collage** like Fix's: small torn sheets, each with a few drawn pieces on it.
   It shows the zip
   in Downloads, Iris dragged to Applications, and the first-open dialog over Privacy &
-  Security with Done and Open Anyway ringed. The specs and why macOS asks sit under them.
+  Security with Done and Open Anyway ringed. Under them, what a Mac needs and what a Windows
+  PC will need, and why macOS asks.
+- **Windows is coming, as a beta.** Every Download Iris says which computers it's for
+  (`Platforms` in `src/parts.tsx`): the button gets the Mac's app, and Windows wears a stamped
+  "beta" (`BetaStamp`: a hollow rubber stamp in espresso through the screen, never a pill) with
+  "coming soon". Windows' status, requirements and its button (Follow it on GitHub) live in one
+  place, `windows` in `src/content.ts`: change them there when the beta is out.
 - **The foot** (`src/Footer.tsx`) waits under the page, pinned to the bottom of the window;
   at the end the page lifts off it like a sheet, and it comes forward out of the page's
   shade. It's the sky with the IRIS wordmark, big and cut off by the page's edge, drawn as

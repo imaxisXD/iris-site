@@ -951,12 +951,12 @@ function MenuBar() {
 
 // ── 08 Install ────────────────────────────────────────────────────────────────────────
 function Install() {
-  // What each computer needs: the Mac's from the app's README (and ModelChoice), Windows' once
-  // they're settled (content.ts). The price is the same on both, so it's said once, under them.
+  // What each computer needs: the Mac's from the app's README and ModelChoice (Best quality from
+  // 16 GB, as Iris recommends at setup), Windows' from content.ts. The price is the same on both, so it's said once, under them.
   const mac: [string, string][] = [
     ['Chip', 'Apple silicon, M1 or later'],
     ['macOS', '15 or later'],
-    ['Memory', '16 GB for Faster, 24 GB or more for Best quality'],
+    ['Memory', 'Best quality from 16 GB, Lighter with 8 GB'],
     ['Disk', 'About 5 GB for the model'],
   ];
   const win: [string, string][] = windows.requirements.length ? windows.requirements : [['Needs', 'To be announced']];
@@ -1008,7 +1008,9 @@ function Install() {
               <dl aria-labelledby="needs-windows" {...stylex.props(s.specs)}>{rows(win, 91)}</dl>
               {windows.action && (
                 <span {...stylex.props(s.needAction)}>
-                  <PenButton href={windows.action.href}>{windows.action.label}</PenButton>
+                  <PenButton href={windows.action.href}>
+                    {windows.action.label} <PenArrow up size={16} />
+                  </PenButton>
                 </span>
               )}
             </div>
