@@ -2,7 +2,7 @@
 import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
 import assets from './assets.json';
-import { links } from './content';
+import { links, windows } from './content';
 import { HandRect, PenArrow, PenRule, Printed, markerMask, ribbonMask, rng, seedOf, slabMasks, slabStyle, type InkName } from './pen';
 import { font, ink, tex } from './tokens.stylex';
 
@@ -494,6 +494,77 @@ export function GetIris({ ribbon }: { ribbon?: InkName }) {
           Download it here instead
         </PenLink>
       </OnTouch>
+    </>
+  );
+}
+
+// ── Beta ──────────────────────────────────────────────────────────────────────────────
+// A rubber stamp, inked once and pressed a few degrees off straight: a double frame and the
+// word in condensed caps, both printed in espresso through the riso screen, so the ink runs
+// thin and speckled where the stamp didn't take. Hollow, so it can't be taken for an InkLabel
+// (a name) or a pill: "beta" is a status, and DESIGN.md keeps statuses out of badges.
+const bs = stylex.create({
+  stamp: {
+    position: 'relative',
+    display: 'inline-grid',
+    placeItems: 'center',
+    verticalAlign: '0.05em',
+    paddingBlock: '3px 2px',
+    paddingInline: '7px 6px',
+    marginInline: '2px',
+    rotate: '-4deg',
+    isolation: 'isolate',
+    lineHeight: 1,
+  },
+  word: {
+    position: 'relative',
+    fontSize: '0.78em',
+    fontWeight: 700,
+    fontStretch: '75%',
+    letterSpacing: '0.16em',
+    textTransform: 'uppercase',
+    // The word is ink through the same screen as the frame, never a flat colour.
+    color: 'transparent',
+    backgroundColor: ink.espresso,
+    backgroundImage: tex.inkDark,
+    backgroundSize: '210px 210px',
+    backgroundClip: 'text',
+    WebkitBackgroundClip: 'text',
+  },
+});
+/** The stamp's frame, as one shape: an outer wobbly edge and an inner one, the space between inked. */
+function stampFrame(seed: number) {
+  const r = rng(seed);
+  const j = (n: number) => (n + (r() - 0.5) * 1.4).toFixed(1);
+  const box = (a: number, b: number, c: number, d: number) => `M${j(a)},${j(b)}L${j(c)},${j(b)}L${j(c)},${j(d)}L${j(a)},${j(d)}Z`;
+  return `url("data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'><path fill-rule='evenodd' d='${box(1, 1, 99, 39)}${box(5, 6, 95, 34)}'/></svg>`,
+  )}")`;
+}
+/** "Beta", stamped beside a name. */
+export function BetaStamp({ seed = 7 }: { seed?: number }) {
+  return (
+    <span {...stylex.props(bs.stamp)}>
+      <Printed mask={stampFrame(seed)} color="espresso" />
+      <span {...stylex.props(bs.word)}>beta</span>
+    </span>
+  );
+}
+
+const pf = stylex.create({
+  line: { display: 'block' },
+  windows: { display: 'inline-flex', alignItems: 'center', gap: '0 6px', flexWrap: 'wrap' },
+});
+/** What's said beside every Download Iris: the price, then which computers. The button gets the
+ *  Mac's app, so the Mac line says so; Windows is coming. */
+export function Platforms() {
+  return (
+    <>
+      <span {...stylex.props(pf.line)}>Free and open source</span>
+      <span {...stylex.props(pf.line)}>For Mac: macOS 15 or later, Apple silicon</span>
+      <span {...stylex.props(pf.line, pf.windows)}>
+        Windows <BetaStamp /> {windows.status}
+      </span>
     </>
   );
 }

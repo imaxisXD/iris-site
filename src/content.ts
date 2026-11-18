@@ -9,6 +9,20 @@ export const links = {
   source: 'https://github.com/imaxisXD/iris#install',
 };
 
+// ── Windows ───────────────────────────────────────────────────────────────────────────
+// Iris's interface is being rebuilt so it can run on Windows, but there's no Windows build or
+// download yet, and the Mac's model engine doesn't run there. So the page says only what's
+// true: Windows is coming, as a beta. Everything about it lives here, so it changes in one place.
+// DRAFT: the ⟨…⟩ values are placeholders until they're decided.
+export const windows = {
+  /** Said after "Windows" and its beta stamp, by every Download Iris. */
+  status: '⟨coming soon⟩',
+  /** The Windows requirements, once they're settled. Empty says "to be announced". */
+  requirements: [] as [string, string][],
+  /** The Windows action under its requirements; null leaves it out. Never a second brush button. */
+  action: { label: '⟨Windows button⟩', href: '#install' } as { label: string; href: string } | null,
+};
+
 // ── The panel's example ───────────────────────────────────────────────────────────────
 // The practice sentence from Iris's setup, and what each tone makes of it.
 export const draft = 'hey, i have checked the PR and its look fine but one thing need to change before merge';

@@ -40,7 +40,7 @@ import * as stylex from '@stylexjs/stylex';
 import type React from 'react';
 import { links } from './content';
 import { rng } from './pen';
-import { GetIris, KeyRow, PageTitle, PenLink, Wordmark } from './parts';
+import { GetIris, KeyRow, PageTitle, PenLink, Platforms, Wordmark } from './parts';
 import { font, ink, tex } from './tokens.stylex';
 
 export const TIMING = {
@@ -395,9 +395,7 @@ export function Footer() {
           <div {...stylex.props(f.cta)}>
             <GetIris ribbon="paper" />
             <span {...stylex.props(f.ctaMeta)}>
-              Free and open source
-              <br />
-              macOS 15 or later, Apple silicon
+              <Platforms />
             </span>
           </div>
           <nav aria-label="More about Iris" {...stylex.props(f.links)}>

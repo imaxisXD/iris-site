@@ -4,6 +4,7 @@ import type React from 'react';
 import { crossMask, HandArrow, HandRect, HandTick, markerMask, PenArrow, penLine, PenRule, Printed, ringMask, rng, seedOf, svgUrl } from './pen';
 import {
   AppName,
+  BetaStamp,
   GetIris,
   GhostWord,
   HandWord,
@@ -13,8 +14,10 @@ import {
   OnMac,
   OnTouch,
   PageTitle,
+  PenButton,
   PenLink,
   Picture,
+  Platforms,
   RunningHead,
   SectionHead,
   StackedFigure,
@@ -27,7 +30,7 @@ import { Bud, CHAPTERS, Desk, doneCss, Flight, FLOWER_PX, ON_FOOT, SHUT_MS, WALL
 import { DONE, LANDS, SaysNote } from './Done';
 import { Pattern } from './Patterns';
 import { Garden } from './Garden';
-import { draft, issues, links, month, pageTones, pressTones, tones } from './content';
+import { draft, issues, links, month, pageTones, pressTones, tones, windows } from './content';
 import { Marks, MessageStack, Panel, panel } from './Panel';
 import { font, ink, tex } from './tokens.stylex';
 
@@ -282,6 +285,10 @@ const s = stylex.create({
   installSteps: { listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 'clamp(36px, 4vw, 56px) clamp(24px, 3vw, 48px)', [NARROW]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }, [MOBILE]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
   installFoot: { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 'clamp(40px, 6vw, 96px)', alignItems: 'start', [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
   specs: { margin: 0, display: 'flex', flexDirection: 'column', fontSize: 13.5 },
+  needs: { display: 'flex', flexDirection: 'column', gap: 36 },
+  needGroup: { display: 'flex', flexDirection: 'column', gap: 4 },
+  needTitle: { margin: 0, display: 'flex', alignItems: 'center', gap: 10, fontFamily: font.brush, fontWeight: 400, fontSize: 28, lineHeight: 1, color: ink.i12 },
+  needAction: { display: 'flex', paddingTop: 14 },
   specRow: { display: 'grid', gridTemplateColumns: 'auto 1fr', backgroundRepeat: 'no-repeat', backgroundPosition: 'bottom', backgroundSize: '100% 6px' },
   specTerm: { fontSize: 11.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: ink.i10, paddingBlock: 12, paddingRight: 24 },
   specDef: { margin: 0, paddingBlock: 12, textAlign: 'right', color: ink.i12, lineHeight: 1.5 },
@@ -380,9 +387,7 @@ function Cover() {
             <div {...stylex.props(s.cta)}>
               <GetIris />
               <span {...stylex.props(s.ctaMeta)}>
-                Free and open source
-                <br />
-                macOS 15 or later, Apple silicon
+                <Platforms />
               </span>
             </div>
             <div {...stylex.props(s.keysNote)}>
@@ -946,17 +951,26 @@ function MenuBar() {
 
 // ── 08 Install ────────────────────────────────────────────────────────────────────────
 function Install() {
-  const specs: [string, string][] = [
-    ['Mac', 'Apple silicon, M1 or later'],
+  // What each computer needs: the Mac's from the app's README (and ModelChoice), Windows' once
+  // they're settled (content.ts). The price is the same on both, so it's said once, under them.
+  const mac: [string, string][] = [
+    ['Chip', 'Apple silicon, M1 or later'],
     ['macOS', '15 or later'],
     ['Memory', '16 GB for Faster, 24 GB or more for Best quality'],
     ['Disk', 'About 5 GB for the model'],
-    ['Price', 'Free, MIT license'],
   ];
+  const win: [string, string][] = windows.requirements.length ? windows.requirements : [['Needs', 'To be announced']];
+  const rows = (list: [string, string][], seed: number) =>
+    list.map(([k, v], i) => (
+      <div key={k} {...stylex.props(s.specRow)} style={{ backgroundImage: penLine(seed + i) }}>
+        <dt {...stylex.props(s.specTerm)}>{k}</dt>
+        <dd {...stylex.props(s.specDef)}>{v}</dd>
+      </div>
+    ));
   return (
     <section id="install" aria-labelledby="install-title" {...stylex.props(s.spread)}>
       <div {...stylex.props(s.wrap, s.stack)} style={{ gap: 'clamp(40px, 6vw, 72px)' }}>
-        <RunningHead seed={81} cols={['Install']} />
+        <RunningHead seed={81} cols={['Install', 'The Mac app, in three steps']} />
         <div {...stylex.props(s.installHead)}>
           <PageTitle id="install-title" lines={['Get', 'Iris']} small />
           <div {...stylex.props(s.cta)}>
@@ -982,14 +996,24 @@ function Install() {
           ))}
         </ol>
         <div {...stylex.props(s.installFoot)}>
-          <dl {...stylex.props(s.specs)}>
-            {specs.map(([k, v], i) => (
-              <div key={k} {...stylex.props(s.specRow)} style={{ backgroundImage: penLine(85 + i) }}>
-                <dt {...stylex.props(s.specTerm)}>{k}</dt>
-                <dd {...stylex.props(s.specDef)}>{v}</dd>
-              </div>
-            ))}
-          </dl>
+          <div {...stylex.props(s.needs)}>
+            <div {...stylex.props(s.needGroup)}>
+              <h3 id="needs-mac" {...stylex.props(s.needTitle)}>On a Mac</h3>
+              <dl aria-labelledby="needs-mac" {...stylex.props(s.specs)}>{rows(mac, 85)}</dl>
+            </div>
+            <div {...stylex.props(s.needGroup)}>
+              <h3 id="needs-windows" {...stylex.props(s.needTitle)}>
+                On Windows <BetaStamp seed={93} />
+              </h3>
+              <dl aria-labelledby="needs-windows" {...stylex.props(s.specs)}>{rows(win, 91)}</dl>
+              {windows.action && (
+                <span {...stylex.props(s.needAction)}>
+                  <PenButton href={windows.action.href}>{windows.action.label}</PenButton>
+                </span>
+              )}
+            </div>
+            <dl {...stylex.props(s.specs)}>{rows([['Price', 'Free on both, MIT license']], 99)}</dl>
+          </div>
           {/* A paper slip taped to the page, like Iris's notes: why step 3 asks. */}
           <div {...stylex.props(panel.sheet, s.why)}>
             <span {...stylex.props(panel.grain)} />
