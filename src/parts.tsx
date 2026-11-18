@@ -500,9 +500,10 @@ export function GetIris({ ribbon }: { ribbon?: InkName }) {
 
 // ── Beta ──────────────────────────────────────────────────────────────────────────────
 // A rubber stamp, inked once and pressed a few degrees off straight: a double frame and the
-// word in condensed caps, both printed in espresso through the riso screen, so the ink runs
-// thin and speckled where the stamp didn't take. Hollow, so it can't be taken for an InkLabel
-// (a name) or a pill: "beta" is a status, and DESIGN.md keeps statuses out of badges.
+// word in condensed caps, both printed in ink (the drawings' espresso black) through the riso
+// screen, so it runs thin and speckled where the stamp didn't take. Ink, not espresso, so the
+// small word holds on the sky. Hollow, so it can't be taken for an InkLabel (a name) or a pill:
+// "beta" is a status, and DESIGN.md keeps statuses out of badges.
 const bs = stylex.create({
   stamp: {
     position: 'relative',
@@ -525,7 +526,7 @@ const bs = stylex.create({
     textTransform: 'uppercase',
     // The word is ink through the same screen as the frame, never a flat colour.
     color: 'transparent',
-    backgroundColor: ink.espresso,
+    backgroundColor: ink.i12,
     backgroundImage: tex.inkDark,
     backgroundSize: '210px 210px',
     backgroundClip: 'text',
@@ -545,7 +546,7 @@ function stampFrame(seed: number) {
 export function BetaStamp({ seed = 7 }: { seed?: number }) {
   return (
     <span {...stylex.props(bs.stamp)}>
-      <Printed mask={stampFrame(seed)} color="espresso" />
+      <Printed mask={stampFrame(seed)} color="ink" />
       <span {...stylex.props(bs.word)}>beta</span>
     </span>
   );

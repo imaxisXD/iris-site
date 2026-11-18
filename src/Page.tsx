@@ -956,7 +956,7 @@ function Install() {
   const mac: [string, string][] = [
     ['Chip', 'Apple silicon, M1 or later'],
     ['macOS', '15 or later'],
-    ['Memory', 'Best quality from 16 GB, Lighter with 8 GB'],
+    ['Memory', 'Best quality from 16 GB, Lighter on Macs with less'],
     ['Disk', 'About 5 GB for the model'],
   ];
   const win: [string, string][] = windows.requirements.length ? windows.requirements : [['Needs', 'To be announced']];
