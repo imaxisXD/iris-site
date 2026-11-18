@@ -1255,11 +1255,25 @@ function WhatsNew() {
 // What someone asks before they download, answered the way Iris talks in its notes: a short
 // lead in brush, first person and lowercase, then the plain answer (DESIGN.md, "Voice"). Every
 // fact is the app's own (its README and Settings).
-// The questions fold: one open at a time (<details name>, so it works without the script and
-// from the keyboard), the first open to start, the title beside them on a wide screen. A pen
-// chevron turns as one opens, and the answer rises in (global.css), still under Reduce Motion.
+// Printed on its own plate, as Privacy is on pink: a soft tan with a tone-on-tone ✻ pattern
+// and ASK as a pale ghost behind the title. The questions are printed on the plate; the one
+// you open lifts off it as a paper slip, and a pink marker swipe draws in under it, as the
+// chosen tone is marked in the app. One is open at a time (<details name>, so it works without
+// the script); with the script the old answer folds as the new one opens, smoothly, and the
+// question you picked holds still (client.ts). Under Reduce Motion they simply show.
 // What's new (the shelf of versions) is off for now: WhatsNew above still builds it.
 const qa = stylex.create({
+  plate: {
+    position: 'relative',
+    isolation: 'isolate',
+    // A lighter tan than the plate elsewhere, as Privacy's pink is, so ink reads on it.
+    backgroundColor: 'rgb(228 199 171)',
+    backgroundImage: `${tex.screen}, ${tex.streaks}`,
+    backgroundSize: '96px 96px, 128px 128px',
+    overflowAnchor: 'none',
+  },
+  ghost: { display: { default: 'contents', [MOBILE]: 'none' } },
+  above: { position: 'relative', zIndex: 1 },
   grid: {
     display: 'grid',
     gridTemplateColumns: 'minmax(0, 4fr) minmax(0, 8fr)',
@@ -1267,29 +1281,33 @@ const qa = stylex.create({
     alignItems: 'start',
     [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' },
   },
-  list: { display: 'flex', flexDirection: 'column' },
-  item: { backgroundRepeat: 'no-repeat', backgroundPosition: 'bottom', backgroundSize: '100% 6px' },
+  list: { display: 'flex', flexDirection: 'column', gap: 4 },
+  item: { position: 'relative', paddingInline: 18, marginInline: -18 },
+  // In the question's row, which shows even when it's folded (the rest of a closed <details> doesn't).
+  rule: { position: 'absolute', left: 18, right: 18, bottom: -3, pointerEvents: 'none' },
   q: {
+    position: 'relative',
     display: 'flex',
     alignItems: 'baseline',
     gap: 14,
     paddingBlock: 18,
-    paddingInline: 8,
-    marginInline: -8,
+    marginInline: -18,
+    paddingInline: 18,
     cursor: 'pointer',
     listStyle: 'none',
     fontSize: 'clamp(15px, 1.4vw, 17px)',
     fontWeight: 560,
     lineHeight: 1.45,
     color: ink.i12,
-    backgroundColor: { default: 'transparent', [HOVER]: { default: 'transparent', ':hover': 'rgb(42 26 22 / 0.04)' } },
-    transitionProperty: 'background-color',
-    transitionDuration: '150ms',
   },
   no: { flex: 'none', minWidth: '2.2ch', fontSize: 12, fontWeight: 400, letterSpacing: '0.08em', color: ink.pinkText },
-  text: { flex: 1 },
-  chev: { flex: 'none', alignSelf: 'center', width: 16, height: 10, transitionProperty: 'rotate', transitionDuration: '220ms', transitionTimingFunction: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
-  a: { display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 'calc(2.2ch + 14px)', paddingBottom: 24, paddingRight: 30 },
+  text: { position: 'relative', flex: '0 1 auto', isolation: 'isolate' },
+  // Low under the words, as `Marked` sets the chosen tone's swipe: never through them, where
+  // it would read as a struck-out word. On two lines it runs under the last.
+  mark: { position: 'absolute', zIndex: -1, left: -6, right: -10, bottom: '-0.16em', height: '0.95em', transform: 'scaleX(0)', transformOrigin: 'left center', pointerEvents: 'none' },
+  chev: { flex: 'none', alignSelf: 'center', marginLeft: 'auto', width: 16, height: 10 },
+  body: { overflow: 'hidden' },
+  a: { display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 'calc(2.2ch + 14px)', paddingBottom: 26, paddingRight: 30 },
   lead: { fontFamily: font.brush, fontSize: 'clamp(22px, 2vw, 26px)', lineHeight: 1.1, color: ink.i12 },
   detail: { fontSize: 14, lineHeight: 1.7, color: ink.i11, maxWidth: '58ch' },
 });
@@ -1351,25 +1369,38 @@ const QUESTIONS: { q: string; lead: string; a: React.ReactNode }[] = [
 
 function Questions() {
   return (
-    <section id="questions" aria-labelledby="questions-title" {...stylex.props(s.spread)}>
-      <div {...stylex.props(s.wrap, s.stack)} style={{ gap: 'clamp(32px, 5vw, 56px)' }}>
+    <section id="questions" aria-labelledby="questions-title" {...stylex.props(s.spread, qa.plate)}>
+      <Pattern kind="stars" color="rgb(236 214 190)" seed={131} scale={1.15} count={8} />
+      <span {...stylex.props(qa.ghost)}>
+        <GhostWord lines={['AS', 'K']} tone="tan" style={{ left: '-0.04em', top: 'clamp(40px, 6vw, 90px)', fontSize: 'clamp(170px, 22vw, 340px)', opacity: 0.75 }} />
+      </span>
+      <div {...stylex.props(s.wrap, s.stack, qa.above)} style={{ gap: 'clamp(32px, 5vw, 56px)' }}>
         <RunningHead seed={91} cols={['Questions', 'Answered by Iris']} />
         <div {...stylex.props(qa.grid)}>
           <PageTitle id="questions-title" lines={['You ask', 'Iris answers']} small />
           <div {...stylex.props(qa.list)}>
-            <PenRule seed={119} />
             {QUESTIONS.map((it, i) => (
-              <details key={it.q} name="iris-questions" open={i === 0} {...stylex.props(qa.item)} style={{ backgroundImage: penLine(120 + i) }} data-question>
+              <details key={it.q} name="iris-questions" open={i === 0} {...stylex.props(qa.item)} data-question>
                 <summary {...stylex.props(qa.q)}>
                   <span aria-hidden {...stylex.props(qa.no)}>{String(i + 1).padStart(2, '0')}</span>
-                  <span {...stylex.props(qa.text)}>{it.q}</span>
+                  <span {...stylex.props(qa.text)}>
+                    <span aria-hidden {...stylex.props(qa.mark)} data-question-mark>
+                      <Printed mask={markerMask(140 + i)} color="pink" />
+                    </span>
+                    {it.q}
+                  </span>
                   <svg aria-hidden viewBox="0 0 16 10" {...stylex.props(qa.chev)} data-question-chevron>
                     <path d="M1.8,2.4C4.4,4.6 6.2,6.4 8.1,8.1C10,6.3 11.9,4.5 14.2,2.2" fill="none" stroke="rgb(42 26 22)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
+                  <span aria-hidden {...stylex.props(qa.rule)} data-question-rule>
+                    <PenRule seed={120 + i} color="rgb(42 26 22 / 0.4)" />
+                  </span>
                 </summary>
-                <div {...stylex.props(qa.a)} data-question-answer>
-                  <span {...stylex.props(qa.lead)}>{it.lead}</span>
-                  <span {...stylex.props(qa.detail)}>{it.a}</span>
+                <div {...stylex.props(qa.body)} data-question-body>
+                  <div {...stylex.props(qa.a)} data-question-answer>
+                    <span {...stylex.props(qa.lead)}>{it.lead}</span>
+                    <span {...stylex.props(qa.detail)}>{it.a}</span>
+                  </div>
                 </div>
               </details>
             ))}

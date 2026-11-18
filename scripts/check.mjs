@@ -70,8 +70,11 @@ for (const reduce of [false, true]) {
   const second = page.locator('#questions [data-question] > summary').nth(1);
   await second.scrollIntoViewIfNeeded();
   await second.click();
+  await page.waitForTimeout(700); // the old answer folds away (client.ts, FOLD)
   ok((await openOnes().count()) === 1 && (await page.locator('#questions [data-question]').nth(1).getAttribute('open')) !== null, 'opening another question folds the first');
   ok(await page.locator('#questions [data-question]').nth(1).locator('[data-question-answer]').isVisible(), 'and shows Iris’s answer');
+  const lifted = await page.locator('#questions [data-question]').nth(1).evaluate((d) => getComputedStyle(d).boxShadow !== 'none');
+  ok(lifted, 'the open question lifts off the plate as a paper slip');
   ok(!(await page.locator('a[href="#new"]').count()), 'nothing links to the hidden What’s new');
   ok((await page.locator('a[href="#questions"]').count()) === 2, 'the cover and the foot link to Questions');
   // Every Download Iris says which computers, each with its drawn computer.

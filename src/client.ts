@@ -1075,6 +1075,75 @@ if (press && pressJson && iris) {
   }
 }
 
+// ── Questions fold smoothly (Page.tsx, Questions) ─────────────────────────────────────
+/* ─────────────────────────────────────────────────────────
+ * ANIMATION STORYBOARD
+ *
+ *     0ms   a question is picked: the open one starts folding (its answer fades,
+ *           its slip settles back onto the plate) while the picked one unfolds
+ *           (it lifts off as a paper slip, its chevron turns)
+ *    60ms   the pink marker swipes in under the picked question
+ *   380ms   both heights settled; the one folded is closed
+ *
+ * Both run together on one curve, so the page below barely moves, and the
+ * question you picked is held where it was (the page scrolls to keep it)
+ * when the one folding sits above it. Under Reduce Motion nothing moves:
+ * the answers just swap. Without the script, <details name> still keeps
+ * one open at a time.
+ * ───────────────────────────────────────────────────────── */
+const FOLD = { ms: 380, ease: 'cubic-bezier(0.32, 0.72, 0, 1)' };
+const questions = $$<HTMLDetailsElement>('[data-question]');
+if (questions.length) {
+  // We keep one open ourselves, so the one closing can fold instead of vanishing.
+  questions.forEach((d) => d.removeAttribute('name'));
+  const bodyOf = (d: HTMLDetailsElement) => d.querySelector<HTMLElement>('[data-question-body]')!;
+  const fold = (d: HTMLDetailsElement, open: boolean) => {
+    const body = bodyOf(d);
+    const from = body.getBoundingClientRect().height;
+    body.getAnimations().forEach((a) => a.cancel());
+    if (still) {
+      d.open = open;
+      d.removeAttribute('data-closing');
+      return;
+    }
+    if (open) {
+      d.removeAttribute('data-closing');
+      d.open = true;
+      body.animate([{ height: `${d.hasAttribute('data-was-open') ? from : 0}px` }, { height: `${body.scrollHeight}px` }], { duration: FOLD.ms, easing: FOLD.ease });
+      d.removeAttribute('data-was-open');
+    } else {
+      d.setAttribute('data-closing', '');
+      const a = body.animate([{ height: `${from}px` }, { height: '0px' }], { duration: FOLD.ms, easing: FOLD.ease, fill: 'forwards' });
+      a.onfinish = () => {
+        d.open = false;
+        d.removeAttribute('data-closing');
+        a.cancel();
+      };
+    }
+  };
+  for (const d of questions) {
+    const summary = d.querySelector('summary')!;
+    summary.addEventListener('click', (e) => {
+      e.preventDefault();
+      const opening = !d.open || d.hasAttribute('data-closing');
+      if (opening && d.hasAttribute('data-closing')) d.setAttribute('data-was-open', '');
+      const top = summary.getBoundingClientRect().top;
+      for (const o of questions) if (o !== d && o.open && !o.hasAttribute('data-closing')) fold(o, false);
+      fold(d, opening);
+      if (still) return;
+      // Hold the picked question still while the one above it folds away.
+      const until = performance.now() + FOLD.ms + 60;
+      const hold = () => {
+        const dy = summary.getBoundingClientRect().top - top;
+        // At once: the page scrolls smoothly by default, which would lag a frame behind.
+        if (Math.abs(dy) > 0.5) window.scrollBy({ top: dy, behavior: 'instant' });
+        if (performance.now() < until) requestAnimationFrame(hold);
+      };
+      requestAnimationFrame(hold);
+    });
+  }
+}
+
 // ── Send to my Mac (parts.tsx, GetIris) ───────────────────────────────────────────────
 // On a phone or tablet the button hands this page to the share sheet, so it can go to a Mac
 // by AirDrop, Messages or Mail. Called straight from the tap, as the share sheet needs. If

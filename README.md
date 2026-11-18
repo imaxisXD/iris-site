@@ -70,7 +70,12 @@ the code.
   "coming soon", each line with its drawn computer (`OsIcon`). Windows' status, requirements and
   its button (Follow it on GitHub) live in one place, `windows` in `src/content.ts`: change them
   there when the beta is out.
-- **Questions** (`Questions` in `src/Page.tsx`) folds: one question open at a time (`<details name>`, no script needed), the first open to start, the title beside them. Each is what someone asks
+- **Questions** (`Questions` in `src/Page.tsx`) is printed on its own soft tan plate with a
+  tone-on-tone ✻ pattern and ASK as a ghost, as Privacy is on pink. It folds: one question open
+  at a time (`<details name>`, no script needed), the first open to start, the title beside them.
+  The open one lifts off the plate as a paper slip with a pink marker swipe under it; with the
+  script the old answer folds as the new one opens, and the question you picked holds still
+  (`client.ts`, storyboard at the top of that part). Each is what someone asks
   before they download; Iris answers with a short lead in brush as it
   talks in its notes, then the plain answer. It's where What's new was: the shelf of versions
   is off for now, but `WhatsNew` still builds it (and its checks are commented out in
@@ -123,7 +128,7 @@ Nothing runs `pnpm check` first, so run it locally (with `pnpm dev` up) before p
 | Make it yours | Iris's Settings window on a green sheet; pick Tones, Words, Apps or Shortcuts to turn its page |
 | Menu bar | A Mac's corner with Iris's menu open under its flower; setup in three steps |
 | Install | Download, drag to Applications, open it once; what a Mac and a Windows PC need, and why macOS asks |
-| Questions | You ask, Iris answers: what it does, free, private, which apps, updates, Windows |
+| Questions | A tan plate: you ask, Iris answers; the open question a paper slip. What it does, free, private, which apps, updates, Windows |
 | What's new | Off for now (`WhatsNew` still builds it): each version an issue on a shelf, from Iris's Changelog.md |
 | Foot | Go write something: download, links, and IRIS with the sun and butterflies on it |
 
