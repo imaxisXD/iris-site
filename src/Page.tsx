@@ -386,13 +386,15 @@ function Cover() {
         <div aria-hidden style={{ position: 'absolute', inset: 0, overflow: 'clip', pointerEvents: 'none' }}>
         <div data-air-depth="far" style={{ position: 'absolute', inset: 0 }}>
           <div data-air="live">
-            <span data-cloud style={{ left: '73%', top: '6%', width: '20%' }}>
+            {/* In focus: the sun's cloud, on the plane of the flower and the panel. */}
+            <span data-cloud data-cloud-depth="focus" style={{ left: '73%', top: '6%', width: '20%' }}>
               <SkyCloud kind="tower" />
             </span>
-            <span data-cloud data-air-wide style={{ left: '49%', top: '-3%', width: '14%', ['--cloud-delay' as string]: '-40s' }}>
+            {/* Farther off: smaller, softer, printed a step toward the sky. */}
+            <span data-cloud data-cloud-depth="far" data-air-wide style={{ left: '49%', top: '-3%', width: '12%', ['--cloud-delay' as string]: '-40s' }}>
               <SkyCloud kind="bank" />
             </span>
-            <span data-cloud data-air-wide style={{ left: '91%', top: '21%', width: '11%', ['--cloud-delay' as string]: '-80s' }}>
+            <span data-cloud data-cloud-depth="far" data-air-wide style={{ left: '92%', top: '22%', width: '9%', ['--cloud-delay' as string]: '-80s' }}>
               <SkyCloud kind="small" />
             </span>
             <Dust seed={21} count={30} area={[38, 100, 12, 92]} />
@@ -458,6 +460,12 @@ function Cover() {
           </div>
         <div data-air-depth="near" style={{ position: 'absolute', inset: 0 }}>
           <div data-air="live" data-air-front>
+            {/* Right in front of the lens: a big cloud drifting past the left edge, out of focus,
+                its right edge kept in the margin, clear of the headline (from 1300px, where the
+                margin has room for it). */}
+            <span data-cloud data-cloud-depth="near" data-air-xwide style={{ right: 'calc(100% - max(clamp(20px, 5vw, 72px), (100% - 1280px) / 2 + clamp(20px, 5vw, 72px)) + 22px)', top: '24%', width: 340, ['--cloud-delay' as string]: '-20s' }}>
+              <SkyCloud kind="bank" />
+            </span>
             <span data-close-box data-air-xwide style={{ left: '24%', top: '3%', width: '26%', height: '13%' }}>
               <span data-close-path style={{ width: 'clamp(56px, 5.6vw, 84px)' }}>
                 <CloseButterfly />

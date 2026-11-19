@@ -121,6 +121,11 @@
    with the night-to-day story (--air-r, the foot's --reveal). Never under Reduce Motion. */
 [data-air] { position: absolute; inset: 0; pointer-events: none; container-type: size; }
 [data-air] [data-cloud] { position: absolute; display: block; }
+/* The clouds through the lens, as About's meadow (MakersJourney.swift): focused on the plane of
+   the sun's cloud and the flower; farther ones softer and printed toward the sky (About's far
+   hill, blur 1.2), the one right in front of the lens very soft (its corner leaves, blur 6). */
+[data-cloud-depth="far"] { filter: blur(1.4px); opacity: 0.72; }
+[data-cloud-depth="near"] { filter: blur(9px); opacity: 0.9; }
 [data-air] [data-dust] { position: absolute; border-radius: 50%; opacity: 0.6; }
 [data-air] [data-petal] { position: absolute; left: var(--x, 0); display: block; }
 [data-air] [data-petal-turn], [data-air] [data-petal] img { display: block; width: 100%; height: auto; }
