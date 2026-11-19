@@ -31,7 +31,7 @@ import { Bud, CHAPTERS, Desk, doneCss, Flight, FLOWER_PX, ON_FOOT, SHUT_MS, WALL
 import { DONE, LANDS, SaysNote } from './Done';
 import { Pattern } from './Patterns';
 import { Branch, type BranchSpec, type Depth } from './Branches';
-import { Cloud, CloseButterfly, Dust, Lens, Petals } from './Atmosphere';
+import { CloseButterfly, Dust, Lens, Petals, SkyCloud } from './Atmosphere';
 import { Garden } from './Garden';
 import { draft, issues, links, month, pageTones, pressTones, tones, windows } from './content';
 import { Marks, MessageStack, Panel, panel } from './Panel';
@@ -381,19 +381,19 @@ function Cover() {
         <span {...stylex.props(s.ghostClip)}>
           <GhostWord lines={['TO', 'NE']} tone="sky" style={{ left: '0.3vw', top: 70, fontSize: 'clamp(180px, 30vw, 440px)' }} />
         </span>
-        {/* The air in the sky, behind the words (About's meadow, Atmosphere.tsx): painted clouds
-            round the sun, dust drifting in its light, a few petals on the breeze. */}
+        {/* The air in the sky, behind the words (About's meadow, Atmosphere.tsx): the garden's
+            riso clouds round the sun, dust drifting in its light, a few petals on the breeze. */}
         <div aria-hidden style={{ position: 'absolute', inset: 0, overflow: 'clip', pointerEvents: 'none' }}>
         <div data-air-depth="far" style={{ position: 'absolute', inset: 0 }}>
           <div data-air="live">
-            <span data-cloud style={{ left: '72%', top: '11%', width: '22%' }}>
-              <Cloud seed={3} tall={0.48} count={90} />
+            <span data-cloud style={{ left: '73%', top: '6%', width: '20%' }}>
+              <SkyCloud kind="tower" />
             </span>
-            <span data-cloud data-air-wide style={{ left: '52%', top: '8%', width: '11%', ['--cloud-delay' as string]: '-40s' }}>
-              <Cloud seed={9} tall={0.3} count={80} />
+            <span data-cloud data-air-wide style={{ left: '49%', top: '-3%', width: '14%', ['--cloud-delay' as string]: '-40s' }}>
+              <SkyCloud kind="bank" />
             </span>
-            <span data-cloud data-air-wide style={{ left: '94%', top: '33%', width: '9%', ['--cloud-delay' as string]: '-80s' }}>
-              <Cloud seed={14} tall={0.28} count={70} />
+            <span data-cloud data-air-wide style={{ left: '91%', top: '21%', width: '11%', ['--cloud-delay' as string]: '-80s' }}>
+              <SkyCloud kind="small" />
             </span>
             <Dust seed={21} count={30} area={[38, 100, 12, 92]} />
             <Petals seed={33} count={5} band={[16, 64]} />
@@ -443,10 +443,11 @@ function Cover() {
         </div>
         <Garden />
         {/* Right in front of the lens: big soft leaves in the bottom corners, and a butterfly
-            drifting a little out of focus through the open sky over the headline (About's
-            foreground, Atmosphere.tsx). */}
+            drifting a little out of focus through the open sky over the headline, where the
+            cover is wide enough for it to keep clear of the words (About's foreground,
+            Atmosphere.tsx). */}
         <div aria-hidden style={{ position: 'absolute', inset: 0, zIndex: 3, overflow: 'clip', pointerEvents: 'none' }}>
-        <div data-air-depth="near" style={{ position: 'absolute', inset: 0 }}>
+          {/* Rooted below the frame, as the flower is: they sway, but never leave the edge. */}
           <div data-air="live" data-air-front>
             <span data-lens style={{ left: 0, width: 'min(9.5vw, 150px)', ['--d' as string]: '6.4s', ['--delay' as string]: '-2s' }}>
               <Lens side="left" seed={5} />
@@ -454,7 +455,10 @@ function Cover() {
             <span data-lens style={{ right: 0, width: 'min(12vw, 180px)', ['--d' as string]: '7.2s', ['--delay' as string]: '-5s' }}>
               <Lens side="right" seed={9} />
             </span>
-            <span data-close-box data-air-wide style={{ left: '24%', top: '3%', width: '26%', height: '13%' }}>
+          </div>
+        <div data-air-depth="near" style={{ position: 'absolute', inset: 0 }}>
+          <div data-air="live" data-air-front>
+            <span data-close-box data-air-xwide style={{ left: '24%', top: '3%', width: '26%', height: '13%' }}>
               <span data-close-path style={{ width: 'clamp(56px, 5.6vw, 84px)' }}>
                 <CloseButterfly />
               </span>
@@ -463,7 +467,7 @@ function Cover() {
         </div>
         </div>
         {/* Stops everything on the cover that moves on its own, as About's does (WCAG 2.2.2). */}
-        <button type="button" data-air-pause aria-label="Pause the animation" aria-pressed="false" hidden {...stylex.props(s.airPause)}>
+        <button type="button" data-air-pause aria-label="Pause the animation" hidden {...stylex.props(s.airPause)}>
           <svg aria-hidden viewBox="0 0 26 26" width={26} height={26}>
             <circle cx={13} cy={13} r={12} fill="rgb(255 252 249 / 0.92)" />
             <path d="M13,1.6C19.6,1.3 24.6,6.4 24.4,13.2C24.2,19.7 19.1,24.6 12.7,24.4C6.4,24.2 1.5,19.2 1.7,12.8C1.9,6.6 6.8,1.8 13,1.6Z" fill="none" stroke="rgb(42 26 22 / 0.55)" strokeWidth={1.1} />

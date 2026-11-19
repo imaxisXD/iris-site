@@ -184,7 +184,7 @@ for (const reduce of [false, true]) {
     petals: h.querySelectorAll('[data-petal]').length,
     lens: h.querySelectorAll('[data-lens]').length,
     fly: h.querySelectorAll('[data-close-fly]').length,
-    quiet: [...h.querySelectorAll('[data-air="live"]')].every((e) => getComputedStyle(e.parentElement.parentElement).pointerEvents === 'none' && e.parentElement.parentElement.getAttribute('aria-hidden') === 'true'),
+    quiet: [...h.querySelectorAll('[data-air="live"]')].every((e) => getComputedStyle(e).pointerEvents === 'none' && e.closest('[aria-hidden="true"]') !== null),
   }));
   ok(air.clouds >= 1 && air.beams === 4 && air.dust > 10 && air.petals >= 3 && air.lens === 2 && air.fly === 1, `the cover has About's air: ${air.clouds} clouds, ${air.beams} beams, ${air.dust} specks, ${air.petals} petals, ${air.lens} lens corners, a close butterfly`);
   ok(air.quiet, 'and it never takes a tap, and screen readers skip it');
@@ -197,7 +197,7 @@ for (const reduce of [false, true]) {
     ok((await pauseBtn.getAttribute('aria-label')) === 'Pause the animation', 'named for what it does');
     await pauseBtn.click();
     await page.waitForTimeout(200);
-    ok((await airState()).running === 0 && (await pauseBtn.getAttribute('aria-pressed')) === 'true' && (await pauseBtn.getAttribute('aria-label')) === 'Play the animation', 'pressed, everything on the cover stops, and it offers to play');
+    ok((await airState()).running === 0 && (await pauseBtn.getAttribute('aria-label')) === 'Play the animation', 'pressed, everything on the cover stops, and it offers to play');
     await pauseBtn.click();
     await page.waitForTimeout(200);
     ok((await airState()).running > 20, 'pressed again, it all carries on');
@@ -366,6 +366,25 @@ for (const width of [320, 390]) {
   ok(done.panel === 0 && done.note === 1 && Math.abs(parseFloat(done.stamp) - 1) < 0.05, `after Return the panel is gone, the stamp is down and Iris's note is up (stamp ${done.stamp})`);
   ok(/replaced/.test(done.words) && /Undo with/.test(done.words), `and the note says what the app's does ("${done.words.replace(/\s+/g, ' ').trim()}")`);
   ok(later.note === 0 && later.stamp === '0', 'and both are gone before the garden comes round again');
+  await page.close();
+}
+
+// Once the garden has played its loops it settles for good, and the air round it with it: with
+// nothing left moving on the cover, the pause button goes. (Its loops are counted off the panel's
+// pop, so they're told here instead of waited out.)
+{
+  const page = await browser.newPage({ viewport: { width: 1280, height: 860 } });
+  await page.goto(url, { waitUntil: 'networkidle' });
+  const pauseBtn = page.locator('[data-air-pause]');
+  ok(await pauseBtn.isVisible(), 'while the garden plays, the cover offers its pause button');
+  await page.evaluate(() => {
+    const pop = document.querySelector('[data-garden] [inert]');
+    for (let i = 0; i < 5; i++) pop.dispatchEvent(new AnimationEvent('animationiteration'));
+  });
+  await page.waitForTimeout(200);
+  const running = await page.locator('header').evaluate((h) => [...h.querySelectorAll('[data-air="live"], [data-garden]')].flatMap((e) => e.getAnimations({ subtree: true })).filter((a) => a.playState === 'running').length);
+  ok(running === 0, `once the garden settles, the air settles with it (${running} still moving)`);
+  ok(!(await pauseBtn.isVisible()), 'and with nothing left moving, the pause button goes');
   await page.close();
 }
 

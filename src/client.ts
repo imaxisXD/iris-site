@@ -563,7 +563,7 @@ if (note && !still && 'getAnimations' in note) {
     pause.hidden = false;
     pause.addEventListener('click', () => {
       held = !held;
-      pause.setAttribute('aria-pressed', String(held));
+      pause.toggleAttribute('data-held', held);
       pause.setAttribute('aria-label', held ? 'Play the animation' : 'Pause the animation');
       apply();
     });

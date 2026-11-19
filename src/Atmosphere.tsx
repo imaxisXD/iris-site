@@ -2,10 +2,10 @@
 // app (MakersJourney.swift, "Where Iris comes from"): the same pieces at the same values, drawn
 // at build time.
 //
-//   clouds     painted cumulus with no outline: puffs under a mound, four flat tones (a
-//              lavender belly, the shade, a soft white body, paper where the sun catches the
-//              tops), the tones melting a little into each other. About cuts them flat along a
-//              horizon; in open sky they billow round underneath too
+//   clouds     About's billowing cumulus (puffs under a mound, cauliflower bumps along the top),
+//              printed in riso as the butterflies are (scripts/sprites.mjs): a lavender shade
+//              off register, the paper body screened so the sky shows through, denser paper
+//              where the sun catches the tops, the pen round the whole cloud
 //   beams      warm light falling from the sun in four long wedges, breathing slowly
 //   dust       soft specks drifting up through the light, each its own size and pace,
 //              twinkling as they turn
@@ -32,14 +32,6 @@ export const AIR = {
     { angle: 2.64, spread: 0.08, alpha: 0.2 },
     { angle: 2.84, spread: 0.04, alpha: 0.14 },
   ],
-  /** Cumulus tones: About's `Cumulus` deep, shade, body and light, and where each sits on a puff
-   *  (offset as a share of the puff, and its size). */
-  cloud: [
-    { ink: 'rgb(128 144 196)', dx: -0.1, dy: 0.25, scale: 1 },
-    { ink: 'rgb(150 168 212)', dx: 0, dy: 0.05, scale: 0.98 },
-    { ink: 'rgb(230 236 248)', dx: 0.18, dy: -0.22, scale: 0.84 },
-    { ink: 'rgb(255 252 249)', dx: 0.3, dy: -0.38, scale: 0.62 },
-  ],
   /** About's foreground: big leaves rising into the corners from below the frame (`Foreground`),
    *  in a corner's own box (200 × 260, the frame's bottom at 260): root, length, width, lean
    *  (radians from upright), ink. Darker and bigger than anything else, so they read as near. */
@@ -62,53 +54,15 @@ export const AIR = {
 
 const r1 = (n: number) => Math.round(n * 10) / 10;
 
-/** A cumulus grown from many small puffs under a mound-shaped envelope, as About's `Cumulus.grow`:
- *  big round puffs low down, small cauliflower bumps along the top edge, so its outline billows.
- *  Shares of its width, up from its flat base. */
-function puffs(seed: number, tall: number, count: number) {
-  const r = rng(seed);
-  const out: { x: number; y: number; r: number }[] = [];
-  for (let k = 0; k < count; k++) {
-    const u = r(), v = r();
-    const top = tall * Math.pow(Math.sin(Math.PI * u), 0.7) * (1 - 0.25 * Math.abs(u - 0.42));
-    const y = top * (1 - Math.pow(v, 2.2) * 0.85);
-    const rad = (0.03 + 0.06 * (1 - y / Math.max(tall, 0.01)) + 0.025 * (r() - 0.5) * 2) * (0.7 + tall);
-    out.push({ x: u, y, r: Math.max(rad, 0.02) });
-  }
-  return out;
-}
-
-/** One painted cumulus, filling its box's width, billowing round underneath (no horizon to sit on). */
-export function Cloud({ seed, tall = 0.3, count = 60 }: { seed: number; tall?: number; count?: number }) {
-  const W = 100, P = puffs(seed, tall, count);
-  const top = -(tall + 0.16) * W, bottom = 0.12 * W, left = -0.12 * W, width = 1.24 * W;
-  const id = `cloud-${seed}`;
-  return (
-    <svg aria-hidden viewBox={`${left} ${r1(top)} ${width} ${r1(bottom - top)}`} style={{ display: 'block', width: '100%', height: 'auto', overflow: 'visible' }}>
-      <defs>
-        {/* Soft edges, painted, not drawn: the tones melt into each other. */}
-        <filter id={`${id}-soft`} x="-5%" y="-5%" width="110%" height="110%">
-          <feGaussianBlur stdDeviation={0.35} />
-        </filter>
-      </defs>
-      <g filter={`url(#${id}-soft)`}>
-        {AIR.cloud.map((t) => (
-          <path
-            key={t.ink}
-            fill={t.ink}
-            d={P.map((p) => {
-              const rad = p.r * W * t.scale, cx = p.x * W + t.dx * p.r * W, cy = -p.y * W + t.dy * p.r * W;
-              return `M${r1(cx - rad)} ${r1(cy)}a${r1(rad)} ${r1(rad)} 0 1 0 ${r1(rad * 2)} 0a${r1(rad)} ${r1(rad)} 0 1 0 ${r1(-rad * 2)} 0`;
-            }).join('')}
-          />
-        ))}
-      </g>
-    </svg>
-  );
+/** One of About's cumulus, printed in riso (scripts/sprites.mjs), filling its box's width. The
+ *  print is square; the cloud sits across its middle. */
+const CLOUD_PX = { tower: 720, bank: 600, small: 528 };
+export function SkyCloud({ kind }: { kind: keyof typeof CLOUD_PX }) {
+  return <img src={`/sprite/cloud-${kind}.png`} alt="" width={CLOUD_PX[kind]} height={CLOUD_PX[kind]} loading="lazy" decoding="async" style={{ display: 'block', width: '100%', height: 'auto' }} />;
 }
 
 /** The sun's beams, centred on the box's middle (put the box's middle on the sun), each long
- *  enough to cross the sky. Each breathes on its own (`data-beam`, `--k`). */
+ *  enough to cross the sky. The light breathes as one (`data-beams-soft`), so the blur is drawn once. */
 export function Beams({ strength = 0.7, rising = false }: { strength?: number; rising?: boolean }) {
   const L = 1000;
   // `rising`: a sun low in the sky, as it comes up, fans its light up into the sky instead.

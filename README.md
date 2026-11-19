@@ -26,8 +26,8 @@ the code.
   per part sit at the top, and the build fails if a keyframe drifts from them. It plays
   three times and settles, pauses while scrolled away, and holds still under Reduce Motion.
 - **The air round both skies** (`src/Atmosphere.tsx`) is About's meadow in the app
-  (`MakersJourney.swift`), the same pieces at the same values: painted cumulus in four flat
-  tones, warm beams falling from the sun, dust drifting through them, petals on the breeze,
+  (`MakersJourney.swift`), the same pieces at the same values: its billowing cumulus,
+  printed in riso as the butterflies are (`scripts/sprites.mjs`), warm beams falling from the sun, dust drifting through them, petals on the breeze,
   big soft grainy leaves right in front of the lens in the bottom corners, and a butterfly
   close to the lens, a little out of focus. On the cover it runs on its own and settles with
   the garden; a paper pause button (About's) stops the garden and the air together (WCAG

@@ -131,9 +131,15 @@
 [data-close-fly] img { position: absolute; inset: 0; width: 100%; height: 100%; }
 [data-close-wings] { transform-origin: 50% 50%; }
 @media (max-width: 1023px) { [data-air] [data-air-wide] { display: none; } }
+@media (max-width: 1299px) { [data-air] [data-air-xwide] { display: none; } }
+/* The foot's right corner leaves only where the wordmark leaves them room. */
+@media (max-width: 1439px) { [data-air] [data-air-full] { display: none; } }
+/* On a phone the wordmark sits centred along the foot's bottom edge: no corner leaves there. */
+@media (max-width: 760px) { [data-air="foot"] [data-lens] { display: none; } }
 /* The cover's pause button shows the pause mark while things move, the play mark once held. */
-[data-air-pause] [data-air-play-mark], [data-air-pause][aria-pressed="true"] [data-air-pause-mark] { display: none; }
-[data-air-pause][aria-pressed="true"] [data-air-play-mark] { display: inline; }
+[data-air-pause][hidden] { display: none; }
+[data-air-pause] [data-air-play-mark], [data-air-pause][data-held] [data-air-pause-mark] { display: none; }
+[data-air-pause][data-held] [data-air-play-mark] { display: inline; }
 @media (prefers-reduced-motion: reduce) { [data-air-pause] { display: none; } }
 @media (max-width: 760px) { [data-air] [data-lens] { width: 22vw !important; } }
 
@@ -146,7 +152,7 @@
   [data-air="live"] [data-lens] { animation: air-lens var(--d) ease-in-out var(--delay) infinite alternate; }
   [data-air="live"] [data-close-path] { animation: air-close 46s ease-in-out infinite; }
   [data-air="live"] [data-close-wings] { animation: air-flap 700ms ease-in-out infinite alternate; }
-  [data-garden] [data-beam] { animation: air-beam 35s ease-in-out calc(var(--k) * -9s) infinite alternate; }
+  [data-garden] [data-beams-soft] { animation: air-beam 35s ease-in-out infinite alternate; }
 
   /* The cover as it scrolls away, as About's camera drifts: the clouds lag, the leaves in front
      of the lens run ahead. Moved by the scroll alone. */
@@ -174,7 +180,7 @@
   100% { translate: 0cqw 50cqh; rotate: -8deg; }
 }
 @keyframes air-flap { from { scale: 1 1; } to { scale: 0.5 1; } }
-@keyframes air-beam { from { opacity: calc(var(--alpha) * 0.65); } to { opacity: var(--alpha); } }
+@keyframes air-beam { from { opacity: 0.7; } to { opacity: 1; } }
 @keyframes air-depth-far { from { translate: 0 0; } to { translate: 0 90px; } }
 @keyframes air-depth-near { from { translate: 0 0; } to { translate: 0 -160px; } }
 

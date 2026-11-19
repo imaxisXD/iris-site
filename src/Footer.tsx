@@ -42,7 +42,7 @@ import { links } from './content';
 import { rng } from './pen';
 import { GetIris, KeyRow, PageTitle, PenLink, Platforms, Wordmark } from './parts';
 import { font, ink, tex } from './tokens.stylex';
-import { Beams, CloseButterfly, Cloud, Dust, Lens, Petals } from './Atmosphere';
+import { Beams, CloseButterfly, Dust, Lens, Petals, SkyCloud } from './Atmosphere';
 
 export const TIMING = {
   flyIn:       200,    // the first butterfly sets off, once the sun is up
@@ -397,11 +397,11 @@ export function Footer() {
       {/* The air in the day sky, behind everything (About's meadow, Atmosphere.tsx): it comes out
           with the day as the page lifts off, and moves only with the scroll. */}
       <div aria-hidden data-air="foot" style={{ zIndex: 0 }}>
-        <span data-cloud data-air-wide style={{ left: '46%', top: '5%', width: '20%' }}>
-          <Cloud seed={3} tall={0.48} count={90} />
+        <span data-cloud data-air-wide style={{ left: '44%', top: '3%', width: '17%' }}>
+          <SkyCloud kind="tower" />
         </span>
-        <span data-cloud style={{ left: '79%', top: '4%', width: 'max(10%, 76px)' }}>
-          <Cloud seed={14} tall={0.28} count={70} />
+        <span data-cloud style={{ left: '79%', top: 'max(5%, 30px)', width: 'max(11%, 88px)' }}>
+          <SkyCloud kind="small" />
         </span>
         <Dust seed={41} count={26} area={[44, 100, 8, 80]} />
         <Petals seed={57} count={5} band={[10, 48]} />
@@ -434,10 +434,10 @@ export function Footer() {
         <span data-lens style={{ left: 0, width: 'min(9.5vw, 150px)' }}>
           <Lens side="left" seed={6} />
         </span>
-        <span data-lens style={{ right: 0, width: 'min(12vw, 180px)' }}>
+        <span data-lens data-air-full style={{ right: 0, width: 'min(12vw, 180px)' }}>
           <Lens side="right" seed={10} />
         </span>
-        <span data-close-box data-air-wide style={{ left: '68%', top: '15%', width: '22%', height: '20%' }}>
+        <span data-close-box data-air-wide style={{ left: '60%', top: '30%', width: '18%', height: '16%' }}>
           <span data-close-path style={{ width: 'clamp(56px, 5.6vw, 84px)' }}>
             <CloseButterfly sprite="rose" />
           </span>
