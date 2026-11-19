@@ -199,7 +199,27 @@
 [data-air="foot"] [data-dust] { opacity: calc(var(--day) * 0.7); translate: calc(var(--sway) * var(--air-r)) calc(var(--rise) * -1 * var(--air-r)); }
 [data-air="foot"] [data-petal] { opacity: var(--day); translate: calc((var(--air-r) - 1) * 50cqw) calc((1 - var(--air-r)) * 60px); }
 [data-air="foot"] [data-petal-turn] { rotate: calc(var(--air-r) * var(--spin)); }
-[data-air="foot"] [data-close-path] { opacity: var(--day); translate: calc(40cqw + (var(--air-r) - 1) * 60cqw) calc(30cqh + (1 - var(--air-r)) * 40cqh); rotate: calc((1 - var(--air-r)) * -20deg); }
+[data-air="foot"] [data-close-path] { opacity: var(--day); }
+[data-air="foot"] [data-close-fly] { filter: none; }
+@media (prefers-reduced-motion: no-preference) {
+  /* The foot's butterfly flits about the open sky over the rings, wings beating. */
+  [data-air="foot"] [data-close-path] { animation: air-flit 14s ease-in-out infinite; }
+  [data-air="foot"] [data-close-wings] { animation: air-flap 180ms ease-in-out infinite alternate; }
+  /* The rings, once out: each turns slowly, alternate ones the other way, and a glow runs out
+     through them, inner to outer (Footer.tsx, RINGS). */
+  [data-ring] { transform-box: fill-box; transform-origin: center; animation: ring-turn var(--turn) linear infinite var(--dir), ring-glow 6s ease-in-out calc(var(--k) * 0.5s) infinite; }
+}
+@keyframes air-flit {
+  0% { translate: 10cqw 60cqh; rotate: -12deg; }
+  18% { translate: 46cqw 10cqh; rotate: 16deg; }
+  34% { translate: 80cqw 44cqh; rotate: -8deg; }
+  52% { translate: 58cqw 84cqh; rotate: 20deg; }
+  70% { translate: 24cqw 30cqh; rotate: -18deg; }
+  86% { translate: 4cqw 74cqh; rotate: 8deg; }
+  100% { translate: 10cqw 60cqh; rotate: -12deg; }
+}
+@keyframes ring-turn { to { rotate: 360deg; } }
+@keyframes ring-glow { 0%, 100% { stroke-opacity: 0.45; } 12% { stroke-opacity: 0.85; } 30% { stroke-opacity: 0.45; } }
 [data-air="foot"] [data-lens] { translate: 0 calc((1 - var(--air-r)) * 160px); }
 [data-foot] [data-sun-beams] { opacity: clamp(0, (var(--air-r) - 0.72) / 0.18, 1); }
 @media (prefers-reduced-motion: reduce) { [data-foot] { --air-r: 1; } }

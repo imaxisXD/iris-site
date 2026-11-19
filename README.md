@@ -26,16 +26,18 @@ the code.
   per part sit at the top, and the build fails if a keyframe drifts from them. It plays
   three times and settles, pauses while scrolled away, and holds still under Reduce Motion.
 - **The air round both skies** (`src/Atmosphere.tsx`) is About's meadow in the app
-  (`MakersJourney.swift`), the same pieces at the same values: its billowing cumulus,
-  printed in riso as the butterflies are (`scripts/sprites.mjs`) and seen
+  (`MakersJourney.swift`), the same pieces at the same values: clouds drawn as
+  illustrated clouds (chunky lobes on a flat bottom, a bold pen, a shade along the base) and
+  printed in riso as the butterflies are (`scripts/sprites.mjs`), seen
   through About's lens on the cover: the sun's cloud in focus, farther ones soft and paler, a
   big one right in front of the lens very soft at the left edge; warm beams falling from the sun, dust drifting through them, petals on the breeze,
   big soft grainy leaves right in front of the lens in the bottom corners, and a butterfly
   close to the lens, a little out of focus. On the cover it runs on its own and settles with
   the garden; a paper pause button (About's) stops the garden and the air together (WCAG
   2.2.2), and as the cover scrolls away the clouds lag and the leaves run ahead. On the foot
-  nothing moves on its own: it comes out with the day as the page lifts off, the beams fan up
-  from the rising sun, and it follows the scroll. Under Reduce Motion it's a still moment.
+  it comes out with the day as the page lifts off and follows the scroll: no clouds, the beams
+  fan up from the rising sun, its rings are in the sun's warm cream and turn slowly with a glow
+  running out through them, and a small butterfly flits about over them. Under Reduce Motion it's a still moment.
 - **One panel for the whole site** (`src/Panel.tsx`): the app's panel (`PanelView.swift`),
   tone names, the marked message, the keys, "into" an app on tape with its icon, Replace.
   Section 03, the cover and the ⌃ ⌥ G panel all use it. Where its footer would wrap it drops

@@ -42,7 +42,7 @@ import { links } from './content';
 import { rng } from './pen';
 import { GetIris, KeyRow, PageTitle, PenLink, Platforms, Wordmark } from './parts';
 import { font, ink, tex } from './tokens.stylex';
-import { Beams, CloseButterfly, Dust, Lens, Petals, SkyCloud } from './Atmosphere';
+import { Beams, CloseButterfly, Dust, Lens, Petals } from './Atmosphere';
 
 export const TIMING = {
   flyIn:       200,    // the first butterfly sets off, once the sun is up
@@ -74,8 +74,14 @@ const BUTTERFLIES = {
   ],
 };
 
-/* The rings round the sun: rough brush loops in the pale sky ink, spreading out from it */
+/* The rings round the sun: rough brush loops in the sun's own warm light (the beams' cream),
+ * spreading out from it. Once out, each turns slowly, the next the other way, and a glow runs
+ * out through them, inner to outer, as warmth does (global.css, "The rings"). */
 const RINGS = {
+  ink: 'rgb(255 238 198)',
+  inkAlpha: 0.55,
+  turnMs: [90000, 120000],   // one turn, alternate rings the other way
+  glowMs: 6000,              // the glow running out through them
   count: 6,
   first: 30,         // the smallest ring's radius, in wordmark units
   gap: 17,           // between rings
@@ -344,7 +350,7 @@ function Mark() {
               {...stylex.props(f.rings)}
               style={{ ...at(SUN.x, SUN.y, R * 2), height: 'auto', ...vars({ '--k': i / (RINGS.count - 1) }) }}
             >
-              <path d={d} fill="none" stroke="rgb(150 184 230)" strokeWidth={RINGS.width} strokeLinecap="round" strokeLinejoin="round" />
+              <path d={d} data-ring fill="none" stroke={RINGS.ink} strokeOpacity={RINGS.inkAlpha} strokeWidth={RINGS.width} strokeLinecap="round" strokeLinejoin="round" style={vars({ '--k': i, '--turn': `${RINGS.turnMs[i % 2] + i * 4000}ms`, '--dir': i % 2 ? 'reverse' : 'normal' })} />
             </svg>
           );
         })}
@@ -395,14 +401,9 @@ export function Footer() {
         </span>
       ))}
       {/* The air in the day sky, behind everything (About's meadow, Atmosphere.tsx): it comes out
-          with the day as the page lifts off, and moves only with the scroll. */}
+          with the day as the page lifts off, and follows the scroll. No clouds: the sky here is
+          the sun's, with its rings. */}
       <div aria-hidden data-air="foot" style={{ zIndex: 0 }}>
-        <span data-cloud data-air-wide style={{ left: '44%', top: '3%', width: '17%' }}>
-          <SkyCloud kind="tower" />
-        </span>
-        <span data-cloud style={{ left: '79%', top: 'max(5%, 30px)', width: 'max(11%, 88px)' }}>
-          <SkyCloud kind="small" />
-        </span>
         <Dust seed={41} count={26} area={[44, 100, 8, 80]} />
         <Petals seed={57} count={5} band={[10, 48]} />
       </div>
@@ -429,7 +430,8 @@ export function Footer() {
         </div>
       </div>
       {/* Right in front of the lens: big soft leaves in the bottom corners, rising with the foot
-          faster than it, and a butterfly drifting in out of focus. Under the night. */}
+          faster than it. And a small butterfly that comes out with the day and flits about the
+          open sky over the rings. Under the night. */}
       <div aria-hidden data-air="foot" style={{ zIndex: 2 }}>
         <span data-lens style={{ left: 0, width: 'min(9.5vw, 150px)' }}>
           <Lens side="left" seed={6} />
@@ -438,7 +440,7 @@ export function Footer() {
           <Lens side="right" seed={10} />
         </span>
         <span data-close-box data-air-wide style={{ left: '60%', top: '30%', width: '18%', height: '16%' }}>
-          <span data-close-path style={{ width: 'clamp(56px, 5.6vw, 84px)' }}>
+          <span data-close-path style={{ width: 'clamp(28px, 2.4vw, 36px)' }}>
             <CloseButterfly sprite="rose" />
           </span>
         </span>

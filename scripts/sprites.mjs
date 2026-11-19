@@ -171,48 +171,42 @@ for (const [i, [colour, grey]] of [[INK.pink, 40], [INK.platePink, 70], [INK.cre
   ]);
 }
 
-// ── Clouds: About's billowing cumulus (MakersJourney.swift, `Cumulus`), printed ─────────
-// Grown as About grows them: many small puffs under a mound-shaped envelope, big round ones low
-// down, small cauliflower bumps along the top, so the outline billows. Then printed as the
-// butterflies are: the lavender shade a dot down and right, the paper body screened so the sky
-// shows through it, denser paper where the sun (to the right) catches the tops, and the pen
-// round the whole cloud, not each puff (a pen twice as thick, the cloud filled blank over its
-// inner half). In open sky it billows round underneath too; About's sits on a horizon.
-function cumulus(seed, tall, count) {
-  const r = rng(seed * 7919);
-  const out = [];
-  for (let k = 0; k < count; k++) {
-    const u = r(), v = r();
-    const top = tall * Math.pow(Math.sin(Math.PI * u), 0.7) * (1 - 0.25 * Math.abs(u - 0.42));
-    const y = top * (1 - Math.pow(v, 2.2) * 0.85);
-    const rad = (0.03 + 0.06 * (1 - y / Math.max(tall, 0.01)) + 0.025 * (r() - 0.5) * 2) * (0.7 + tall);
-    out.push({ x: u, y, r: Math.max(rad, 0.02) });
-  }
-  return out;
-}
-/** The puffs on the 80×80 canvas: the cloud `span` wide, its base at `baseY`, each puff moved
- *  (dx, dy, as shares of itself) and scaled, as About lays each tone. */
-const puffPath = (puffs, span, baseY, dx = 0, dy = 0, scale = 1) => {
-  const x0 = (80 - span) / 2;
-  return puffs.map((p) => {
-    const rad = p.r * span * scale, cx = x0 + p.x * span + dx * p.r * span, cy = baseY - p.y * span + dy * p.r * span;
-    return ellipse(+cx.toFixed(2), +cy.toFixed(2), +(rad * 2).toFixed(2), +(rad * 2).toFixed(2));
-  }).join('');
+// ── Clouds: drawn lobe by lobe, printed as the butterflies are ──────────────────────────
+// Illustrated clouds, as Pinterest's are drawn: a few chunky round lobes on a flat bottom, the
+// tallest a little left of the middle, a bold outline, a shade along the base and a curl of
+// light on the top lobe. Printed in plates like the butterflies: a lavender belly a dot down
+// and right; the paper body lifted up inside it, so the lavender shows as a band along the
+// bottom; the pen round the whole cloud (a pen twice as thick, the cloud filled blank over its
+// inner half), a little curl where a front lobe sits on the one behind it; and a curl of paper
+// light on the top lobe, over the pen's plate.
+const circle = ([cx, cy, r]) => `<circle cx="${cx}" cy="${cy}" r="${r}"/>`;
+const bar = ([x0, x1, y, h]) => `<rect x="${x0}" y="${y}" width="${x1 - x0}" height="${h}" rx="${h / 2}"/>`;
+/** An arc of a lobe from `a0` to `a1` degrees (0 is right, -90 up), clockwise. */
+const arc = ([cx, cy, r], a0, a1) => {
+  const p = (a) => `${(cx + r * Math.cos((a * Math.PI) / 180)).toFixed(2)},${(cy + r * Math.sin((a * Math.PI) / 180)).toFixed(2)}`;
+  return `M${p(a0)}A${r} ${r} 0 0 1 ${p(a1)}`;
 };
 const CLOUDS = [
-  { name: 'cloud-tower', seed: 3, tall: 0.48, count: 90, px: 120 },
-  { name: 'cloud-bank', seed: 9, tall: 0.3, count: 80, px: 100 },
-  { name: 'cloud-small', seed: 14, tall: 0.28, count: 70, px: 88 },
+  { name: 'cloud-tower', seed: 81, base: [9, 71, 44, 14],
+    lobes: [[22, 45, 11], [36, 33, 15], [53, 31, 12.5], [64, 43, 10]],
+    curls: [[0, -165, -80], [3, -120, -40]], light: [1, -160, -110] },
+  { name: 'cloud-bank', seed: 82, base: [6, 74, 46, 12],
+    lobes: [[16, 47, 9], [30, 40, 12], [46, 36, 13], [60, 42, 10.5], [69, 48, 7.5]],
+    curls: [[0, -170, -80], [3, -110, -35]], light: [2, -160, -112] },
+  { name: 'cloud-small', seed: 83, base: [16, 64, 44, 12],
+    lobes: [[27, 45, 10], [41, 36, 13], [55, 45, 8.5]],
+    curls: [[0, -165, -80]], light: [1, -160, -110] },
 ];
-for (const [i, c] of CLOUDS.entries()) {
-  const puffs = cumulus(c.seed, c.tall, c.count);
-  const span = 66, baseY = 40 + (c.tall * span) / 2;
-  const whole = puffPath(puffs, span, baseY);
-  await print(c.name, c.px, 81 + i, [
-    { ink: [150, 168, 212], dx: 1, dy: 1, svg: `<path d="${puffPath(puffs, span, baseY, -0.1, 0.25, 1)}" fill="${g(90)}"/>` },
-    { ink: INK.paper, dx: -1, dy: -1, svg: `<path d="${puffPath(puffs, span, baseY, 0.18, -0.22, 0.84)}" fill="${g(110)}"/>` },
-    { ink: INK.paper, dx: -1, dy: -1, svg: `<path d="${puffPath(puffs, span, baseY, 0.3, -0.38, 0.62)}" fill="${g(25)}"/>` },
-    { ink: INK.espresso, svg: `<path d="${whole}" fill="none" stroke="${g(25)}" stroke-width="2.6" stroke-linejoin="round"/><path d="${whole}" fill="#fff"/>` },
+for (const c of CLOUDS) {
+  const whole = c.lobes.map(circle).join('') + bar(c.base);
+  const lift = c.lobes.map(([x, y, r]) => circle([x - 1, y - 3.2, r])).join('') + bar([c.base[0] - 1, c.base[1] - 1, c.base[2] - 3.2, c.base[3]]);
+  await print(c.name, 96, c.seed, [
+    // The belly: the whole cloud in lavender, a dot down and right.
+    { ink: [150, 168, 212], dx: 1, dy: 1, svg: `<g fill="${g(60)}">${whole}</g>` },
+    // The paper body: the cloud lifted up, kept inside the cloud.
+    { ink: INK.paper, dx: -1, dy: -1, svg: `<defs><clipPath id="in">${whole}</clipPath></defs><g clip-path="url(#in)"><g fill="${g(14)}">${lift}</g></g>` },
+    // The pen: round the whole cloud, and the curls.
+    { ink: INK.espresso, svg: `<g fill="none" stroke="${g(25)}" stroke-width="5.4">${whole}</g><g fill="#fff" stroke="#fff" stroke-width="1.4">${whole}</g>` + c.curls.map(([i, a0, a1]) => pen(arc(c.lobes[i], a0, a1), 2.2)).join('') },
   ]);
 }
 

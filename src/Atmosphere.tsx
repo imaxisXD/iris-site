@@ -2,10 +2,9 @@
 // app (MakersJourney.swift, "Where Iris comes from"): the same pieces at the same values, drawn
 // at build time.
 //
-//   clouds     About's billowing cumulus (puffs under a mound, cauliflower bumps along the top),
-//              printed in riso as the butterflies are (scripts/sprites.mjs): a lavender shade
-//              off register, the paper body screened so the sky shows through, denser paper
-//              where the sun catches the tops, the pen round the whole cloud
+//   clouds     illustrated clouds, printed in riso as the butterflies are (scripts/sprites.mjs):
+//              chunky round lobes on a flat bottom, a bold pen outline with a curl where one
+//              lobe sits on another, a lavender shade along the base
 //   beams      warm light falling from the sun in four long wedges, breathing slowly
 //   dust       soft specks drifting up through the light, each its own size and pace,
 //              twinkling as they turn
@@ -54,9 +53,9 @@ export const AIR = {
 
 const r1 = (n: number) => Math.round(n * 10) / 10;
 
-/** One of About's cumulus, printed in riso (scripts/sprites.mjs), filling its box's width. The
- *  print is square; the cloud sits across its middle. */
-const CLOUD_PX = { tower: 720, bank: 600, small: 528 };
+/** One of the riso clouds (scripts/sprites.mjs), filling its box's width. The print is square;
+ *  the cloud sits across its middle. */
+const CLOUD_PX = { tower: 576, bank: 576, small: 576 };
 export function SkyCloud({ kind }: { kind: keyof typeof CLOUD_PX }) {
   return <img src={`/sprite/cloud-${kind}.png`} alt="" width={CLOUD_PX[kind]} height={CLOUD_PX[kind]} loading="lazy" decoding="async" style={{ display: 'block', width: '100%', height: 'auto' }} />;
 }
