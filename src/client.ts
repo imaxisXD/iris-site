@@ -548,6 +548,26 @@ if (note && !still && 'getAnimations' in note) {
   let keys: Animation[] = [];
   let seen = true;
   let settled = false;
+  // The air round the cover (Atmosphere.tsx): it runs with the garden, holds with it while the
+  // cover is scrolled away, and settles with it. The pause button stops all of it, as About's
+  // does (WCAG 2.2.2); once everything has settled there's nothing left to stop, so it goes.
+  const header = note.closest('header')!;
+  const air = () => $$<HTMLElement>('[data-air="live"]', header).flatMap((el) => el.getAnimations({ subtree: true }));
+  const pause = header.querySelector<HTMLButtonElement>('[data-air-pause]');
+  let held = false;
+  const everything = () => (settled ? [] : [...note.getAnimations({ subtree: true }), ...keys, ...air()]);
+  const apply = () => {
+    for (const a of everything()) seen && !held ? a.play() : a.pause();
+  };
+  if (pause) {
+    pause.hidden = false;
+    pause.addEventListener('click', () => {
+      held = !held;
+      pause.setAttribute('aria-pressed', String(held));
+      pause.setAttribute('aria-label', held ? 'Play the animation' : 'Pause the animation');
+      apply();
+    });
+  }
   const start = () => {
     keys.forEach((a) => a.cancel());
     const parts = note.getAnimations({ subtree: true });
@@ -559,18 +579,12 @@ if (note && !still && 'getAnimations' in note) {
         { duration: loop, iterations: Infinity },
       );
     });
-    for (const a of [...parts, ...keys]) {
-      a.currentTime = 0;
-      seen ? a.play() : a.pause();
-    }
+    for (const a of [...parts, ...keys]) a.currentTime = 0;
+    apply();
   };
   new IntersectionObserver(([e]) => {
     seen = e.isIntersecting;
-    if (settled) return;
-    for (const a of [...note.getAnimations({ subtree: true }), ...keys]) {
-      if (seen && a.playState === 'paused') a.play();
-      else if (!seen && a.playState === 'running') a.pause();
-    }
+    apply();
   }).observe(note);
   // On a fine pointer the scene's planes follow it a little, each by its own depth (the
   // amounts are Garden.tsx's DEPTH; this only says where the pointer is over the cover).
@@ -594,6 +608,9 @@ if (note && !still && 'getAnimations' in note) {
       a.currentTime = 0;
       a.pause();
     }
+    // The air settles where it is, in the light.
+    for (const a of air()) a.pause();
+    if (pause) pause.hidden = true;
   });
   start();
 }

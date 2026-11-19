@@ -78,6 +78,7 @@ import { Panel, panel } from './Panel';
 import { KeyRow } from './parts';
 import { DONE as APP_DONE, flightOf, ReplacedNote, STAMP_BOX, StampFace, trailOf } from './Done';
 import { font, ink } from './tokens.stylex';
+import { Beams } from './Atmosphere';
 
 const TIMING = {
   loop:        12000,  // one round of the garden
@@ -744,8 +745,12 @@ export function Garden() {
   };
   return (
     <div {...stylex.props(g.garden)} aria-hidden="true" data-garden data-loop={TIMING.loop} data-loops={TIMING.loops} data-keys={`${TIMING.keysPress},${TIMING.keyGap},${TIMING.wakes}`}>
-      {/* 1. The sun, far away */}
+      {/* 1. The sun, far away, its light falling across the sky (About's beams, Atmosphere.tsx):
+          behind the sun and everything in front of it, centred on it wherever it is. */}
       <Depth plane={DEPTH.sun}>
+        <div aria-hidden data-sun-beams style={{ position: 'absolute', left: 'var(--sx)', top: 'var(--sy)', width: cq(3000), aspectRatio: '1', translate: '-50% -50%', pointerEvents: 'none' }}>
+          <Beams />
+        </div>
         <div {...stylex.props(g.layer, g.square)} style={{ left: `calc(var(--sx) - ${cq((SUN.size * DEPTH.sun.scale) / 2)})`, opacity: DEPTH.sun.ink, top: `calc(var(--sy) - ${cq((SUN.size * DEPTH.sun.scale) / 2)})`, width: cq(SUN.size * DEPTH.sun.scale), ...vars({ '--turn': ms(SUN.notchMs * 16) }) }}>
           <div style={{ position: 'absolute', inset: SUN.halo.reach, borderRadius: '50%', opacity: SUN.halo.ink, backgroundImage: `radial-gradient(closest-side, ${SUN.halo.color}, transparent)` }} />
           <div {...stylex.props(g.fill, g.beam)} style={vars({ '--beam': SUN.beam, '--cheer': SUN.cheer })}>

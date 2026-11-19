@@ -170,6 +170,38 @@ for (const reduce of [false, true]) {
     const back = await gardenState();
     ok(back.running > 20, 'and carries on when it comes back');
   }
+  // The air round the cover (Atmosphere.tsx): About's clouds, beams, dust, petals, lens leaves
+  // and close butterfly; it runs with the garden and the pause button stops all of it.
+  const airState = () =>
+    page.locator('header').evaluate((h) => {
+      const all = [...h.querySelectorAll('[data-air="live"], [data-garden]')].flatMap((e) => e.getAnimations({ subtree: true }));
+      return { running: all.filter((a) => a.playState === 'running').length };
+    });
+  const air = await page.locator('header').evaluate((h) => ({
+    clouds: h.querySelectorAll('[data-cloud]').length,
+    beams: h.querySelectorAll('[data-garden] [data-beam]').length,
+    dust: h.querySelectorAll('[data-dust]').length,
+    petals: h.querySelectorAll('[data-petal]').length,
+    lens: h.querySelectorAll('[data-lens]').length,
+    fly: h.querySelectorAll('[data-close-fly]').length,
+    quiet: [...h.querySelectorAll('[data-air="live"]')].every((e) => getComputedStyle(e.parentElement.parentElement).pointerEvents === 'none' && e.parentElement.parentElement.getAttribute('aria-hidden') === 'true'),
+  }));
+  ok(air.clouds >= 1 && air.beams === 4 && air.dust > 10 && air.petals >= 3 && air.lens === 2 && air.fly === 1, `the cover has About's air: ${air.clouds} clouds, ${air.beams} beams, ${air.dust} specks, ${air.petals} petals, ${air.lens} lens corners, a close butterfly`);
+  ok(air.quiet, 'and it never takes a tap, and screen readers skip it');
+  const pauseBtn = page.locator('[data-air-pause]');
+  if (reduce) {
+    ok(!(await pauseBtn.isVisible()), 'under Reduce Motion there is nothing to pause, so no pause button');
+    ok((await airState()).running === 0, 'and the air is still');
+  } else {
+    ok(await pauseBtn.isVisible(), 'the cover has a pause button, as About does (WCAG 2.2.2)');
+    ok((await pauseBtn.getAttribute('aria-label')) === 'Pause the animation', 'named for what it does');
+    await pauseBtn.click();
+    await page.waitForTimeout(200);
+    ok((await airState()).running === 0 && (await pauseBtn.getAttribute('aria-pressed')) === 'true' && (await pauseBtn.getAttribute('aria-label')) === 'Play the animation', 'pressed, everything on the cover stops, and it offers to play');
+    await pauseBtn.click();
+    await page.waitForTimeout(200);
+    ok((await airState()).running > 20, 'pressed again, it all carries on');
+  }
   ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'the page never scrolls sideways');
 
   // The foot: the sun comes up and the butterflies land once it's in view; ⌃ ⌥ G there plays

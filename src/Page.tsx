@@ -31,6 +31,7 @@ import { Bud, CHAPTERS, Desk, doneCss, Flight, FLOWER_PX, ON_FOOT, SHUT_MS, WALL
 import { DONE, LANDS, SaysNote } from './Done';
 import { Pattern } from './Patterns';
 import { Branch, type BranchSpec, type Depth } from './Branches';
+import { Cloud, CloseButterfly, Dust, Lens, Petals } from './Atmosphere';
 import { Garden } from './Garden';
 import { draft, issues, links, month, pageTones, pressTones, tones, windows } from './content';
 import { Marks, MessageStack, Panel, panel } from './Panel';
@@ -107,6 +108,26 @@ const s = stylex.create({
   // Butterflies may loop past the plate's right edge: cut them there, never widen the page.
   // Only sideways, so the garden still stands below the plate.
   coverClip: { overflowX: 'clip' },
+  // The cover's pause button: About's paper disc, in the plate's bottom left corner, a 32px target.
+  airPause: {
+    position: 'absolute',
+    zIndex: 4,
+    left: 'max(clamp(20px, 5vw, 72px), (100% - 1280px) / 2 + clamp(20px, 5vw, 72px))',
+    bottom: { default: 18, [MOBILE]: 14 },
+    display: 'grid',
+    placeItems: 'center',
+    width: 32,
+    height: 32,
+    padding: 0,
+    border: 'none',
+    borderRadius: '50%',
+    backgroundColor: 'transparent',
+    cursor: 'pointer',
+    transitionProperty: 'scale',
+    transitionDuration: '150ms',
+    transitionTimingFunction: 'ease-out',
+    scale: { default: '1', ':active': '0.96' },
+  },
 
   // Moment
   // Square to the page: a turned video is resampled every frame, and its text goes soft.
@@ -360,6 +381,25 @@ function Cover() {
         <span {...stylex.props(s.ghostClip)}>
           <GhostWord lines={['TO', 'NE']} tone="sky" style={{ left: '0.3vw', top: 70, fontSize: 'clamp(180px, 30vw, 440px)' }} />
         </span>
+        {/* The air in the sky, behind the words (About's meadow, Atmosphere.tsx): painted clouds
+            round the sun, dust drifting in its light, a few petals on the breeze. */}
+        <div aria-hidden style={{ position: 'absolute', inset: 0, overflow: 'clip', pointerEvents: 'none' }}>
+        <div data-air-depth="far" style={{ position: 'absolute', inset: 0 }}>
+          <div data-air="live">
+            <span data-cloud style={{ left: '72%', top: '11%', width: '22%' }}>
+              <Cloud seed={3} tall={0.48} count={90} />
+            </span>
+            <span data-cloud data-air-wide style={{ left: '52%', top: '8%', width: '11%', ['--cloud-delay' as string]: '-40s' }}>
+              <Cloud seed={9} tall={0.3} count={80} />
+            </span>
+            <span data-cloud data-air-wide style={{ left: '94%', top: '33%', width: '9%', ['--cloud-delay' as string]: '-80s' }}>
+              <Cloud seed={14} tall={0.28} count={70} />
+            </span>
+            <Dust seed={21} count={30} area={[38, 100, 12, 92]} />
+            <Petals seed={33} count={5} band={[16, 64]} />
+          </div>
+        </div>
+        </div>
         <div {...stylex.props(s.wrap, s.plateInner)}>
           <div {...stylex.props(s.masthead)}>
             <a href="/" aria-label="Iris, home" style={{ textDecoration: 'none' }}>
@@ -402,6 +442,38 @@ function Cover() {
           </div>
         </div>
         <Garden />
+        {/* Right in front of the lens: big soft leaves in the bottom corners, and a butterfly
+            drifting a little out of focus through the open sky over the headline (About's
+            foreground, Atmosphere.tsx). */}
+        <div aria-hidden style={{ position: 'absolute', inset: 0, zIndex: 3, overflow: 'clip', pointerEvents: 'none' }}>
+        <div data-air-depth="near" style={{ position: 'absolute', inset: 0 }}>
+          <div data-air="live" data-air-front>
+            <span data-lens style={{ left: 0, width: 'min(9.5vw, 150px)', ['--d' as string]: '6.4s', ['--delay' as string]: '-2s' }}>
+              <Lens side="left" seed={5} />
+            </span>
+            <span data-lens style={{ right: 0, width: 'min(12vw, 180px)', ['--d' as string]: '7.2s', ['--delay' as string]: '-5s' }}>
+              <Lens side="right" seed={9} />
+            </span>
+            <span data-close-box data-air-wide style={{ left: '24%', top: '3%', width: '26%', height: '13%' }}>
+              <span data-close-path style={{ width: 'clamp(56px, 5.6vw, 84px)' }}>
+                <CloseButterfly />
+              </span>
+            </span>
+          </div>
+        </div>
+        </div>
+        {/* Stops everything on the cover that moves on its own, as About's does (WCAG 2.2.2). */}
+        <button type="button" data-air-pause aria-label="Pause the animation" aria-pressed="false" hidden {...stylex.props(s.airPause)}>
+          <svg aria-hidden viewBox="0 0 26 26" width={26} height={26}>
+            <circle cx={13} cy={13} r={12} fill="rgb(255 252 249 / 0.92)" />
+            <path d="M13,1.6C19.6,1.3 24.6,6.4 24.4,13.2C24.2,19.7 19.1,24.6 12.7,24.4C6.4,24.2 1.5,19.2 1.7,12.8C1.9,6.6 6.8,1.8 13,1.6Z" fill="none" stroke="rgb(42 26 22 / 0.55)" strokeWidth={1.1} />
+            <g data-air-pause-mark fill="rgb(42 26 22)">
+              <rect x={9.4} y={8} width={2.6} height={10} rx={1.3} />
+              <rect x={14} y={8} width={2.6} height={10} rx={1.3} />
+            </g>
+            <path data-air-play-mark d="M10.5,7.5L19.5,13L10.5,18.5Z" fill="rgb(42 26 22)" />
+          </svg>
+        </button>
       </div>
     </header>
   );
@@ -1335,7 +1407,7 @@ const QA_BRANCHES: { depth: Depth; spec: BranchSpec; box: React.CSSProperties; w
   { depth: 'mid', spec: { seed: 41, w: 300, h: 460, base: [120, 460], stems: [{ angle: -86, len: 420, bend: 0.4 }, { angle: -62, len: 260, bend: -0.3 }] }, box: { left: '5%', bottom: 0 }, width: [22, 300], phone: null, sway: [1.4, 4.2, 0.1] },
   // Near the lens: big and soft, leaning into the corners from past the plate's edge.
   { depth: 'near', spec: { seed: 37, w: 340, h: 470, base: [60, 470], stems: [{ angle: -70, len: 430, bend: 0.25 }, { angle: -45, len: 300, bend: -0.2 }] }, box: { left: '-7%', bottom: '-12%' }, width: [36, 520], phone: '62%', sway: [2, 4.8, 0] },
-  { depth: 'near', spec: { seed: 11, w: 340, h: 300, base: [340, 30], stems: [{ angle: 160, len: 300, bend: 0.5 }, { angle: 135, len: 220, bend: -0.3 }] }, box: { right: '-6%', top: '-6%' }, width: [32, 460], phone: null, sway: [1.8, 4.5, 0.4] },
+  { depth: 'near', spec: { seed: 11, w: 340, h: 300, base: [340, 30], stems: [{ angle: 160, len: 300, bend: 0.5 }, { angle: 135, len: 220, bend: -0.3 }] }, box: { right: '-7%', top: '-10%' }, width: [32, 460], phone: null, sway: [1.8, 4.5, 0.4] },
 ];
 /** A depth's branches, each at its place, swaying from its foot. */
 function BranchLayer({ depth }: { depth: Depth }) {

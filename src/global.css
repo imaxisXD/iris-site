@@ -91,18 +91,19 @@
   80% { rotate: calc(var(--a) * -0.15); }
   100% { rotate: 0deg; }
 }
-/* Depth as the page scrolls, as About's camera drifts: the far branches slide a little, the near
-   ones, right in front of the lens, slide the most, so they pass in front of the words. Moved by
-   the reader's own scrolling, never on its own; where the browser can't tie motion to the
-   scroll they simply stay put. */
+/* Depth as the page scrolls, as About's camera drifts: the far branches lag behind the words a
+   little, the near ones, right in front of the lens, run ahead of them, so the planes slide past
+   each other. Each starts where it's drawn as the plate comes in and only moves away from the
+   words from there: far ones down, near ones up. Moved by the reader's own scrolling, never on
+   its own; where the browser can't tie motion to the scroll they simply stay put. */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
     [data-depth="far"] { animation: depth-far linear both; animation-timeline: view(); }
     [data-depth="near"] { animation: depth-near linear both; animation-timeline: view(); }
   }
 }
-@keyframes depth-far { from { translate: 0 28px; } to { translate: 0 -28px; } }
-@keyframes depth-near { from { translate: 0 120px; } to { translate: 0 -120px; } }
+@keyframes depth-far { from { translate: 0 0; } to { translate: 0 28px; } }
+@keyframes depth-near { from { translate: 0 0; } to { translate: 0 -90px; } }
 @media (max-width: 760px) {
   [data-branch] { width: var(--pw) !important; }
   [data-branch-phone="hide"] { display: none; }
@@ -111,6 +112,86 @@
   [data-question], [data-question-chevron], [data-question-mark], [data-question-rule], [data-question-answer] { transition: none; }
   [data-branch] { animation: none; }
 }
+
+/* The air (Atmosphere.tsx): About's meadow round the page's two skies, the cover and the foot.
+   Still, it is a moment in the light: clouds, dust and petals where they are, the leaves and the
+   butterfly in front. On the cover (data-air="live") it runs on its own, as About's does, held
+   while the cover is scrolled away, stopped by the pause button and settled with the garden
+   (client.ts). On the foot (data-air="foot") nothing moves on its own: it follows the scroll
+   with the night-to-day story (--air-r, the foot's --reveal). Never under Reduce Motion. */
+[data-air] { position: absolute; inset: 0; pointer-events: none; container-type: size; }
+[data-air] [data-cloud] { position: absolute; display: block; }
+[data-air] [data-dust] { position: absolute; border-radius: 50%; opacity: 0.6; }
+[data-air] [data-petal] { position: absolute; left: var(--x, 0); display: block; }
+[data-air] [data-petal-turn], [data-air] [data-petal] img { display: block; width: 100%; height: auto; }
+[data-air] [data-lens] { position: absolute; bottom: 0; display: block; aspect-ratio: 200 / 260; transform-origin: 50% 100%; }
+[data-air] [data-close-box] { position: absolute; display: block; container-type: size; }
+[data-air] [data-close-path] { position: absolute; left: 0; top: 0; display: block; translate: 40cqw 20cqh; }
+[data-close-fly] { position: relative; display: block; aspect-ratio: 1; filter: blur(2px); }
+[data-close-fly] img { position: absolute; inset: 0; width: 100%; height: 100%; }
+[data-close-wings] { transform-origin: 50% 50%; }
+@media (max-width: 1023px) { [data-air] [data-air-wide] { display: none; } }
+/* The cover's pause button shows the pause mark while things move, the play mark once held. */
+[data-air-pause] [data-air-play-mark], [data-air-pause][aria-pressed="true"] [data-air-pause-mark] { display: none; }
+[data-air-pause][aria-pressed="true"] [data-air-play-mark] { display: inline; }
+@media (prefers-reduced-motion: reduce) { [data-air-pause] { display: none; } }
+@media (max-width: 760px) { [data-air] [data-lens] { width: 22vw !important; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The cover's: running on its own */
+  [data-air="live"] [data-cloud] { animation: air-cloud 120s ease-in-out var(--cloud-delay, 0s) infinite alternate; }
+  [data-air="live"] [data-dust] { animation: air-dust var(--dur) linear var(--delay) infinite; }
+  [data-air="live"] [data-petal] { left: 0; animation: air-petal var(--dur) linear var(--delay) infinite; }
+  [data-air="live"] [data-petal-turn] { animation: air-petal-turn var(--bob) ease-in-out calc(var(--k) * -0.7s) infinite alternate; }
+  [data-air="live"] [data-lens] { animation: air-lens var(--d) ease-in-out var(--delay) infinite alternate; }
+  [data-air="live"] [data-close-path] { animation: air-close 46s ease-in-out infinite; }
+  [data-air="live"] [data-close-wings] { animation: air-flap 700ms ease-in-out infinite alternate; }
+  [data-garden] [data-beam] { animation: air-beam 35s ease-in-out calc(var(--k) * -9s) infinite alternate; }
+
+  /* The cover as it scrolls away, as About's camera drifts: the clouds lag, the leaves in front
+     of the lens run ahead. Moved by the scroll alone. */
+  @supports (animation-timeline: scroll()) {
+    [data-air-depth="far"] { animation: air-depth-far linear both; animation-timeline: scroll(root); animation-range: 0 100vh; }
+    [data-air-depth="near"] { animation: air-depth-near linear both; animation-timeline: scroll(root); animation-range: 0 100vh; }
+  }
+}
+@keyframes air-cloud { from { translate: -10px 0; } to { translate: 10px 0; } }
+@keyframes air-dust {
+  0% { opacity: 0; translate: 0 0; }
+  25% { opacity: 0.75; }
+  50% { translate: var(--sway) calc(var(--rise) * -0.5); }
+  75% { opacity: 0.6; }
+  100% { opacity: 0; translate: 0 calc(var(--rise) * -1); }
+}
+@keyframes air-petal { from { translate: -6cqw 0; } to { translate: 106cqw 36px; } }
+@keyframes air-petal-turn { from { translate: 0 -10px; rotate: 0deg; scale: 1 1; } to { translate: 0 10px; rotate: var(--spin); scale: 0.5 1; } }
+@keyframes air-lens { from { rotate: -1.4deg; } to { rotate: 1.4deg; } }
+@keyframes air-close {
+  0% { translate: 0cqw 50cqh; rotate: -8deg; }
+  22% { translate: 34cqw 6cqh; rotate: 12deg; }
+  46% { translate: 72cqw 30cqh; rotate: -6deg; }
+  72% { translate: 44cqw 70cqh; rotate: 14deg; }
+  100% { translate: 0cqw 50cqh; rotate: -8deg; }
+}
+@keyframes air-flap { from { scale: 1 1; } to { scale: 0.5 1; } }
+@keyframes air-beam { from { opacity: calc(var(--alpha) * 0.65); } to { opacity: var(--alpha); } }
+@keyframes air-depth-far { from { translate: 0 0; } to { translate: 0 90px; } }
+@keyframes air-depth-near { from { translate: 0 0; } to { translate: 0 -160px; } }
+
+/* The foot's: following the scroll, night to day (Footer.tsx's storyboard). The clouds come out
+   and drift a little as the night lifts, the beams once the sun has cleared the S, the dust rises
+   through them, the petals are carried across, the butterfly drifts in, and the leaves in front
+   rise with the foot, faster than it, as nearer things do. */
+[data-foot] { --air-r: var(--reveal, 1); }
+[data-air="foot"] { --day: clamp(0, (var(--air-r) - 0.35) / 0.55, 1); }
+[data-air="foot"] [data-cloud] { opacity: var(--day); translate: calc((var(--air-r) - 1) * 90px) 0; }
+[data-air="foot"] [data-dust] { opacity: calc(var(--day) * 0.7); translate: calc(var(--sway) * var(--air-r)) calc(var(--rise) * -1 * var(--air-r)); }
+[data-air="foot"] [data-petal] { opacity: var(--day); translate: calc((var(--air-r) - 1) * 50cqw) calc((1 - var(--air-r)) * 60px); }
+[data-air="foot"] [data-petal-turn] { rotate: calc(var(--air-r) * var(--spin)); }
+[data-air="foot"] [data-close-path] { opacity: var(--day); translate: calc(40cqw + (var(--air-r) - 1) * 60cqw) calc(30cqh + (1 - var(--air-r)) * 40cqh); rotate: calc((1 - var(--air-r)) * -20deg); }
+[data-air="foot"] [data-lens] { translate: 0 calc((1 - var(--air-r)) * 160px); }
+[data-foot] [data-sun-beams] { opacity: clamp(0, (var(--air-r) - 0.72) / 0.18, 1); }
+@media (prefers-reduced-motion: reduce) { [data-foot] { --air-r: 1; } }
 
 /* How it works: the steps not playing step back (client.ts sets data-active), still easy to
    read: dimmer than the one playing, never faint. */

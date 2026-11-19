@@ -42,6 +42,7 @@ import { links } from './content';
 import { rng } from './pen';
 import { GetIris, KeyRow, PageTitle, PenLink, Platforms, Wordmark } from './parts';
 import { font, ink, tex } from './tokens.stylex';
+import { Beams, CloseButterfly, Cloud, Dust, Lens, Petals } from './Atmosphere';
 
 export const TIMING = {
   flyIn:       200,    // the first butterfly sets off, once the sun is up
@@ -348,6 +349,10 @@ function Mark() {
           );
         })}
         <span {...stylex.props(f.sun)} style={at(SUN.x, SUN.y, SUN.size)}>
+          {/* Its light fanning up into the sky once it has cleared the S (About's beams, Atmosphere.tsx). */}
+          <span aria-hidden data-sun-beams style={{ position: 'absolute', left: '50%', top: '50%', width: '1100%', aspectRatio: '1', translate: '-50% -50%', pointerEvents: 'none' }}>
+            <Beams rising />
+          </span>
           <span {...stylex.props(f.halo)} />
           <img src="/sprite/sun-rays.png" alt="" loading="lazy" decoding="async" {...stylex.props(f.sprite, f.rays)} />
           <img src="/sprite/sun-glints.png" alt="" loading="lazy" decoding="async" {...stylex.props(f.sprite, f.rays)} />
@@ -389,6 +394,18 @@ export function Footer() {
           <span {...stylex.props(f.twinkle)}>✻</span>
         </span>
       ))}
+      {/* The air in the day sky, behind everything (About's meadow, Atmosphere.tsx): it comes out
+          with the day as the page lifts off, and moves only with the scroll. */}
+      <div aria-hidden data-air="foot" style={{ zIndex: 0 }}>
+        <span data-cloud data-air-wide style={{ left: '46%', top: '5%', width: '20%' }}>
+          <Cloud seed={3} tall={0.48} count={90} />
+        </span>
+        <span data-cloud style={{ left: '79%', top: '4%', width: 'max(10%, 76px)' }}>
+          <Cloud seed={14} tall={0.28} count={70} />
+        </span>
+        <Dust seed={41} count={26} area={[44, 100, 8, 80]} />
+        <Petals seed={57} count={5} band={[10, 48]} />
+      </div>
       <div {...stylex.props(f.wrap, f.depth)}>
         <div {...stylex.props(f.call)}>
           <PageTitle id="foot-title" lines={['Go write', 'something']} small />
@@ -410,6 +427,21 @@ export function Footer() {
         <div {...stylex.props(f.markCell)}>
           <Mark />
         </div>
+      </div>
+      {/* Right in front of the lens: big soft leaves in the bottom corners, rising with the foot
+          faster than it, and a butterfly drifting in out of focus. Under the night. */}
+      <div aria-hidden data-air="foot" style={{ zIndex: 2 }}>
+        <span data-lens style={{ left: 0, width: 'min(9.5vw, 150px)' }}>
+          <Lens side="left" seed={6} />
+        </span>
+        <span data-lens style={{ right: 0, width: 'min(12vw, 180px)' }}>
+          <Lens side="right" seed={10} />
+        </span>
+        <span data-close-box data-air-wide style={{ left: '68%', top: '15%', width: '22%', height: '20%' }}>
+          <span data-close-path style={{ width: 'clamp(56px, 5.6vw, 84px)' }}>
+            <CloseButterfly sprite="rose" />
+          </span>
+        </span>
       </div>
       {/* The pointer, as a butterfly, while it's over the foot (client.ts). */}
       <span aria-hidden data-cursor-fly hidden style={{ position: 'fixed', left: 0, top: 0, width: 34, height: 34, pointerEvents: 'none', zIndex: 40 }}>
