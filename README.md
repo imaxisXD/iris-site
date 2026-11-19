@@ -36,7 +36,7 @@ the code.
   the garden; a paper pause button (About's) stops the garden and the air together (WCAG
   2.2.2), and as the cover scrolls away the clouds lag and the leaves run ahead. On the foot
   it comes out with the day as the page lifts off and follows the scroll: no clouds, the beams
-  fan up from the rising sun, its rings are in the sun's warm cream and turn slowly with a glow
+  fan up from the rising sun, its rings, in the pale sky blue, turn slowly with a glow
   running out through them, and a small butterfly flits about over them. Under Reduce Motion it's a still moment.
 - **One panel for the whole site** (`src/Panel.tsx`): the app's panel (`PanelView.swift`),
   tone names, the marked message, the keys, "into" an app on tape with its icon, Replace.

@@ -74,12 +74,12 @@ const BUTTERFLIES = {
   ],
 };
 
-/* The rings round the sun: rough brush loops in the sun's own warm light (the beams' cream),
- * spreading out from it. Once out, each turns slowly, the next the other way, and a glow runs
- * out through them, inner to outer, as warmth does (global.css, "The rings"). */
+/* The rings round the sun: rough brush loops in the pale sky ink, spreading out from it. Once
+ * out, each turns slowly, the next the other way, and a glow runs out through them, inner to
+ * outer, as warmth does (global.css, "The rings"). */
 const RINGS = {
-  ink: 'rgb(255 238 198)',
-  inkAlpha: 0.55,
+  ink: 'rgb(150 184 230)',
+  inkAlpha: 1,
   turnMs: [90000, 120000],   // one turn, alternate rings the other way
   glowMs: 6000,              // the glow running out through them
   count: 6,
