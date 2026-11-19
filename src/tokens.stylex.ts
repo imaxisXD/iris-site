@@ -26,8 +26,6 @@ export const ink = stylex.defineVars({
   khaki: 'rgb(226 218 196)',
   tape: '#E0D1BB',
   green: '#1E8C55',
-  /** Green deep enough to read as small text: 5.7:1 on the Questions sheet, 4.9:1 on its open tint. */
-  greenText: 'rgb(22 108 64)',
 });
 
 export const font = stylex.defineVars({

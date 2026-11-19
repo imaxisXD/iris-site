@@ -74,17 +74,25 @@ for (const reduce of [false, true]) {
   await second.click();
   await page.waitForTimeout(700); // the answer unfolds (client.ts, FOLD)
   const qAfter = await second.evaluate((s) => ({ y: scrollY, top: s.getBoundingClientRect().top }));
-  ok(qAfter.y === qBefore.y && Math.abs(qAfter.top - qBefore.top) < 1, `opening a question never scrolls the page (moved ${Math.round(qAfter.y - qBefore.y)}px)`);
-  ok((await openOnes().count()) === 2 && (await page.locator('#questions [data-question]').nth(1).getAttribute('open')) !== null, 'each question opens on its own; the first stays as it was');
+  ok(qAfter.y === qBefore.y, `opening a question never scrolls the page (scrolled ${Math.round(qAfter.y - qBefore.y)}px)`);
+  ok((await openOnes().count()) === 1 && (await page.locator('#questions [data-question]').nth(1).getAttribute('open')) !== null, 'opening another question folds the first: one open at a time');
   ok(await page.locator('#questions [data-question]').nth(1).locator('[data-question-answer]').isVisible(), 'and shows Iris’s answer');
-  const tinted = await page.locator('#questions [data-question]').nth(1).evaluate((d) => getComputedStyle(d).backgroundColor !== 'rgba(0, 0, 0, 0)');
-  ok(tinted, 'the open question is printed over in the green tint');
+  const lifted = await page.locator('#questions [data-question]').nth(1).evaluate((d) => getComputedStyle(d).boxShadow !== 'none');
+  ok(lifted, 'the open question lifts off the plate as a paper slip');
   await second.click();
   await page.waitForTimeout(700);
-  ok((await openOnes().count()) === 1, 'tapped again, it folds');
+  ok((await openOnes().count()) === 0, 'tapped again, it folds');
+  await page.locator('#questions [data-question] > summary').first().click();
+  await page.waitForTimeout(700);
+  // The plate ends the page: no paper margin between its green and the foot.
+  const gap = await page.evaluate(() => document.querySelector('[data-sheet]').getBoundingClientRect().bottom - document.querySelector('#questions').getBoundingClientRect().bottom);
+  ok(Math.abs(gap) < 1, `the green runs straight into the foot (${Math.round(gap)}px between)`);
   // The sheet's branches: painted, never in the way, swaying only while on screen.
   const branches = page.locator('#questions [data-branch]');
-  ok((await branches.count()) >= 4, `the Questions sheet has ${await branches.count()} branches`);
+  ok((await branches.count()) >= 4, `the Questions plate has ${await branches.count()} branches`);
+  const depths = await page.locator('#questions [data-branch-depth]').evaluateAll((bs) => [...new Set(bs.map((b) => b.dataset.branchDepth))].sort().join(' '));
+  ok(depths === 'far mid near', `they're seen through a lens, far, sharp and near (${depths})`);
+  ok(await page.locator('#questions [data-depth="near"]').evaluate((l) => getComputedStyle(l).pointerEvents === 'none' && l.getAttribute('aria-hidden') === 'true'), 'the near ones, in front of the words, never take a tap');
   ok(await branches.first().evaluate((b) => getComputedStyle(b.parentElement).pointerEvents === 'none' && b.parentElement.getAttribute('aria-hidden') === 'true'), 'the branches never take a tap, and screen readers skip them');
   const breeze = await page.locator('#questions').evaluate((q) => {
     const all = [...q.querySelectorAll('[data-branch]')].flatMap((b) => b.getAnimations());

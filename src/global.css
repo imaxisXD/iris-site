@@ -51,32 +51,33 @@
 [data-fly-cursor] { cursor: none; }
 [data-fly-cursor] a, [data-fly-cursor] button { cursor: pointer; }
 
-/* Questions (Page.tsx, client.ts). The open question is printed over in a pale green tint
-   (through the riso screen) and a pink marker swipe draws in under it; its pen rule goes.
-   While one folds away (data-closing) its tint lifts as it closes. No browser marker: the pen
-   chevron turns instead. */
-[data-question] { transition: background-color 320ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+/* Questions (Page.tsx, client.ts). The open question lifts off the green plate as a paper slip
+   (paper, grain, the paper shadow) and a pink marker swipe draws in under it; its pen rule goes.
+   While one folds away (data-closing) it settles back onto the plate as it closes. No browser
+   marker: the pen chevron turns instead. */
+[data-question] { transition: background-color 320ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 320ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 [data-question] > summary::-webkit-details-marker { display: none; }
 [data-question-chevron], [data-question-mark], [data-question-rule], [data-question-answer] { transition: rotate 320ms cubic-bezier(0.2, 0.8, 0.2, 1), transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 260ms ease; }
 [data-question][open]:not([data-closing]) {
-  background-color: rgb(30 140 85 / 0.13);
-  background-image: url(/tex/screen.png);
-  background-size: 96px 96px;
+  background-color: rgb(255 252 249);
+  background-image: url(/tex/paper.png);
+  background-size: 64px 64px;
+  box-shadow: 0 0 0 1px rgb(42 26 22 / 0.08), 0 2px 3px rgb(42 26 22 / 0.1), 0 14px 26px -10px rgb(42 26 22 / 0.35);
 }
 [data-question][open]:not([data-closing]) [data-question-chevron] { rotate: 180deg; }
 [data-question][open]:not([data-closing]) [data-question-mark] { transform: scaleX(1); transition-delay: 60ms; }
 [data-question][open]:not([data-closing]) [data-question-rule] { opacity: 0; }
 [data-question][data-closing] [data-question-answer] { opacity: 0; }
 @media (hover: hover) {
-  [data-question]:not([open]) > summary:hover { background-color: rgb(30 140 85 / 0.07); }
+  [data-question]:not([open]) > summary:hover { background-color: rgb(42 26 22 / 0.05); }
   [data-question] > summary { transition: background-color 150ms ease; }
 }
 
-/* The branches on the Questions sheet (Branches.tsx). A breeze passes as the sheet comes on
-   screen (client.ts sets data-sway): each branch sways from its foot, a little out of step with
-   the others, and settles, every one within 5s, so nothing keeps moving beside the questions
-   (WCAG 2.2.2). It passes again the next time the sheet comes back. Never under Reduce Motion.
-   They turn as a whole; the painting itself never changes, so the browser draws it once. */
+/* The branches round Questions (Branches.tsx). A breeze passes as the plate comes on screen
+   (client.ts sets data-sway): each branch sways from its foot, a little out of step with the
+   others, and settles, every one within 5s, so nothing keeps moving beside the questions
+   (WCAG 2.2.2). It passes again the next time the plate comes back. They turn as a whole; the
+   painting itself never changes, so the browser draws it once. */
 [data-branch] { transform-origin: var(--o); }
 [data-sway] [data-branch] {
   animation: branch-breeze var(--d) cubic-bezier(0.45, 0, 0.55, 1) var(--delay) 1 both;
@@ -90,9 +91,18 @@
   80% { rotate: calc(var(--a) * -0.15); }
   100% { rotate: 0deg; }
 }
-@media (max-width: 1180px) {
-  [data-branch-wide] { display: none; }
+/* Depth as the page scrolls, as About's camera drifts: the far branches slide a little, the near
+   ones, right in front of the lens, slide the most, so they pass in front of the words. Moved by
+   the reader's own scrolling, never on its own; where the browser can't tie motion to the
+   scroll they simply stay put. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    [data-depth="far"] { animation: depth-far linear both; animation-timeline: view(); }
+    [data-depth="near"] { animation: depth-near linear both; animation-timeline: view(); }
+  }
 }
+@keyframes depth-far { from { translate: 0 28px; } to { translate: 0 -28px; } }
+@keyframes depth-near { from { translate: 0 120px; } to { translate: 0 -120px; } }
 @media (max-width: 760px) {
   [data-branch] { width: var(--pw) !important; }
   [data-branch-phone="hide"] { display: none; }

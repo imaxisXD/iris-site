@@ -1079,16 +1079,17 @@ if (press && pressJson && iris) {
 /* ─────────────────────────────────────────────────────────
  * ANIMATION STORYBOARD
  *
- *     0ms   a question is tapped: its answer unfolds below it (printed over in
- *           the pale green tint, its chevron turns); tapped again, it folds
- *           (the answer fades, the tint lifts)
- *    60ms   the pink marker swipes in under the question
- *   380ms   the height has settled
+ *     0ms   a question is tapped: the open one folds (its answer fades, its
+ *           slip settles back onto the plate) while the tapped one unfolds
+ *           (it lifts off as a paper slip, its chevron turns); tapped again,
+ *           it folds
+ *    60ms   the pink marker swipes in under the tapped question
+ *   380ms   both heights settled; the one folded is closed
  *
- * Each question opens and closes on its own, and an answer only ever unfolds
- * below the question you tapped, so nothing above it moves and the page never
- * scrolls by itself. Under Reduce Motion the answer simply shows. Without the
- * script, <details> opens and closes the same way.
+ * One is open at a time. Both run together on one curve, so the page below
+ * barely moves. The script never scrolls the page: the reader's scrolling is
+ * theirs alone. Under Reduce Motion the answers simply swap. Without the
+ * script, <details name> still keeps one open at a time.
  * ───────────────────────────────────────────────────────── */
 const FOLD = { ms: 380, ease: 'cubic-bezier(0.32, 0.72, 0, 1)' };
 // A breeze sways the sheet's branches as it comes on screen, and again each time it comes
@@ -1098,30 +1099,39 @@ if (swayField && !still) {
   new IntersectionObserver(([e]) => swayField.toggleAttribute('data-sway', e.isIntersecting), { threshold: 0.15 }).observe(swayField);
 }
 const questions = $$<HTMLDetailsElement>('[data-question]');
-for (const d of questions) {
+/** Unfolds or folds one answer, from wherever its height is now. */
+const fold = (d: HTMLDetailsElement, open: boolean) => {
   const body = d.querySelector<HTMLElement>('[data-question-body]')!;
-  d.querySelector('summary')!.addEventListener('click', (e) => {
-    if (still) return; // the browser's own open and close
-    e.preventDefault();
-    const closing = d.hasAttribute('data-closing');
-    const opening = !d.open || closing;
-    const from = body.getBoundingClientRect().height;
-    body.getAnimations().forEach((a) => a.cancel());
-    if (opening) {
+  const closing = d.hasAttribute('data-closing');
+  const from = body.getBoundingClientRect().height;
+  body.getAnimations().forEach((a) => a.cancel());
+  if (open) {
+    d.removeAttribute('data-closing');
+    d.open = true;
+    // From wherever it was, if it was still folding away.
+    body.animate([{ height: `${closing ? from : 0}px` }, { height: `${body.scrollHeight}px` }], { duration: FOLD.ms, easing: FOLD.ease });
+  } else {
+    d.setAttribute('data-closing', '');
+    const a = body.animate([{ height: `${from}px` }, { height: '0px' }], { duration: FOLD.ms, easing: FOLD.ease, fill: 'forwards' });
+    a.onfinish = () => {
+      d.open = false;
       d.removeAttribute('data-closing');
-      d.open = true;
-      // From wherever it was, if it was still folding away.
-      body.animate([{ height: `${closing ? from : 0}px` }, { height: `${body.scrollHeight}px` }], { duration: FOLD.ms, easing: FOLD.ease });
-    } else {
-      d.setAttribute('data-closing', '');
-      const a = body.animate([{ height: `${from}px` }, { height: '0px' }], { duration: FOLD.ms, easing: FOLD.ease, fill: 'forwards' });
-      a.onfinish = () => {
-        d.open = false;
-        d.removeAttribute('data-closing');
-        a.cancel();
-      };
-    }
-  });
+      a.cancel();
+    };
+  }
+};
+// Under Reduce Motion the browser's own <details name> opens one and closes the other at once.
+if (!still) {
+  // We keep one open ourselves, so the one closing can fold instead of vanishing.
+  questions.forEach((d) => d.removeAttribute('name'));
+  for (const d of questions) {
+    d.querySelector('summary')!.addEventListener('click', (e) => {
+      e.preventDefault();
+      const opening = !d.open || d.hasAttribute('data-closing');
+      if (opening) for (const o of questions) if (o !== d && o.open && !o.hasAttribute('data-closing')) fold(o, false);
+      fold(d, opening);
+    });
+  }
 }
 
 // ── Send to my Mac (parts.tsx, GetIris) ───────────────────────────────────────────────

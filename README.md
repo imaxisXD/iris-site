@@ -70,15 +70,19 @@ the code.
   "coming soon", each line with its drawn computer (`OsIcon`). Windows' status, requirements and
   its button (Follow it on GitHub) live in one place, `windows` in `src/content.ts`: change them
   there when the beta is out.
-- **Questions** (`Questions` in `src/Page.tsx`) is a poster: one cream sheet on a riso-green
-  field, the wordmark at its head and the stair title centred under it. Branches are painted in
-  from its corners and sides (`src/Branches.tsx`: a seeded brush in four of Iris's inks,
-  overprinted). A breeze sways them as the sheet comes on screen, each from its foot, and every
-  one settles within 5s (WCAG 2.2.2); never under Reduce Motion (`global.css`, `client.ts`). The
-  side ones show only where the margins are wide. Each question opens and closes on its own
-  (`<details>`, no script needed), the first open to start. An open one is printed over in a
-  pale green tint with a pink marker swipe under it; with the script its answer unfolds
-  smoothly below it, so nothing above moves and the page never scrolls by itself (`client.ts`,
+- **Questions** (`Questions` in `src/Page.tsx`) is printed on its own plate, as Privacy is on
+  pink: the pale green of About's meadow haze in the app, with the running head, the stair title
+  and the questions beside it. Branches hang and rise round it (`src/Branches.tsx`: a seeded dry
+  brush, overprinted), seen through a lens as About's meadow is (`MakersJourney.swift`): far ones
+  printed toward the haze and a touch soft, a sharp one under the title, and big soft grainy ones
+  right in front of the lens at the corners. Scrolling slides the near ones past the far ones
+  (`animation-timeline: view()`, where the browser has it). A breeze sways them once as the plate
+  comes on screen and every one settles within 5s (WCAG 2.2.2); never under Reduce Motion. Near
+  ones never sit over a question, and on a phone only the one under the list stays. One question
+  is open at a time (`<details name>`, no script needed), the first to start. The open one lifts
+  off the plate as a paper slip with a pink marker swipe under it; with the script the open one
+  folds as the tapped one unfolds, on one curve, and the page is never scrolled for you. The
+  plate ends the page: its green runs straight into the foot (`client.ts`,
   storyboard at the top of that part). Each is what someone asks
   before they download; Iris answers with a short lead in brush as it
   talks in its notes, then the plain answer. It's where What's new was: the shelf of versions
@@ -132,7 +136,7 @@ Nothing runs `pnpm check` first, so run it locally (with `pnpm dev` up) before p
 | Make it yours | Iris's Settings window on a green sheet; pick Tones, Words, Apps or Shortcuts to turn its page |
 | Menu bar | A Mac's corner with Iris's menu open under its flower; setup in three steps |
 | Install | Download, drag to Applications, open it once; what a Mac and a Windows PC need, and why macOS asks |
-| Questions | A poster on green, a breeze through the branches round it: you ask, Iris answers; the open question tinted green. What it does, free, private, which apps, updates, Windows |
+| Questions | A pale green plate, branches round it at three depths: you ask, Iris answers; the open question a paper slip. What it does, free, private, which apps, updates, Windows |
 | What's new | Off for now (`WhatsNew` still builds it): each version an issue on a shelf, from Iris's Changelog.md |
 | Foot | Go write something: download, links, and IRIS with the sun and butterflies on it |
 

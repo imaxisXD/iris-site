@@ -1,12 +1,17 @@
-// Branches painted on the Questions sheet, drawn at build time with a seeded brush: a stem in
+// Branches painted on the Questions plate, drawn at build time with a seeded brush: a stem in
 // deep green, broken where the brush ran dry, and along it leaves and blossoms laid on as short
-// dabs, each a few strokes side by side. Four of Iris's inks, overprinted (multiply), so pink
-// over green goes dark as it does on a riso. The edges are roughened (a displacement) and the
-// ink is speckled where the paper shows through, as a dry brush leaves it.
+// dabs, each a few strokes side by side. Overprinted (multiply), so pink over green goes dark as
+// it does on a riso. The edges are roughened (a displacement) and the ink is speckled where the
+// paper shows through, as a dry brush leaves it.
 //
-// They are decoration: screen readers skip them and they never take a tap. Each sways on its
-// own from where it grows (global.css, "Questions"), only while the sheet is on screen
-// (client.ts) and never under Reduce Motion. The drawing itself never changes as it moves.
+// Seen through a lens, as About's meadow is in the app (MakersJourney.swift): each branch is at
+// a depth. Far ones are printed a step toward the plate's haze and a touch out of focus; the
+// middle is sharp; near ones, right in front of the lens, are big, deep and soft, with grain
+// over the blur. The page slides them past each other as it scrolls (global.css, "Questions").
+//
+// They are decoration: screen readers skip them and they never take a tap. A breeze sways each
+// from where it grows as the plate comes on screen (client.ts), never under Reduce Motion. The
+// drawing itself never changes as it moves.
 import { rng } from './pen';
 
 /** The inks: the stem, the leaves, and the two blossom colours. */
@@ -17,6 +22,27 @@ export const BRANCH_INK = {
   sky: 'rgb(132 150 222)',
 };
 type Ink = keyof typeof BRANCH_INK;
+
+/** How far from the lens: `far` is printed toward the haze and a touch soft, `mid` is sharp,
+ *  `near` is deep, soft and grainy, as About's corner leaves are. */
+export type Depth = 'far' | 'mid' | 'near';
+
+/** The haze between the lens and the far branches: the plate itself (About's `Scene.haze`). */
+export const HAZE: [number, number, number] = [178, 216, 186];
+
+const RGB: Record<Ink, [number, number, number]> = { stem: [22, 68, 44], leaf: [30, 140, 85], pink: [240, 134, 176], sky: [132, 150, 222] };
+/** Near the lens the inks are About's foreground ones: a green near espresso, the brand pink, rose. */
+const NEAR: Record<Ink, [number, number, number]> = { stem: [22, 70, 46], leaf: [40, 112, 70], pink: [236, 110, 176], sky: [170, 102, 124] };
+/** Two inks mixed, as a far thing printed a step toward the haze: one flat colour, never a gradient. */
+const toward = (c: [number, number, number], k: number) => `rgb(${c.map((v, i) => Math.round(v * (1 - k) + HAZE[i] * k)).join(' ')})`;
+const inkAt = (ink: Ink, depth: Depth) => (depth === 'near' ? toward(NEAR[ink], 0) : depth === 'far' ? toward(RGB[ink], 0.45) : BRANCH_INK[ink]);
+
+/** Each depth's focus: how soft (SVG units, about a pixel each at its drawn size) and how much grain. */
+const LENS: Record<Depth, { blur: number; grain: number }> = {
+  far: { blur: 1.4, grain: 0 },
+  mid: { blur: 0, grain: 0 },
+  near: { blur: 9, grain: 0.5 },
+};
 
 export type BranchSpec = {
   seed: number;
@@ -119,22 +145,39 @@ function paint(spec: BranchSpec) {
   return out;
 }
 
-/** One branch, its own SVG filling its parent. */
-export function Branch({ spec }: { spec: BranchSpec }) {
+/** One branch at a depth, its own SVG filling its parent. */
+export function Branch({ spec, depth = 'mid' }: { spec: BranchSpec; depth?: Depth }) {
   const p = paint(spec);
   const id = `branch-${spec.seed}`;
+  const lens = LENS[depth];
   const layer = (ink: Ink | 'twig', width: number) =>
-    p[ink] && <path d={p[ink]} stroke={BRANCH_INK[ink === 'twig' ? 'stem' : ink]} strokeWidth={width} style={{ mixBlendMode: 'multiply' }} />;
+    p[ink] && <path d={p[ink]} stroke={inkAt(ink === 'twig' ? 'stem' : ink, depth)} strokeWidth={width} style={{ mixBlendMode: 'multiply' }} />;
+  // Room round the drawing for the blur to spread into.
+  const pad = depth === 'near' ? '-30%' : '-10%', size = depth === 'near' ? '160%' : '120%';
   return (
     <svg aria-hidden viewBox={`0 0 ${spec.w} ${spec.h}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block', width: '100%', height: '100%', overflow: 'visible' }}>
       <defs>
-        <filter id={id} x="-10%" y="-10%" width="120%" height="120%">
+        <filter id={id} x={pad} y={pad} width={size} height={size}>
           <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves={2} seed={spec.seed} result="wobble" />
           <feDisplacementMap in="SourceGraphic" in2="wobble" scale={8} result="rough" />
           {/* Specks where the dry brush skipped: fine noise turned into holes. */}
-          <feTurbulence type="fractalNoise" baseFrequency="0.14" numOctaves={1} seed={spec.seed + 3} result="grain" />
-          <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -4 0 0 0 3.3" result="holes" />
-          <feComposite in="rough" in2="holes" operator="in" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.14" numOctaves={1} seed={spec.seed + 3} result="specks" />
+          <feColorMatrix in="specks" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -4 0 0 0 3.3" result="holes" />
+          <feComposite in="rough" in2="holes" operator="in" result="dry" />
+          {/* Out of focus: soft by its distance from the lens. */}
+          <feGaussianBlur in="dry" stdDeviation={lens.blur} result="soft" />
+          {lens.grain > 0 && (
+            <>
+              {/* Film grain over the blur, as About's foreground (.grain): dark specks, only where there's ink. */}
+              <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves={2} seed={spec.seed + 7} result="noise" />
+              <feColorMatrix in="noise" type="matrix" values={`0 0 0 0 0.08  0 0 0 0 0.06  0 0 0 0 0.05  ${-lens.grain * 2.4} 0 0 0 ${lens.grain * 1.3}`} result="dark" />
+              <feComposite in="dark" in2="soft" operator="in" result="grain" />
+              <feMerge>
+                <feMergeNode in="soft" />
+                <feMergeNode in="grain" />
+              </feMerge>
+            </>
+          )}
         </filter>
       </defs>
       <g fill="none" strokeLinecap="round" filter={`url(#${id})`}>

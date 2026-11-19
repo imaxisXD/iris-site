@@ -30,7 +30,7 @@ import { FactStage, type FactLook, MacCorner, PanelScene } from './Backdrop';
 import { Bud, CHAPTERS, Desk, doneCss, Flight, FLOWER_PX, ON_FOOT, SHUT_MS, WALL } from './Desk';
 import { DONE, LANDS, SaysNote } from './Done';
 import { Pattern } from './Patterns';
-import { Branch, type BranchSpec } from './Branches';
+import { Branch, type BranchSpec, type Depth } from './Branches';
 import { Garden } from './Garden';
 import { draft, issues, links, month, pageTones, pressTones, tones, windows } from './content';
 import { Marks, MessageStack, Panel, panel } from './Panel';
@@ -52,7 +52,7 @@ const s = stylex.create({
     backgroundColor: ink.paper,
     backgroundImage: tex.paper,
     backgroundSize: '64px 64px',
-    paddingBottom: 'clamp(64px, 8vw, 112px)',
+    // No margin at the foot: the last chapter's plate (Questions) runs straight to the page's edge.
     boxShadow: '0 2px 2px rgb(42 26 22 / 0.1), 0 18px 30px -6px rgb(42 26 22 / 0.28), 0 46px 70px -10px rgb(42 26 22 / 0.3)',
   },
   // ⌃ ⌥ G on the page (PressPanel)
@@ -1256,50 +1256,43 @@ function WhatsNew() {
 // What someone asks before they download, answered the way Iris talks in its notes: a short
 // lead in brush, first person and lowercase, then the plain answer (DESIGN.md, "Voice"). Every
 // fact is the app's own (its README and Settings).
-// Printed as a poster: one cream sheet on a riso-green field, branches painted in from its
-// corners (Branches.tsx) that a breeze sways, each on its own, as it comes on screen, and the page's
-// stair title centred between them. The questions are printed on the sheet;
-// the one you open is printed over in a pale green tint, and a pink marker swipe draws in
-// under it, as the chosen tone is marked in the app. Each opens and closes on its own
-// (<details>, so it works without the script); with the script the answer unfolds smoothly
-// below the question you tapped, so nothing above it moves and the page never scrolls by
-// itself (client.ts). Under Reduce Motion the branches are still and the answers simply show.
+// Printed on its own plate, as Privacy is on pink: the pale green of About's meadow haze in the
+// app, with the running head, the stair title and the questions beside it, as the page's other
+// chapters are set. Branches hang and rise round it (Branches.tsx), seen through a lens as
+// About's meadow is: far ones printed toward the haze and a touch soft behind everything, a sharp
+// one in the middle, and big soft ones right in front of the lens at the corners, sliding past
+// each other as the page scrolls. The questions are printed on the plate; the one you open lifts
+// off it as a paper slip (the white of Iris's panels) with a pink marker swipe under it, as the
+// chosen tone is marked in the app. One is open at a time (<details name>, so it works without
+// the script); with the script the open one folds as the tapped one unfolds, on one curve, and
+// the page is never scrolled for you (client.ts). Under Reduce Motion the branches are still
+// and the answers simply swap. The plate ends the page: the green runs straight into the foot.
 // What's new (the shelf of versions) is off for now: WhatsNew above still builds it.
 const qa = stylex.create({
-  field: {
+  plate: {
     position: 'relative',
     isolation: 'isolate',
-    backgroundColor: ink.green,
+    // About's haze: a pale green, as Privacy's pink is lighter than the pink elsewhere, so ink reads on it.
+    backgroundColor: 'rgb(178 216 186)',
     backgroundImage: `${tex.screen}, ${tex.streaks}`,
     backgroundSize: '96px 96px, 128px 128px',
-    paddingBlock: 'clamp(28px, 5vw, 72px)',
-    paddingInline: 'clamp(10px, 4vw, 72px)',
     overflowAnchor: 'none',
+    // Room at the foot for the near branches, clear of the last question.
+    paddingBottom: { default: 'clamp(120px, 14vw, 200px)', [MOBILE]: 240 },
   },
-  sheet: {
-    position: 'relative',
-    isolation: 'isolate',
-    maxWidth: 1240,
-    marginInline: 'auto',
-    overflow: 'clip',
-    backgroundColor: 'rgb(246 241 229)',
-    backgroundImage: tex.paper,
-    backgroundSize: '64px 64px',
-    paddingTop: 'clamp(28px, 3vw, 44px)',
-    // Room for the branches at the foot: more where the side margins are narrow.
-    paddingBottom: { default: 'clamp(150px, 16vw, 230px)', '@media (min-width: 761px) and (max-width: 1180px)': 'clamp(250px, 30vw, 340px)', [MOBILE]: 230 },
-    // The rows reach 18px past the list and their focus ring 6px more: keep both inside the sheet.
-    paddingInline: 'clamp(24px, 4vw, 48px)',
-  },
-  branches: { position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' },
+  // The depths, each a layer over the plate: far behind the words, near in front of them.
+  far: { position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' },
+  near: { position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none' },
   branch: { position: 'absolute' },
   above: { position: 'relative', zIndex: 1 },
-  brand: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 'clamp(110px, 11vw, 160px)', [MOBILE]: { marginBottom: 170 } },
-  // What the nav calls this section, under the wordmark, as the running heads name the others.
-  kicker: { fontSize: 12, lineHeight: 1.45, color: ink.i11 },
-  // The page's own stair title, centred on the sheet between the branches.
-  title: { width: 'fit-content', marginInline: 'auto' },
-  list: { display: 'flex', flexDirection: 'column', gap: 4, maxWidth: 700, marginInline: 'auto', marginTop: 'clamp(56px, 6vw, 80px)' },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0, 4fr) minmax(0, 8fr)',
+    gap: 'clamp(32px, 5vw, 80px)',
+    alignItems: 'start',
+    [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' },
+  },
+  list: { display: 'flex', flexDirection: 'column', gap: 4 },
   item: { position: 'relative', paddingInline: 18, marginInline: -18 },
   // In the question's row, which shows even when it's folded (the rest of a closed <details> doesn't).
   rule: { position: 'absolute', left: 18, right: 18, bottom: -3, pointerEvents: 'none' },
@@ -1318,7 +1311,7 @@ const qa = stylex.create({
     lineHeight: 1.45,
     color: ink.i12,
   },
-  no: { flex: 'none', minWidth: '2.2ch', fontSize: 12, fontWeight: 400, letterSpacing: '0.08em', color: ink.greenText },
+  no: { flex: 'none', minWidth: '2.2ch', fontSize: 12, fontWeight: 400, letterSpacing: '0.08em', color: ink.pinkText },
   text: { position: 'relative', flex: '0 1 auto', isolation: 'isolate' },
   // Low under the words, as `Marked` sets the chosen tone's swipe: never through them, where
   // it would read as a struck-out word. On two lines it runs under the last.
@@ -1329,19 +1322,49 @@ const qa = stylex.create({
   lead: { fontFamily: font.brush, fontSize: 'clamp(22px, 2vw, 26px)', lineHeight: 1.1, color: ink.i12 },
   detail: { fontSize: 14, lineHeight: 1.7, color: ink.i11, maxWidth: '58ch' },
 });
-/** The branches on the sheet: each drawing, where it sits and how wide (a share of the sheet,
- *  and at most), how a breeze sways it from its foot (degrees, seconds, delay: every one has
- *  settled by 5s, WCAG 2.2.2), and its width on a
- *  phone (`null` hides it there). The ones in the side margins (`wide`) show only where the
- *  margins are wide enough to keep them clear of the questions. */
-const QA_BRANCHES: { spec: BranchSpec; box: React.CSSProperties; width: [number, number]; phone: string | null; wide?: boolean; sway: [number, number, number] }[] = [
-  { spec: { seed: 11, w: 300, h: 420, base: [50, 0], stems: [{ angle: 84, len: 380, bend: -0.45 }] }, box: { left: '1%', top: 0 }, width: [28, 360], phone: '46%', sway: [1.8, 4.2, 0] },
-  { spec: { seed: 23, w: 300, h: 420, base: [260, 0], stems: [{ angle: 98, len: 360, bend: 0.5 }] }, box: { right: '2%', top: 0 }, width: [27, 350], phone: '44%', sway: [1.6, 4.4, 0.3] },
-  { spec: { seed: 53, w: 320, h: 240, base: [0, 150], stems: [{ angle: -12, len: 270, bend: -0.3 }] }, box: { left: 0, top: '42%' }, width: [20, 250], phone: null, wide: true, sway: [2, 3.8, 0.5] },
-  { spec: { seed: 67, w: 320, h: 260, base: [320, 120], stems: [{ angle: 190, len: 280, bend: 0.35 }] }, box: { right: 0, top: '58%' }, width: [20, 250], phone: null, wide: true, sway: [1.7, 4, 0.2] },
-  { spec: { seed: 41, w: 300, h: 440, base: [40, 440], stems: [{ angle: -84, len: 400, bend: 0.35 }] }, box: { left: 0, bottom: 0 }, width: [25, 320], phone: null, sway: [1.4, 4.2, 0.4] },
-  { spec: { seed: 37, w: 340, h: 470, base: [300, 470], stems: [{ angle: -98, len: 430, bend: -0.3 }, { angle: -118, len: 320, bend: 0.3 }] }, box: { right: 0, bottom: 0 }, width: [28, 360], phone: '46%', sway: [1.2, 4.4, 0.1] },
+/** The branches round the plate, by depth: each drawing, where it sits and how wide (a share of
+ *  the plate, and at most), how a breeze sways it from its foot (degrees, seconds, delay: every
+ *  one has settled by 5s, WCAG 2.2.2), and its width on a phone (`null` hides it there). Far and
+ *  sharp ones keep to the margins and the room under the title; near ones only lean into the
+ *  corners, so none of them covers a question. */
+const QA_BRANCHES: { depth: Depth; spec: BranchSpec; box: React.CSSProperties; width: [number, number]; phone: string | null; sway: [number, number, number] }[] = [
+  // Far: hanging from the top between the running head's labels, and rising past the right edge.
+  { depth: 'far', spec: { seed: 23, w: 300, h: 300, base: [150, 0], stems: [{ angle: 95, len: 250, bend: 0.4 }] }, box: { left: '19%', top: 0 }, width: [14, 200], phone: '34%', sway: [1.2, 4.6, 0.3] },
+  { depth: 'far', spec: { seed: 67, w: 300, h: 440, base: [250, 440], stems: [{ angle: -100, len: 380, bend: -0.3 }, { angle: -122, len: 260, bend: 0.3 }] }, box: { right: '-3%', bottom: 0 }, width: [16, 220], phone: null, sway: [1, 4.4, 0.6] },
+  // Sharp: rising under the title, in focus with the words.
+  { depth: 'mid', spec: { seed: 41, w: 300, h: 460, base: [120, 460], stems: [{ angle: -86, len: 420, bend: 0.4 }, { angle: -62, len: 260, bend: -0.3 }] }, box: { left: '5%', bottom: 0 }, width: [22, 300], phone: null, sway: [1.4, 4.2, 0.1] },
+  // Near the lens: big and soft, leaning into the corners from past the plate's edge.
+  { depth: 'near', spec: { seed: 37, w: 340, h: 470, base: [60, 470], stems: [{ angle: -70, len: 430, bend: 0.25 }, { angle: -45, len: 300, bend: -0.2 }] }, box: { left: '-7%', bottom: '-12%' }, width: [36, 520], phone: '62%', sway: [2, 4.8, 0] },
+  { depth: 'near', spec: { seed: 11, w: 340, h: 300, base: [340, 30], stems: [{ angle: 160, len: 300, bend: 0.5 }, { angle: 135, len: 220, bend: -0.3 }] }, box: { right: '-6%', top: '-6%' }, width: [32, 460], phone: null, sway: [1.8, 4.5, 0.4] },
 ];
+/** A depth's branches, each at its place, swaying from its foot. */
+function BranchLayer({ depth }: { depth: Depth }) {
+  return (
+    <div aria-hidden {...stylex.props(depth === 'near' ? qa.near : qa.far)} data-depth={depth}>
+      {QA_BRANCHES.filter((b) => (depth === 'near' ? b.depth === 'near' : b.depth !== 'near')).map(({ depth: d, spec, box, width, phone, sway }) => (
+        <span
+          key={spec.seed}
+          data-branch
+          data-branch-depth={d}
+          data-branch-phone={phone == null ? 'hide' : undefined}
+          {...stylex.props(qa.branch)}
+          style={{
+            ...box,
+            width: `min(${width[0]}%, ${width[1]}px)`,
+            ['--pw' as string]: phone ?? undefined,
+            aspectRatio: `${spec.w} / ${spec.h}`,
+            ['--o' as string]: `${(spec.base[0] / spec.w) * 100}% ${(spec.base[1] / spec.h) * 100}%`,
+            ['--a' as string]: `${sway[0]}deg`,
+            ['--d' as string]: `${sway[1]}s`,
+            ['--delay' as string]: `${sway[2]}s`,
+          }}
+        >
+          <Branch spec={spec} depth={d} />
+        </span>
+      ))}
+    </div>
+  );
+}
 const QUESTIONS: { q: string; lead: string; a: React.ReactNode }[] = [
   {
     q: 'What does Iris do?',
@@ -1400,42 +1423,15 @@ const QUESTIONS: { q: string; lead: string; a: React.ReactNode }[] = [
 
 function Questions() {
   return (
-    <section id="questions" aria-labelledby="questions-title" {...stylex.props(qa.field)} data-sway-field>
-      <div {...stylex.props(qa.sheet)}>
-        <div aria-hidden {...stylex.props(qa.branches)}>
-          {QA_BRANCHES.map(({ spec, box, width, phone, wide, sway }) => (
-            <span
-              key={spec.seed}
-              data-branch
-              data-branch-phone={phone == null ? 'hide' : undefined}
-              data-branch-wide={wide || undefined}
-              {...stylex.props(qa.branch)}
-              style={{
-                ...box,
-                width: `min(${width[0]}%, ${width[1]}px)`,
-                ['--pw' as string]: phone ?? undefined,
-                aspectRatio: `${spec.w} / ${spec.h}`,
-                ['--o' as string]: `${(spec.base[0] / spec.w) * 100}% ${(spec.base[1] / spec.h) * 100}%`,
-                ['--a' as string]: `${sway[0]}deg`,
-                ['--d' as string]: `${sway[1]}s`,
-                ['--delay' as string]: `${sway[2]}s`,
-              }}
-            >
-              <Branch spec={spec} />
-            </span>
-          ))}
-        </div>
-        <div {...stylex.props(qa.above)}>
-          <div {...stylex.props(qa.brand)}>
-            <span aria-hidden>
-              <Wordmark size="30px" />
-            </span>
-            <span {...stylex.props(qa.kicker)}>Questions</span>
-          </div>
-          <PageTitle id="questions-title" lines={['You ask', 'Iris answers']} small xstyle={qa.title} />
+    <section id="questions" aria-labelledby="questions-title" {...stylex.props(s.spread, qa.plate)} data-sway-field>
+      <BranchLayer depth="far" />
+      <div {...stylex.props(s.wrap, s.stack, qa.above)} style={{ gap: 'clamp(32px, 5vw, 56px)' }}>
+        <RunningHead seed={91} cols={['Questions', 'Answered by Iris']} />
+        <div {...stylex.props(qa.grid)}>
+          <PageTitle id="questions-title" lines={['You ask', 'Iris answers']} small />
           <div {...stylex.props(qa.list)}>
             {QUESTIONS.map((it, i) => (
-              <details key={it.q} open={i === 0} {...stylex.props(qa.item)} data-question>
+              <details key={it.q} name="iris-questions" open={i === 0} {...stylex.props(qa.item)} data-question>
                 <summary {...stylex.props(qa.q)}>
                   <span aria-hidden {...stylex.props(qa.no)}>{String(i + 1).padStart(2, '0')}</span>
                   <span {...stylex.props(qa.text)}>
@@ -1462,6 +1458,7 @@ function Questions() {
           </div>
         </div>
       </div>
+      <BranchLayer depth="near" />
     </section>
   );
 }
