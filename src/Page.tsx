@@ -1257,13 +1257,13 @@ function WhatsNew() {
 // lead in brush, first person and lowercase, then the plain answer (DESIGN.md, "Voice"). Every
 // fact is the app's own (its README and Settings).
 // Printed as a poster: one cream sheet on a riso-green field, branches painted in from its
-// corners (Branches.tsx) that sway, each on its own, while it's on screen, and the page's
+// corners (Branches.tsx) that a breeze sways, each on its own, as it comes on screen, and the page's
 // stair title centred between them. The questions are printed on the sheet;
 // the one you open is printed over in a pale green tint, and a pink marker swipe draws in
-// under it, as the chosen tone is marked in the app. One is open at a time (<details name>, so
-// it works without the script); with the script the old answer folds as the new one opens,
-// smoothly, and the question you picked holds still (client.ts). Under Reduce Motion the
-// branches are still and the answers simply show.
+// under it, as the chosen tone is marked in the app. Each opens and closes on its own
+// (<details>, so it works without the script); with the script the answer unfolds smoothly
+// below the question you tapped, so nothing above it moves and the page never scrolls by
+// itself (client.ts). Under Reduce Motion the branches are still and the answers simply show.
 // What's new (the shelf of versions) is off for now: WhatsNew above still builds it.
 const qa = stylex.create({
   field: {
@@ -1288,12 +1288,15 @@ const qa = stylex.create({
     paddingTop: 'clamp(28px, 3vw, 44px)',
     // Room for the branches at the foot: more where the side margins are narrow.
     paddingBottom: { default: 'clamp(150px, 16vw, 230px)', '@media (min-width: 761px) and (max-width: 1180px)': 'clamp(250px, 30vw, 340px)', [MOBILE]: 230 },
-    paddingInline: 'clamp(16px, 4vw, 48px)',
+    // The rows reach 18px past the list and their focus ring 6px more: keep both inside the sheet.
+    paddingInline: 'clamp(24px, 4vw, 48px)',
   },
   branches: { position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' },
   branch: { position: 'absolute' },
   above: { position: 'relative', zIndex: 1 },
-  brand: { display: 'flex', justifyContent: 'center', marginBottom: 'clamp(110px, 11vw, 160px)', [MOBILE]: { marginBottom: 170 } },
+  brand: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 'clamp(110px, 11vw, 160px)', [MOBILE]: { marginBottom: 170 } },
+  // What the nav calls this section, under the wordmark, as the running heads name the others.
+  kicker: { fontSize: 12, lineHeight: 1.45, color: ink.i11 },
   // The page's own stair title, centred on the sheet between the branches.
   title: { width: 'fit-content', marginInline: 'auto' },
   list: { display: 'flex', flexDirection: 'column', gap: 4, maxWidth: 700, marginInline: 'auto', marginTop: 'clamp(56px, 6vw, 80px)' },
@@ -1315,7 +1318,7 @@ const qa = stylex.create({
     lineHeight: 1.45,
     color: ink.i12,
   },
-  no: { flex: 'none', minWidth: '2.2ch', fontSize: 12, fontWeight: 400, letterSpacing: '0.08em', color: ink.green },
+  no: { flex: 'none', minWidth: '2.2ch', fontSize: 12, fontWeight: 400, letterSpacing: '0.08em', color: ink.greenText },
   text: { position: 'relative', flex: '0 1 auto', isolation: 'isolate' },
   // Low under the words, as `Marked` sets the chosen tone's swipe: never through them, where
   // it would read as a struck-out word. On two lines it runs under the last.
@@ -1327,16 +1330,17 @@ const qa = stylex.create({
   detail: { fontSize: 14, lineHeight: 1.7, color: ink.i11, maxWidth: '58ch' },
 });
 /** The branches on the sheet: each drawing, where it sits and how wide (a share of the sheet,
- *  and at most), how it sways from its foot (degrees, seconds, delay), and its width on a
+ *  and at most), how a breeze sways it from its foot (degrees, seconds, delay: every one has
+ *  settled by 5s, WCAG 2.2.2), and its width on a
  *  phone (`null` hides it there). The ones in the side margins (`wide`) show only where the
  *  margins are wide enough to keep them clear of the questions. */
 const QA_BRANCHES: { spec: BranchSpec; box: React.CSSProperties; width: [number, number]; phone: string | null; wide?: boolean; sway: [number, number, number] }[] = [
-  { spec: { seed: 11, w: 300, h: 420, base: [50, 0], stems: [{ angle: 84, len: 380, bend: -0.45 }] }, box: { left: '1%', top: 0 }, width: [28, 360], phone: '46%', sway: [1.6, 6.4, -1.2] },
-  { spec: { seed: 23, w: 300, h: 420, base: [260, 0], stems: [{ angle: 98, len: 360, bend: 0.5 }] }, box: { right: '2%', top: 0 }, width: [27, 350], phone: '44%', sway: [1.4, 7.2, -3.1] },
-  { spec: { seed: 53, w: 320, h: 240, base: [0, 150], stems: [{ angle: -12, len: 270, bend: -0.3 }] }, box: { left: 0, top: '42%' }, width: [20, 250], phone: null, wide: true, sway: [1.8, 5.8, -2.6] },
-  { spec: { seed: 67, w: 320, h: 260, base: [320, 120], stems: [{ angle: 190, len: 280, bend: 0.35 }] }, box: { right: 0, top: '58%' }, width: [20, 250], phone: null, wide: true, sway: [1.5, 6.6, -0.7] },
-  { spec: { seed: 41, w: 300, h: 440, base: [40, 440], stems: [{ angle: -84, len: 400, bend: 0.35 }] }, box: { left: 0, bottom: 0 }, width: [25, 320], phone: null, sway: [1.2, 6.8, -4.4] },
-  { spec: { seed: 37, w: 340, h: 470, base: [300, 470], stems: [{ angle: -98, len: 430, bend: -0.3 }, { angle: -118, len: 320, bend: 0.3 }] }, box: { right: 0, bottom: 0 }, width: [28, 360], phone: '46%', sway: [1, 8, -2.2] },
+  { spec: { seed: 11, w: 300, h: 420, base: [50, 0], stems: [{ angle: 84, len: 380, bend: -0.45 }] }, box: { left: '1%', top: 0 }, width: [28, 360], phone: '46%', sway: [1.8, 4.2, 0] },
+  { spec: { seed: 23, w: 300, h: 420, base: [260, 0], stems: [{ angle: 98, len: 360, bend: 0.5 }] }, box: { right: '2%', top: 0 }, width: [27, 350], phone: '44%', sway: [1.6, 4.4, 0.3] },
+  { spec: { seed: 53, w: 320, h: 240, base: [0, 150], stems: [{ angle: -12, len: 270, bend: -0.3 }] }, box: { left: 0, top: '42%' }, width: [20, 250], phone: null, wide: true, sway: [2, 3.8, 0.5] },
+  { spec: { seed: 67, w: 320, h: 260, base: [320, 120], stems: [{ angle: 190, len: 280, bend: 0.35 }] }, box: { right: 0, top: '58%' }, width: [20, 250], phone: null, wide: true, sway: [1.7, 4, 0.2] },
+  { spec: { seed: 41, w: 300, h: 440, base: [40, 440], stems: [{ angle: -84, len: 400, bend: 0.35 }] }, box: { left: 0, bottom: 0 }, width: [25, 320], phone: null, sway: [1.4, 4.2, 0.4] },
+  { spec: { seed: 37, w: 340, h: 470, base: [300, 470], stems: [{ angle: -98, len: 430, bend: -0.3 }, { angle: -118, len: 320, bend: 0.3 }] }, box: { right: 0, bottom: 0 }, width: [28, 360], phone: '46%', sway: [1.2, 4.4, 0.1] },
 ];
 const QUESTIONS: { q: string; lead: string; a: React.ReactNode }[] = [
   {
@@ -1422,13 +1426,16 @@ function Questions() {
           ))}
         </div>
         <div {...stylex.props(qa.above)}>
-          <div aria-hidden {...stylex.props(qa.brand)}>
-            <Wordmark size="30px" />
+          <div {...stylex.props(qa.brand)}>
+            <span aria-hidden>
+              <Wordmark size="30px" />
+            </span>
+            <span {...stylex.props(qa.kicker)}>Questions</span>
           </div>
           <PageTitle id="questions-title" lines={['You ask', 'Iris answers']} small xstyle={qa.title} />
           <div {...stylex.props(qa.list)}>
             {QUESTIONS.map((it, i) => (
-              <details key={it.q} name="iris-questions" open={i === 0} {...stylex.props(qa.item)} data-question>
+              <details key={it.q} open={i === 0} {...stylex.props(qa.item)} data-question>
                 <summary {...stylex.props(qa.q)}>
                   <span aria-hidden {...stylex.props(qa.no)}>{String(i + 1).padStart(2, '0')}</span>
                   <span {...stylex.props(qa.text)}>

@@ -1079,43 +1079,39 @@ if (press && pressJson && iris) {
 /* ─────────────────────────────────────────────────────────
  * ANIMATION STORYBOARD
  *
- *     0ms   a question is picked: the open one starts folding (its answer fades,
- *           its tint lifts) while the picked one unfolds (it's printed over in
- *           the pale green tint, its chevron turns)
- *    60ms   the pink marker swipes in under the picked question
- *   380ms   both heights settled; the one folded is closed
+ *     0ms   a question is tapped: its answer unfolds below it (printed over in
+ *           the pale green tint, its chevron turns); tapped again, it folds
+ *           (the answer fades, the tint lifts)
+ *    60ms   the pink marker swipes in under the question
+ *   380ms   the height has settled
  *
- * Both run together on one curve, so the page below barely moves, and the
- * question you picked is held where it was (the page scrolls to keep it)
- * when the one folding sits above it. Under Reduce Motion nothing moves:
- * the answers just swap. Without the script, <details name> still keeps
- * one open at a time.
+ * Each question opens and closes on its own, and an answer only ever unfolds
+ * below the question you tapped, so nothing above it moves and the page never
+ * scrolls by itself. Under Reduce Motion the answer simply shows. Without the
+ * script, <details> opens and closes the same way.
  * ───────────────────────────────────────────────────────── */
 const FOLD = { ms: 380, ease: 'cubic-bezier(0.32, 0.72, 0, 1)' };
-// The sheet's branches sway only while it's on screen (global.css, "The branches").
+// A breeze sways the sheet's branches as it comes on screen, and again each time it comes
+// back (global.css, "The branches"): taking data-sway off while it's away resets the breeze.
 const swayField = document.querySelector<HTMLElement>('[data-sway-field]');
 if (swayField && !still) {
-  new IntersectionObserver(([e]) => swayField.toggleAttribute('data-sway', e.isIntersecting)).observe(swayField);
+  new IntersectionObserver(([e]) => swayField.toggleAttribute('data-sway', e.isIntersecting), { threshold: 0.15 }).observe(swayField);
 }
 const questions = $$<HTMLDetailsElement>('[data-question]');
-if (questions.length) {
-  // We keep one open ourselves, so the one closing can fold instead of vanishing.
-  questions.forEach((d) => d.removeAttribute('name'));
-  const bodyOf = (d: HTMLDetailsElement) => d.querySelector<HTMLElement>('[data-question-body]')!;
-  const fold = (d: HTMLDetailsElement, open: boolean) => {
-    const body = bodyOf(d);
+for (const d of questions) {
+  const body = d.querySelector<HTMLElement>('[data-question-body]')!;
+  d.querySelector('summary')!.addEventListener('click', (e) => {
+    if (still) return; // the browser's own open and close
+    e.preventDefault();
+    const closing = d.hasAttribute('data-closing');
+    const opening = !d.open || closing;
     const from = body.getBoundingClientRect().height;
     body.getAnimations().forEach((a) => a.cancel());
-    if (still) {
-      d.open = open;
-      d.removeAttribute('data-closing');
-      return;
-    }
-    if (open) {
+    if (opening) {
       d.removeAttribute('data-closing');
       d.open = true;
-      body.animate([{ height: `${d.hasAttribute('data-was-open') ? from : 0}px` }, { height: `${body.scrollHeight}px` }], { duration: FOLD.ms, easing: FOLD.ease });
-      d.removeAttribute('data-was-open');
+      // From wherever it was, if it was still folding away.
+      body.animate([{ height: `${closing ? from : 0}px` }, { height: `${body.scrollHeight}px` }], { duration: FOLD.ms, easing: FOLD.ease });
     } else {
       d.setAttribute('data-closing', '');
       const a = body.animate([{ height: `${from}px` }, { height: '0px' }], { duration: FOLD.ms, easing: FOLD.ease, fill: 'forwards' });
@@ -1125,28 +1121,7 @@ if (questions.length) {
         a.cancel();
       };
     }
-  };
-  for (const d of questions) {
-    const summary = d.querySelector('summary')!;
-    summary.addEventListener('click', (e) => {
-      e.preventDefault();
-      const opening = !d.open || d.hasAttribute('data-closing');
-      if (opening && d.hasAttribute('data-closing')) d.setAttribute('data-was-open', '');
-      const top = summary.getBoundingClientRect().top;
-      for (const o of questions) if (o !== d && o.open && !o.hasAttribute('data-closing')) fold(o, false);
-      fold(d, opening);
-      if (still) return;
-      // Hold the picked question still while the one above it folds away.
-      const until = performance.now() + FOLD.ms + 60;
-      const hold = () => {
-        const dy = summary.getBoundingClientRect().top - top;
-        // At once: the page scrolls smoothly by default, which would lag a frame behind.
-        if (Math.abs(dy) > 0.5) window.scrollBy({ top: dy, behavior: 'instant' });
-        if (performance.now() < until) requestAnimationFrame(hold);
-      };
-      requestAnimationFrame(hold);
-    });
-  }
+  });
 }
 
 // ── Send to my Mac (parts.tsx, GetIris) ───────────────────────────────────────────────

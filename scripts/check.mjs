@@ -69,18 +69,29 @@ for (const reduce of [false, true]) {
   ok((await openOnes().count()) === 1 && (await page.locator('#questions [data-question]').first().getAttribute('open')) !== null, 'the first question starts open, and only it');
   const second = page.locator('#questions [data-question] > summary').nth(1);
   await second.scrollIntoViewIfNeeded();
+  // Opening a question never moves the page: nothing above it changes, and nothing scrolls.
+  const qBefore = await second.evaluate((s) => ({ y: scrollY, top: s.getBoundingClientRect().top }));
   await second.click();
-  await page.waitForTimeout(700); // the old answer folds away (client.ts, FOLD)
-  ok((await openOnes().count()) === 1 && (await page.locator('#questions [data-question]').nth(1).getAttribute('open')) !== null, 'opening another question folds the first');
+  await page.waitForTimeout(700); // the answer unfolds (client.ts, FOLD)
+  const qAfter = await second.evaluate((s) => ({ y: scrollY, top: s.getBoundingClientRect().top }));
+  ok(qAfter.y === qBefore.y && Math.abs(qAfter.top - qBefore.top) < 1, `opening a question never scrolls the page (moved ${Math.round(qAfter.y - qBefore.y)}px)`);
+  ok((await openOnes().count()) === 2 && (await page.locator('#questions [data-question]').nth(1).getAttribute('open')) !== null, 'each question opens on its own; the first stays as it was');
   ok(await page.locator('#questions [data-question]').nth(1).locator('[data-question-answer]').isVisible(), 'and shows Iris’s answer');
   const tinted = await page.locator('#questions [data-question]').nth(1).evaluate((d) => getComputedStyle(d).backgroundColor !== 'rgba(0, 0, 0, 0)');
   ok(tinted, 'the open question is printed over in the green tint');
+  await second.click();
+  await page.waitForTimeout(700);
+  ok((await openOnes().count()) === 1, 'tapped again, it folds');
   // The sheet's branches: painted, never in the way, swaying only while on screen.
   const branches = page.locator('#questions [data-branch]');
   ok((await branches.count()) >= 4, `the Questions sheet has ${await branches.count()} branches`);
   ok(await branches.first().evaluate((b) => getComputedStyle(b.parentElement).pointerEvents === 'none' && b.parentElement.getAttribute('aria-hidden') === 'true'), 'the branches never take a tap, and screen readers skip them');
-  const swaying = await page.locator('#questions').evaluate((q) => q.hasAttribute('data-sway') && q.querySelector('[data-branch]').getAnimations().length > 0);
-  ok(reduce ? !swaying : swaying, reduce ? 'under Reduce Motion the branches are still' : 'the branches sway while the sheet is on screen');
+  const breeze = await page.locator('#questions').evaluate((q) => {
+    const all = [...q.querySelectorAll('[data-branch]')].flatMap((b) => b.getAnimations());
+    return { on: q.hasAttribute('data-sway') && all.length > 0, longest: Math.max(0, ...all.map((a) => a.effect.getComputedTiming().endTime)) };
+  });
+  ok(reduce ? !breeze.on : breeze.on, reduce ? 'under Reduce Motion the branches are still' : 'a breeze sways the branches as the sheet comes on screen');
+  if (!reduce) ok(breeze.longest > 0 && breeze.longest <= 5000, `and every branch has settled within 5s (${Math.round(breeze.longest)}ms), WCAG 2.2.2`);
   ok(!(await page.locator('a[href="#new"]').count()), 'nothing links to the hidden What’s new');
   ok((await page.locator('a[href="#questions"]').count()) === 2, 'the cover and the foot link to Questions');
   // Every Download Iris says which computers, each with its drawn computer.

@@ -73,12 +73,13 @@ the code.
 - **Questions** (`Questions` in `src/Page.tsx`) is a poster: one cream sheet on a riso-green
   field, the wordmark at its head and the stair title centred under it. Branches are painted in
   from its corners and sides (`src/Branches.tsx`: a seeded brush in four of Iris's inks,
-  overprinted). Each sways from its foot at its own pace, only while the sheet is on screen and
-  never under Reduce Motion (`global.css`, `client.ts`); the side ones show only where the margins
-  are wide. It folds: one question open at a time (`<details name>`, no script needed), the first
-  open to start. The open one is printed over in a pale green tint with a pink marker swipe under it; with the
-  script the old answer folds as the new one opens, and the question you picked holds still
-  (`client.ts`, storyboard at the top of that part). Each is what someone asks
+  overprinted). A breeze sways them as the sheet comes on screen, each from its foot, and every
+  one settles within 5s (WCAG 2.2.2); never under Reduce Motion (`global.css`, `client.ts`). The
+  side ones show only where the margins are wide. Each question opens and closes on its own
+  (`<details>`, no script needed), the first open to start. An open one is printed over in a
+  pale green tint with a pink marker swipe under it; with the script its answer unfolds
+  smoothly below it, so nothing above moves and the page never scrolls by itself (`client.ts`,
+  storyboard at the top of that part). Each is what someone asks
   before they download; Iris answers with a short lead in brush as it
   talks in its notes, then the plain answer. It's where What's new was: the shelf of versions
   is off for now, but `WhatsNew` still builds it (and its checks are commented out in
@@ -131,7 +132,7 @@ Nothing runs `pnpm check` first, so run it locally (with `pnpm dev` up) before p
 | Make it yours | Iris's Settings window on a green sheet; pick Tones, Words, Apps or Shortcuts to turn its page |
 | Menu bar | A Mac's corner with Iris's menu open under its flower; setup in three steps |
 | Install | Download, drag to Applications, open it once; what a Mac and a Windows PC need, and why macOS asks |
-| Questions | A poster on green, branches swaying round it: you ask, Iris answers; the open question tinted green. What it does, free, private, which apps, updates, Windows |
+| Questions | A poster on green, a breeze through the branches round it: you ask, Iris answers; the open question tinted green. What it does, free, private, which apps, updates, Windows |
 | What's new | Off for now (`WhatsNew` still builds it): each version an issue on a shelf, from Iris's Changelog.md |
 | Foot | Go write something: download, links, and IRIS with the sun and butterflies on it |
 

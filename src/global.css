@@ -72,20 +72,23 @@
   [data-question] > summary { transition: background-color 150ms ease; }
 }
 
-/* The branches on the Questions sheet (Branches.tsx) sway from their feet, each at its own
-   pace and a little out of step, as plants in a breeze: only while the sheet is on screen
-   (client.ts sets data-sway), never under Reduce Motion. They turn as a whole; the painting
-   itself never changes, so the browser draws it once. */
-[data-branch] {
-  transform-origin: var(--o);
-  animation: branch-sway var(--d) cubic-bezier(0.45, 0, 0.55, 1) var(--delay) infinite alternate;
-  animation-play-state: paused;
+/* The branches on the Questions sheet (Branches.tsx). A breeze passes as the sheet comes on
+   screen (client.ts sets data-sway): each branch sways from its foot, a little out of step with
+   the others, and settles, every one within 5s, so nothing keeps moving beside the questions
+   (WCAG 2.2.2). It passes again the next time the sheet comes back. Never under Reduce Motion.
+   They turn as a whole; the painting itself never changes, so the browser draws it once. */
+[data-branch] { transform-origin: var(--o); }
+[data-sway] [data-branch] {
+  animation: branch-breeze var(--d) cubic-bezier(0.45, 0, 0.55, 1) var(--delay) 1 both;
   will-change: rotate;
 }
-[data-sway] [data-branch] { animation-play-state: running; }
-@keyframes branch-sway {
-  from { rotate: calc(var(--a) * -1); }
-  to { rotate: var(--a); }
+@keyframes branch-breeze {
+  0% { rotate: 0deg; }
+  16% { rotate: var(--a); }
+  38% { rotate: calc(var(--a) * -0.75); }
+  60% { rotate: calc(var(--a) * 0.4); }
+  80% { rotate: calc(var(--a) * -0.15); }
+  100% { rotate: 0deg; }
 }
 @media (max-width: 1180px) {
   [data-branch-wide] { display: none; }
