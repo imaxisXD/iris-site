@@ -1080,8 +1080,8 @@ if (press && pressJson && iris) {
  * ANIMATION STORYBOARD
  *
  *     0ms   a question is picked: the open one starts folding (its answer fades,
- *           its slip settles back onto the plate) while the picked one unfolds
- *           (it lifts off as a paper slip, its chevron turns)
+ *           its tint lifts) while the picked one unfolds (it's printed over in
+ *           the pale green tint, its chevron turns)
  *    60ms   the pink marker swipes in under the picked question
  *   380ms   both heights settled; the one folded is closed
  *
@@ -1092,6 +1092,11 @@ if (press && pressJson && iris) {
  * one open at a time.
  * ───────────────────────────────────────────────────────── */
 const FOLD = { ms: 380, ease: 'cubic-bezier(0.32, 0.72, 0, 1)' };
+// The sheet's branches sway only while it's on screen (global.css, "The branches").
+const swayField = document.querySelector<HTMLElement>('[data-sway-field]');
+if (swayField && !still) {
+  new IntersectionObserver(([e]) => swayField.toggleAttribute('data-sway', e.isIntersecting)).observe(swayField);
+}
 const questions = $$<HTMLDetailsElement>('[data-question]');
 if (questions.length) {
   // We keep one open ourselves, so the one closing can fold instead of vanishing.

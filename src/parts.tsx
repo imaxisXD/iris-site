@@ -557,7 +557,10 @@ export function BetaStamp({ seed = 7 }: { seed?: number }) {
 
 const pf = stylex.create({
   line: { display: 'block' },
-  os: { display: 'flex', alignItems: 'center', gap: '0 7px', flexWrap: 'wrap' },
+  // The icon and its words side by side; on a narrow screen the words wrap beside the icon,
+  // never under it.
+  os: { display: 'flex', alignItems: 'center', gap: 7 },
+  words: { minWidth: 0 },
 });
 const os = stylex.create({
   icon: { display: 'inline-block', flex: 'none', verticalAlign: 'middle' },
@@ -579,10 +582,14 @@ export function Platforms() {
     <>
       <span {...stylex.props(pf.line)}>Free and open source</span>
       <span {...stylex.props(pf.os)}>
-        <OsIcon os="mac" /> For Mac: macOS 15 or later, Apple silicon
+        <OsIcon os="mac" />
+        <span {...stylex.props(pf.words)}>For Mac: macOS 15 or later, Apple silicon</span>
       </span>
       <span {...stylex.props(pf.os)}>
-        <OsIcon os="windows" /> Windows <BetaStamp /> {windows.status}
+        <OsIcon os="windows" />
+        <span {...stylex.props(pf.words)}>
+          Windows <BetaStamp /> {windows.status}
+        </span>
       </span>
     </>
   );

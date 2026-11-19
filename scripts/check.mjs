@@ -73,8 +73,14 @@ for (const reduce of [false, true]) {
   await page.waitForTimeout(700); // the old answer folds away (client.ts, FOLD)
   ok((await openOnes().count()) === 1 && (await page.locator('#questions [data-question]').nth(1).getAttribute('open')) !== null, 'opening another question folds the first');
   ok(await page.locator('#questions [data-question]').nth(1).locator('[data-question-answer]').isVisible(), 'and shows Iris’s answer');
-  const lifted = await page.locator('#questions [data-question]').nth(1).evaluate((d) => getComputedStyle(d).boxShadow !== 'none');
-  ok(lifted, 'the open question lifts off the plate as a paper slip');
+  const tinted = await page.locator('#questions [data-question]').nth(1).evaluate((d) => getComputedStyle(d).backgroundColor !== 'rgba(0, 0, 0, 0)');
+  ok(tinted, 'the open question is printed over in the green tint');
+  // The sheet's branches: painted, never in the way, swaying only while on screen.
+  const branches = page.locator('#questions [data-branch]');
+  ok((await branches.count()) >= 4, `the Questions sheet has ${await branches.count()} branches`);
+  ok(await branches.first().evaluate((b) => getComputedStyle(b.parentElement).pointerEvents === 'none' && b.parentElement.getAttribute('aria-hidden') === 'true'), 'the branches never take a tap, and screen readers skip them');
+  const swaying = await page.locator('#questions').evaluate((q) => q.hasAttribute('data-sway') && q.querySelector('[data-branch]').getAnimations().length > 0);
+  ok(reduce ? !swaying : swaying, reduce ? 'under Reduce Motion the branches are still' : 'the branches sway while the sheet is on screen');
   ok(!(await page.locator('a[href="#new"]').count()), 'nothing links to the hidden What’s new');
   ok((await page.locator('a[href="#questions"]').count()) === 2, 'the cover and the foot link to Questions');
   // Every Download Iris says which computers, each with its drawn computer.
