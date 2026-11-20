@@ -157,7 +157,11 @@ const timed = (duration: number, ease: string) => ({ duration, ease });
 
 /** Each element's entry, ready to spread onto it: `<p {...ENTER.lede}>`. Styles merge with
  *  `withEnter` where the element has its own. */
-export const ENTER = {
+/** Each cue carries its own name on its attribute (`data-enter="title"`), so it can be found and
+ *  retimed while reviewing. */
+const named = <T extends Record<string, ReturnType<typeof cue>>>(cues: T): T =>
+  Object.fromEntries(Object.entries(cues).map(([k, c]) => [k, Object.fromEntries(Object.entries(c).map(([a, v]) => [a, a.startsWith('data-enter') ? k : v]))])) as T;
+export const ENTER = named({
   cloudLeft: cue('focus', TIMING.clouds, timed(CLOUDS.duration, CLOUDS.ease), { b: CLOUDS.blur, s: CLOUDS.scale, x: CLOUDS.from.left[0], y: CLOUDS.from.left[1] }, 'kids'),
   cloudBank: cue('focus', TIMING.clouds, timed(CLOUDS.duration, CLOUDS.ease), { b: CLOUDS.blur, s: CLOUDS.scale, x: CLOUDS.from.bank[0], y: CLOUDS.from.bank[1] }, 'kids'),
   cloudSun: cue('focus', TIMING.clouds, timed(CLOUDS.duration, CLOUDS.ease), { b: CLOUDS.blur, s: CLOUDS.scale, x: CLOUDS.from.sun[0], y: CLOUDS.from.sun[1] }, 'kids'),
@@ -180,7 +184,7 @@ export const ENTER = {
   keys: cue('rise', TIMING.keys, spring(KEYS.spring), { y: KEYS.y }, 'grandkids', KEYS.gap),
   keysWords: cue('write', TIMING.keysWords, timed(WRITE.duration, WRITE.ease)),
   pause: cue('fade', TIMING.pause, timed(PAUSE.duration, PAUSE.ease)),
-};
+});
 export type EnterCue = (typeof ENTER)[keyof typeof ENTER];
 
 /** An entry's attributes with the element's own style folded in. */
