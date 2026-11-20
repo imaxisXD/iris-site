@@ -430,6 +430,9 @@ span[data-enter] { display: inline-block; }
   to { clip-path: inset(-30% -5% -30% -5%); }
 }
 @keyframes enter-fade { from { opacity: 0; } }
+/* Under 1024px the sun has no cloud and rests low by the garden: it comes down from the top of
+   the sky instead of climbing up from below (Entry.ts's SUN). */
+@media (max-width: 1023px) { [data-enter="sun"] { --ey: var(--eya) !important; } }
 /* The night over the cover's sky (Page.tsx): there only while the day comes up. */
 [data-dawn] { position: absolute; inset: 0; pointer-events: none; background: var(--ec); opacity: 0; }
 @keyframes enter-dawn { from { opacity: var(--eo); } to { opacity: 0; } }

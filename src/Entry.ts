@@ -7,7 +7,8 @@
  * Reduce Motion (global.css, "The cover's entry"); the words are there without it, and
  * without the script.
  *
- *    0ms   night blue over the sky; the sun climbs up from below the frame
+ *    0ms   night blue over the sky; the sun climbs up from below the frame (under 1024px,
+ *          where it has no cloud and rests low by the garden, it comes down from the top)
  *    0ms   the day comes up: the night lifts over 1900ms
  *  200ms   the clouds drift in from their corners, out of focus → sharp
  * 1000ms   TONE prints in behind, snapping into register
@@ -107,8 +108,10 @@ const KEYS = { y: '-18px', gap: 70, spring: SPRINGS.drop };
 /* "in any text box", in the brush hand */
 const WRITE = { duration: 650, ease: 'cubic-bezier(0.45, 0, 0.2, 1)' };
 
-/* The sun, climbing up from below the frame */
-const SUN = { y: '520%', spring: SPRINGS.climb };
+/* The sun, climbing up from below the frame to tuck in under its cloud; under 1024px, where it
+   has no cloud and rests low by the garden, coming down from the top of the sky instead, a
+   screen's height above (global.css swaps the start) */
+const SUN = { y: '520%', fromAbove: 'calc(-100svh - 60px)', spring: SPRINGS.climb };
 
 /* The night over the sky, lifting */
 const DAWN = { duration: 1900, ease: 'ease-in', color: 'rgb(26 32 84)', from: 0.86 };  // night blue, most of the way over the sky
@@ -179,7 +182,7 @@ export const ENTER = named({
   ghost: cue('focus', TIMING.ghost, timed(GHOST.duration, GHOST.ease), { x: GHOST.from[0], y: GHOST.from[1] }, 'kids'),
   wordmark: cue('rise', TIMING.masthead, spring(MASTHEAD.spring), { y: MASTHEAD.y }),
   nav: cue('rise', TIMING.masthead + MASTHEAD.gap, spring(MASTHEAD.spring), { y: MASTHEAD.y }, 'kids', MASTHEAD.gap),
-  sun: cue('rise', TIMING.sun, spring(SUN.spring), { y: SUN.y }),
+  sun: cue('rise', TIMING.sun, spring(SUN.spring), { y: SUN.y, ya: SUN.fromAbove }),
   dawn: cue('dawn', TIMING.dawn, timed(DAWN.duration, DAWN.ease), { c: DAWN.color, o: DAWN.from }),
   beams: cue('fade', TIMING.beams, timed(BEAMS.duration, BEAMS.ease)),
   butterflies: cue('fade', TIMING.butterflies, timed(BUTTERFLIES.duration, BUTTERFLIES.ease)),
