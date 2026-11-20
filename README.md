@@ -26,14 +26,15 @@ the code.
   per part sit at the top, and the build fails if a keyframe drifts from them. It plays
   on a loop, pauses while scrolled away or at the cover's pause button, and holds still under
   Reduce Motion.
-- **The cover's entry** (`src/Entry.ts`) plays once as the page shows, as About's camera pulls
-  focus on the sky: the clouds come into focus from their corners, TONE prints in, the headline
-  rises line by line and its ✻ spins in, the copy rises and stamps down, ⌃ ⌥ G drop in, the
-  flower grows from its foot and the butterflies flutter in; then, at 1.5s, the garden wakes.
-  A storyboard, one `TIMING` and a config per element sit at the top; its springs are real
-  springs, written into CSS `linear()` easing at build time. CSS only, so the words are there
-  without the script, and never under Reduce Motion. While reviewing it, `?entry` lets R
-  replay it.
+- **The cover's entry** (`src/Entry.ts`) plays once as the page shows. It opens before
+  sunrise: night blue over the sky, the sun climbing up from below the frame. As the day comes
+  up, About's camera pulls focus on the sky: the clouds come into focus from their corners, TONE
+  prints in, the headline rises line by line and its ✻ spins in, the copy rises and stamps down,
+  ⌃ ⌥ G drop in, the flower grows from its foot and the butterflies flutter in; then, at about
+  2.4s, the garden wakes. A storyboard, one `TIMING` and a config per element sit at the top;
+  its springs are real springs, written into CSS `linear()` easing at build time. CSS only, so
+  the words are there without the script, and never under Reduce Motion. While reviewing it,
+  `?entry` lets R replay it.
 - **The air round both skies** (`src/Atmosphere.tsx`) is About's meadow in the app
   (`MakersJourney.swift`), the same pieces at the same values. On the cover, towering cumulus
   as anime background art paints them, grown and lit as one billowing surface and printed in
@@ -42,9 +43,11 @@ the code.
   garden, all a little soft through About's lens and drifting slowly. Their edges run past the
   frame, so they never show a cut; they're held to the frame's edges (the sun's to the sun),
   and at any width they hang behind the wordmark and the nav but keep clear of the headline and
-  the copy. Warm beams fall from the sun, dust drifts through them and petals ride the breeze;
-  big soft grainy leaves rise into the bottom corners right in front of the lens, and a
-  butterfly drifts close to it, a little out of focus. On the cover it runs on its own, looping with the
+  the copy. Warm beams fall from the sun, each on its own uneven breath and swaying a little about
+  it, as light through moving air does; dust drifts through them and petals ride the breeze;
+  big soft grainy leaves rise into the bottom corners right in front of the lens (the left ones
+  smaller), and small butterflies in five colours flit about the flower and the leaves, a little
+  soft, never by the words. On the cover it runs on its own, looping with the
   garden; a paper pause button (About's) stops the garden and the air together (WCAG
   2.2.2), and as the cover scrolls away the clouds lag and the leaves run ahead. On the foot
   it comes out with the day as the page lifts off and follows the scroll: no clouds, the beams

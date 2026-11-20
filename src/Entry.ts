@@ -1,47 +1,55 @@
 /* ─────────────────────────────────────────────────────────
  * THE COVER'S ENTRY · STORYBOARD
  *
- * Read top-to-bottom. Each value is ms after the page shows. It plays once, as About's camera
- * pulls focus on the sky: the clouds come into focus from their corners, the words print in,
- * and the garden wakes last. Never under Reduce Motion (global.css, "The cover's entry"); the
- * words are there without it, and without the script.
+ * Read top-to-bottom. Each value is ms after the page shows. It plays once: the cover opens
+ * before sunrise, the sun climbs out of the frame and the day comes up; as it does, About's
+ * camera pulls focus on the sky, the words print in, and the garden wakes last. Never under
+ * Reduce Motion (global.css, "The cover's entry"); the words are there without it, and
+ * without the script.
  *
- *    0ms   the clouds drift in from their corners, out of focus → sharp
- *   80ms   TONE prints in behind, snapping into register
- *  140ms   the wordmark, then the nav links (staggered 50ms)
- *  200ms   the sun slips down out from behind its cloud; its beams come up after it (1200ms)
- *  240ms   headline line 1 rises out of its slot; line 2 follows (staggered 110ms)
- *  420ms   the ✻ spins in, −150° → 0, with a little bounce
- *  560ms   the line under the headline rises; the leaves rise into the bottom corners
- *  660ms   "100% on your Mac" stamps down; the three promises rise (staggered 60ms)
- *  700ms   the flower grows up from its foot
- *  760ms   the butterflies flutter in round it; the one close to the lens after (900ms)
- *  800ms   Download Iris stamps down; the requirements rise (staggered 60ms)
- *  960ms   ⌃ ⌥ G drop in (staggered 70ms)
- * 1150ms   "in any text box" writes on, left to right
- * 1400ms   the pause button
- * 1500ms   the garden wakes: its loop starts (Garden.tsx's TIMING; client.ts starts it)
+ *    0ms   night blue over the sky; the sun climbs up from below the frame
+ *    0ms   the day comes up: the night lifts over 1900ms
+ *  200ms   the clouds drift in from their corners, out of focus → sharp
+ * 1000ms   TONE prints in behind, snapping into register
+ * 1060ms   the wordmark, then the nav links (staggered 50ms)
+ * 1100ms   the sun's beams come up
+ * 1160ms   headline line 1 rises out of its slot; line 2 follows (staggered 110ms)
+ * 1340ms   the ✻ spins in, −150° → 0, with a little bounce
+ * 1480ms   the line under the headline rises; the leaves rise into the bottom corners
+ * 1580ms   "100% on your Mac" stamps down; the three promises rise (staggered 60ms)
+ * 1620ms   the flower grows up from its foot
+ * 1680ms   the butterflies flutter in round it; the small ones by the flowers after (1820ms)
+ * 1720ms   Download Iris stamps down; the requirements rise (staggered 60ms)
+ * 1880ms   ⌃ ⌥ G drop in (staggered 70ms)
+ * 2070ms   "in any text box" writes on, left to right
+ * 2320ms   the pause button
+ * 2420ms   the garden wakes: its loop starts (Garden.tsx's TIMING; client.ts starts it)
  * ───────────────────────────────────────────────────────── */
 import type React from 'react';
 
+/** When the words begin: once the day is mostly up. */
+const DAY = 920;
+
 export const TIMING = {
-  clouds:      0,     // the clouds drift in from their corners, coming into focus
-  ghost:       80,    // TONE prints in, snapping into register
-  masthead:    140,   // the wordmark, then the nav links
-  sun:         200,   // the sun slips out from behind its cloud
-  title:       240,   // headline line 1 rises; line 2 after TITLE.gap
-  star:        420,   // the ✻ spins in
-  lede:        560,   // the line under the headline rises
-  lens:        560,   // the leaves rise into the bottom corners, in front of the lens
-  promise:     660,   // "100% on your Mac" stamps down, the promises rise
-  flower:      700,   // the flower grows up from its foot
-  butterflies: 760,   // the garden's butterflies flutter in
-  closeFly:    900,   // and the one close to the lens
-  cta:         800,   // Download Iris stamps down, the requirements rise
-  keys:        960,   // ⌃ ⌥ G drop in
-  keysWords:   1150,  // "in any text box" writes on
-  pause:       1400,  // the pause button
-  gardenWakes: 1500,  // the garden's loop starts
+  sun:         0,           // the sun climbs up from below the frame
+  dawn:        0,           // the night lifts off the sky
+  clouds:      200,         // the clouds drift in from their corners, coming into focus
+  ghost:       DAY + 80,    // TONE prints in, snapping into register
+  masthead:    DAY + 140,   // the wordmark, then the nav links
+  beams:       1100,        // the sun's beams come up
+  title:       DAY + 240,   // headline line 1 rises; line 2 after TITLE.gap
+  star:        DAY + 420,   // the ✻ spins in
+  lede:        DAY + 560,   // the line under the headline rises
+  lens:        DAY + 560,   // the leaves rise into the bottom corners, in front of the lens
+  promise:     DAY + 660,   // "100% on your Mac" stamps down, the promises rise
+  flower:      DAY + 700,   // the flower grows up from its foot
+  butterflies: DAY + 760,   // the garden's butterflies flutter in
+  closeFly:    DAY + 900,   // and the small ones by the flowers
+  cta:         DAY + 800,   // Download Iris stamps down, the requirements rise
+  keys:        DAY + 960,   // ⌃ ⌥ G drop in
+  keysWords:   DAY + 1150,  // "in any text box" writes on
+  pause:       DAY + 1400,  // the pause button
+  gardenWakes: DAY + 1500,  // the garden's loop starts
 };
 
 /** A spring, as stiffness and damping on a unit mass. */
@@ -55,7 +63,7 @@ const SPRINGS = {
   drop:   { stiffness: 600, damping: 22 },  // keycaps landing
   spin:   { stiffness: 280, damping: 14 },  // the ✻: a little bounce at the end
   grow:   { stiffness: 260, damping: 15 },  // the flower: up, a touch past, settles
-  slip:   { stiffness: 200, damping: 20 },  // the sun
+  climb:  { stiffness: 26, damping: 9.5 },  // the sun: a slow climb, settling without a bounce
 } satisfies Record<string, Spring>;
 
 /* The clouds: a slow ease out of focus (no spring: weather doesn't bounce) */
@@ -99,8 +107,11 @@ const KEYS = { y: '-18px', gap: 70, spring: SPRINGS.drop };
 /* "in any text box", in the brush hand */
 const WRITE = { duration: 650, ease: 'cubic-bezier(0.45, 0, 0.2, 1)' };
 
-/* The sun, out from behind its cloud */
-const SUN = { y: '-70%', spring: SPRINGS.slip };
+/* The sun, climbing up from below the frame */
+const SUN = { y: '520%', spring: SPRINGS.climb };
+
+/* The night over the sky, lifting */
+const DAWN = { duration: 1900, ease: 'ease-in', color: 'rgb(26 32 84)', from: 0.86 };  // night blue, most of the way over the sky
 
 /* The leaves in the bottom corners, right in front of the lens */
 const LENS = { y: '45%', duration: 1300, ease: 'cubic-bezier(0.16, 1, 0.3, 1)' };
@@ -108,7 +119,7 @@ const LENS = { y: '45%', duration: 1300, ease: 'cubic-bezier(0.16, 1, 0.3, 1)' }
 /* The flower, from its foot */
 const FLOWER = { from: [0.92, 0.25], spring: SPRINGS.grow };
 
-/* The sun's beams: they come up after it */
+/* The sun's beams: they come up once it's high */
 const BEAMS = { duration: 1200, ease: 'ease-out' };
 
 /* The butterflies: in, out of nowhere, as they flit */
@@ -140,7 +151,7 @@ export function spring({ stiffness, damping }: Spring): { ease: string; duration
   return { ease, duration: Math.round(end * 1000) };
 }
 
-type Motion = 'rise' | 'line' | 'focus' | 'write' | 'fade';
+type Motion = 'rise' | 'line' | 'focus' | 'write' | 'fade' | 'dawn';
 /** Who moves: the element itself, its children, or its children's children (staggered by
  *  `gap`, in order). Children where the element runs an animation of its own (a cloud's drift,
  *  a leaf's sway) or is only a wrapper. */
@@ -169,7 +180,8 @@ export const ENTER = named({
   wordmark: cue('rise', TIMING.masthead, spring(MASTHEAD.spring), { y: MASTHEAD.y }),
   nav: cue('rise', TIMING.masthead + MASTHEAD.gap, spring(MASTHEAD.spring), { y: MASTHEAD.y }, 'kids', MASTHEAD.gap),
   sun: cue('rise', TIMING.sun, spring(SUN.spring), { y: SUN.y }),
-  beams: cue('fade', TIMING.sun, timed(BEAMS.duration, BEAMS.ease)),
+  dawn: cue('dawn', TIMING.dawn, timed(DAWN.duration, DAWN.ease), { c: DAWN.color, o: DAWN.from }),
+  beams: cue('fade', TIMING.beams, timed(BEAMS.duration, BEAMS.ease)),
   butterflies: cue('fade', TIMING.butterflies, timed(BUTTERFLIES.duration, BUTTERFLIES.ease)),
   closeFly: cue('fade', TIMING.closeFly, timed(BUTTERFLIES.duration, BUTTERFLIES.ease)),
   title: cue('line', TIMING.title, spring(TITLE.spring), { y: TITLE.y }, 'kids', TITLE.gap),

@@ -141,6 +141,9 @@
 [data-air] [data-close-box] { position: absolute; display: block; container-type: size; }
 [data-air] [data-close-path] { position: absolute; left: 0; top: 0; display: block; translate: 40cqw 20cqh; }
 [data-close-fly] { position: relative; display: block; aspect-ratio: 1; filter: blur(2px); }
+/* The small ones by the cover's flowers (Atmosphere.tsx's FLUTTER): softer for their size, each
+   in its own colour, on its own path, its wings beating fast. */
+[data-flutter] [data-close-fly] { filter: blur(1px) hue-rotate(var(--hue, 0deg)); }
 [data-close-fly] img { position: absolute; inset: 0; width: 100%; height: 100%; }
 [data-close-wings] { transform-origin: 50% 50%; }
 @media (max-width: 1023px) { [data-air] [data-air-wide] { display: none; } }
@@ -155,6 +158,8 @@
 [data-air-pause][data-held] [data-air-play-mark] { display: inline; }
 @media (prefers-reduced-motion: reduce) { [data-air-pause] { display: none; } }
 @media (max-width: 760px) { [data-air] [data-lens] { width: 22vw !important; } }
+/* The cover's left corner leaves stay small, as the flower is (Page.tsx). */
+@media (max-width: 760px) { [data-air] [data-lens="left"] { width: 15vw !important; } }
 
 @media (prefers-reduced-motion: no-preference) {
   /* The cover's: running on its own */
@@ -163,9 +168,11 @@
   [data-air="live"] [data-petal] { left: 0; animation: air-petal var(--dur) linear var(--delay) infinite; }
   [data-air="live"] [data-petal-turn] { animation: air-petal-turn var(--bob) ease-in-out calc(var(--k) * -0.7s) infinite alternate; }
   [data-air="live"] [data-lens] { animation: air-lens var(--d) ease-in-out var(--delay) infinite alternate; }
-  [data-air="live"] [data-close-path] { animation: air-close 46s ease-in-out infinite; }
-  [data-air="live"] [data-close-wings] { animation: air-flap 700ms ease-in-out infinite alternate; }
+  [data-air="live"] [data-close-path] { animation: air-close var(--round, 46s) ease-in-out var(--from, 0s) infinite var(--way, normal); }
+  [data-air="live"] [data-close-wings] { animation: air-flap var(--flap, 700ms) ease-in-out infinite alternate; }
   [data-garden] [data-beams-soft] { animation: air-beam 35s ease-in-out infinite alternate; }
+  /* And each beam on its own (Atmosphere.tsx's AIR.beams): its uneven breath, its sway. */
+  [data-garden] [data-beam] { transform-box: view-box; transform-origin: 50% 50%; animation: beam-breathe var(--breathe) ease-in-out var(--lag) infinite, beam-sway var(--sway-for) ease-in-out var(--lag) infinite alternate; }
 
   /* The cover as it scrolls away, as About's camera drifts: the clouds lag, the leaves in front
      of the lens run ahead. Moved by the scroll alone. */
@@ -194,6 +201,14 @@
 }
 @keyframes air-flap { from { scale: 1 1; } to { scale: 0.5 1; } }
 @keyframes air-beam { from { opacity: 0.7; } to { opacity: 1; } }
+@keyframes beam-breathe {
+  0%, 100% { opacity: calc(var(--alpha) * 0.7); }
+  22% { opacity: calc(var(--alpha) * 1.1); }
+  41% { opacity: calc(var(--alpha) * 0.85); }
+  63% { opacity: calc(var(--alpha) * 1.22); }
+  82% { opacity: calc(var(--alpha) * 0.75); }
+}
+@keyframes beam-sway { from { rotate: calc(var(--sway) * -1); } to { rotate: var(--sway); } }
 @keyframes air-depth-far { from { translate: 0 0; } to { translate: 0 90px; } }
 @keyframes air-depth-near { from { translate: 0 0; } to { translate: 0 -160px; } }
 
@@ -415,3 +430,6 @@ span[data-enter] { display: inline-block; }
   to { clip-path: inset(-30% -5% -30% -5%); }
 }
 @keyframes enter-fade { from { opacity: 0; } }
+/* The night over the cover's sky (Page.tsx): there only while the day comes up. */
+[data-dawn] { position: absolute; inset: 0; pointer-events: none; background: var(--ec); opacity: 0; }
+@keyframes enter-dawn { from { opacity: var(--eo); } to { opacity: 0; } }

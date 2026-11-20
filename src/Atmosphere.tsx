@@ -25,11 +25,15 @@ export const AIR = {
   dust: 'rgb(255 247 224)',
   /** The four beams from About's sun: the way each falls (radians, 0 is right, y down), how wide,
    *  how strong. */
+  // Each beam lives on its own on the cover, as light through moving air does: it brightens and
+  // dims on an uneven breath (`breathe`, s) and sways a little about the sun (`sway`, degrees,
+  // one way and back over `swayFor`, s). Their periods share no beat, so the four never fall
+  // into step.
   beams: [
-    { angle: 2.28, spread: 0.07, alpha: 0.22 },
-    { angle: 2.47, spread: 0.045, alpha: 0.17 },
-    { angle: 2.64, spread: 0.08, alpha: 0.2 },
-    { angle: 2.84, spread: 0.04, alpha: 0.14 },
+    { angle: 2.28, spread: 0.07, alpha: 0.22, breathe: 13, sway: 1.1, swayFor: 29 },
+    { angle: 2.47, spread: 0.045, alpha: 0.17, breathe: 17, sway: 0.7, swayFor: 23 },
+    { angle: 2.64, spread: 0.08, alpha: 0.2, breathe: 11, sway: 0.9, swayFor: 37 },
+    { angle: 2.84, spread: 0.04, alpha: 0.14, breathe: 19, sway: 0.6, swayFor: 31 },
   ],
   /** About's foreground: big leaves rising into the corners from below the frame (`Foreground`),
    *  in a corner's own box (200 × 260, the frame's bottom at 260): root, length, width, lean
@@ -90,7 +94,7 @@ export function Beams({ strength = 0.7, rising = false }: { strength?: number; r
         <path
           key={k}
           data-beam
-          style={{ ['--k' as string]: k, ['--alpha' as string]: b.alpha * strength, opacity: b.alpha * strength }}
+          style={{ ['--k' as string]: k, ['--alpha' as string]: b.alpha * strength, opacity: b.alpha * strength, ['--breathe' as string]: `${b.breathe}s`, ['--sway' as string]: `${b.sway}deg`, ['--sway-for' as string]: `${b.swayFor}s`, ['--lag' as string]: `${-b.breathe * 0.37 * (k + 1)}s` }}
           fill={AIR.beam}
           d={`M0 0L${r1(Math.cos(turn(b.angle - b.spread)) * L)} ${r1(Math.sin(turn(b.angle - b.spread)) * L)}L${r1(Math.cos(turn(b.angle + b.spread)) * L)} ${r1(Math.sin(turn(b.angle + b.spread)) * L)}Z`}
         />
@@ -196,6 +200,21 @@ export function Lens({ side, seed }: { side: 'left' | 'right'; seed: number }) {
 
 /** One butterfly close to the lens: big and a little out of focus, in the garden's own colours.
  *  Fills its box; how it drifts is the caller's, always in open sky, never over a cloud. */
+/** The small butterflies flitting about the cover's flowers, a little soft in front of the
+ *  lens: each a butterfly of the garden's (a tint makes a fifth, a blue), its size, the box it
+ *  flits about in (low, by the flower and the leaves in the corners, never by the words), how
+ *  long one round of its path takes and where in it it starts, which way round it goes, and how
+ *  fast its wings beat. `wide`: only where the cover's margin has room (data-air-full, 1440px). */
+export const FLUTTER: { sprite: string; hue?: number; size: string; box: React.CSSProperties; round: number; from: number; back?: boolean; flap: number; wide?: boolean }[] = [
+  // By the flower and the leaves in the right corner
+  { sprite: 'monarch', size: 'clamp(16px, 1.5vw, 22px)', box: { right: '1%', bottom: '5%', width: 'min(15vw, 220px)', height: '26%' }, round: 22, from: -3, flap: 240 },
+  { sprite: 'rose', size: 'clamp(14px, 1.25vw, 19px)', box: { right: '5%', bottom: '14%', width: 'min(11vw, 160px)', height: '20%' }, round: 17, from: -9, back: true, flap: 200 },
+  { sprite: 'monarch', hue: 190, size: 'clamp(13px, 1.1vw, 17px)', box: { right: '0%', bottom: '1%', width: 'min(10vw, 150px)', height: '17%' }, round: 26, from: -14, flap: 220 },
+  // By the leaves in the left corner
+  { sprite: 'white', size: 'clamp(14px, 1.2vw, 18px)', box: { left: '0%', bottom: '4%', width: 'min(7vw, 100px)', height: '22%' }, round: 19, from: -5, flap: 230, wide: true },
+  { sprite: 'swallowtail', size: 'clamp(13px, 1.1vw, 17px)', box: { left: '1%', bottom: '12%', width: 'min(5.5vw, 80px)', height: '16%' }, round: 24, from: -11, back: true, flap: 210, wide: true },
+];
+
 export function CloseButterfly({ sprite = 'monarch' }: { sprite?: string }) {
   return (
     <span data-close-fly>

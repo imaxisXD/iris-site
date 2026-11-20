@@ -186,7 +186,7 @@ for (const reduce of [false, true]) {
     fly: h.querySelectorAll('[data-close-fly]').length,
     quiet: [...h.querySelectorAll('[data-air="live"]')].every((e) => getComputedStyle(e).pointerEvents === 'none' && e.closest('[aria-hidden="true"]') !== null),
   }));
-  ok(air.clouds === 3 && air.beams === 4 && air.dust > 10 && air.petals >= 3 && air.lens === 2 && air.fly === 1, `the cover has About's air: ${air.clouds} clouds (one in each top corner, the sun under the right, a bank behind the garden), ${air.beams} beams, ${air.dust} specks, ${air.petals} petals, ${air.lens} lens corners, a close butterfly`);
+  ok(air.clouds === 3 && air.beams === 4 && air.dust > 10 && air.petals >= 3 && air.lens === 2 && air.fly === 5, `the cover has About's air: ${air.clouds} clouds (one in each top corner, the sun under the right, a bank behind the garden), ${air.beams} beams, ${air.dust} specks, ${air.petals} petals, ${air.lens} lens corners, ${air.fly} small butterflies by the flowers`);
   ok(air.quiet, 'and it never takes a tap, and screen readers skip it');
   const pauseBtn = page.locator('[data-air-pause]');
   if (reduce) {
@@ -406,7 +406,7 @@ for (const reduce of [false, true]) {
     ok(first.length === 0, 'under Reduce Motion the cover has no entry: it is simply there');
   } else {
     const wake = Number(await page.locator('[data-garden]').getAttribute('data-wake'));
-    ok(first.length > 20 && Math.max(...first.map((a) => a.end)) <= 2200, `the cover enters: ${first.length} parts, all in place by ${Math.round(Math.max(...first.map((a) => a.end)))}ms`);
+    ok(first.length > 20 && Math.max(...first.map((a) => a.end)) <= 3000, `the cover enters: ${first.length} parts, all in place by ${Math.round(Math.max(...first.map((a) => a.end)))}ms`);
     const before = await garden();
     ok(before === 0, `and the garden waits at rest while it does (${before} parts moving)`);
     await page.waitForTimeout(wake + 900);
@@ -424,10 +424,11 @@ for (const reduce of [false, true]) {
     const again = await page.evaluate(() => document.getAnimations().filter((a) => a.animationName?.startsWith('enter-') && a.playState !== 'finished').length);
     ok(again === 0, `nor pausing and playing, nor scrolling away and back (${again} replaying)`);
     const done = await page.evaluate(() => {
-      const els = [...document.querySelectorAll('[data-enter], [data-enter-kids] > *, [data-enter-grandkids] > * > *')].filter((e) => e.getClientRects().length && getComputedStyle(e).display !== 'contents');
+      const els = [...document.querySelectorAll('[data-enter], [data-enter-kids] > *, [data-enter-grandkids] > * > *')].filter((e) => e.getClientRects().length && getComputedStyle(e).display !== 'contents' && !e.hasAttribute('data-dawn'));
       const off = els.filter((e) => { const cs = getComputedStyle(e); return +cs.opacity < 0.99 || (cs.transform !== 'none' && cs.transform !== 'matrix(1, 0, 0, 1, 0, 0)'); });
-      return { all: els.length, off: off.map((e) => e.getAttribute('class')?.slice(0, 24) ?? e.tagName), running: document.getAnimations().filter((a) => a.animationName?.startsWith('enter-') && a.playState === 'running').length };
+      return { all: els.length, off: off.map((e) => e.getAttribute('class')?.slice(0, 24) ?? e.tagName), running: document.getAnimations().filter((a) => a.animationName?.startsWith('enter-') && a.playState === 'running').length, night: +getComputedStyle(document.querySelector('[data-dawn]')).opacity };
     });
+    ok(done.night === 0, `and the night over the sky has lifted, all of it (${done.night})`);
     ok(done.running === 0 && done.off.length === 0, `and once it's in, all ${done.all} parts stand where they belong, in full (${done.off.join(', ') || 'none out of place'})`);
   }
   await page.close();

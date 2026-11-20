@@ -31,7 +31,7 @@ import { Bud, CHAPTERS, Desk, doneCss, Flight, FLOWER_PX, ON_FOOT, SHUT_MS, WALL
 import { DONE, LANDS, SaysNote } from './Done';
 import { Pattern } from './Patterns';
 import { Branch, type BranchSpec, type Depth } from './Branches';
-import { CloseButterfly, COVER_CLOUDS, CoverCloud, Dust, Lens, Petals } from './Atmosphere';
+import { CloseButterfly, COVER_CLOUDS, CoverCloud, Dust, FLUTTER, Lens, Petals } from './Atmosphere';
 import { ENTER, withEnter } from './Entry';
 import type { CoverCloudName } from './Atmosphere';
 import { Garden } from './Garden';
@@ -418,6 +418,8 @@ function Cover() {
             <Dust seed={21} count={30} area={[38, 100, 12, 92]} />
             <Petals seed={33} count={5} band={[16, 64]} />
           </div>
+          {/* Before sunrise: the night over the sky, lifting as the cover comes in (Entry.ts). */}
+          <span data-dawn {...ENTER.dawn} />
         </div>
         </div>
         <div {...stylex.props(s.wrap, s.plateInner)}>
@@ -471,19 +473,23 @@ function Cover() {
         <div aria-hidden style={{ position: 'absolute', inset: 0, zIndex: 3, overflow: 'clip', pointerEvents: 'none' }}>
           {/* Rooted below the frame, as the flower is: they sway, but never leave the edge. */}
           <div data-air="live" data-air-front>
-            <span data-lens {...withEnter(ENTER.lens, { left: 0, width: 'min(9.5vw, 150px)', ['--d' as string]: '6.4s', ['--delay' as string]: '-2s' })}>
+            <span data-lens="left" {...withEnter(ENTER.lens, { left: 0, width: 'min(6.4vw, 100px)', ['--d' as string]: '6.4s', ['--delay' as string]: '-2s' })}>
               <Lens side="left" seed={5} />
             </span>
-            <span data-lens {...withEnter(ENTER.lens, { right: 0, width: 'min(12vw, 180px)', ['--d' as string]: '7.2s', ['--delay' as string]: '-5s' })}>
+            <span data-lens="right" {...withEnter(ENTER.lens, { right: 0, width: 'min(12vw, 180px)', ['--d' as string]: '7.2s', ['--delay' as string]: '-5s' })}>
               <Lens side="right" seed={9} />
             </span>
           </div>
         <div data-air-depth="near" style={{ position: 'absolute', inset: 0 }}>
           <div data-air="live" data-air-front>
-            <span data-close-box data-air-xwide {...withEnter(ENTER.closeFly, { left: '24%', top: '3%', width: '26%', height: '13%' })}>
-              <span data-close-path style={{ width: 'clamp(56px, 5.6vw, 84px)' }}>
-                <CloseButterfly />
-              </span>
+            <span {...withEnter(ENTER.closeFly, { position: 'absolute', inset: 0 })}>
+              {FLUTTER.map((f, i) => (
+                <span key={i} data-close-box data-air-wide={f.wide ? undefined : ''} data-air-full={f.wide ? '' : undefined} style={f.box}>
+                  <span data-close-path data-flutter style={{ width: f.size, ['--round' as string]: `${f.round}s`, ['--from' as string]: `${f.from}s`, ['--way' as string]: f.back ? 'reverse' : 'normal', ['--flap' as string]: `${f.flap}ms`, ['--hue' as string]: `${f.hue ?? 0}deg` }}>
+                    <CloseButterfly sprite={f.sprite} />
+                  </span>
+                </span>
+              ))}
             </span>
           </div>
         </div>
