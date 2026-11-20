@@ -2,9 +2,9 @@
 // app (MakersJourney.swift, "Where Iris comes from"): the same pieces at the same values, drawn
 // at build time.
 //
-//   clouds     illustrated clouds, printed in riso as the butterflies are (scripts/sprites.mjs):
-//              chunky round lobes on a flat bottom, a bold pen outline with a curl where one
-//              lobe sits on another, a lavender shade along the base
+//   clouds     towering cumulus as anime background art paints them, printed in riso
+//              (scripts/clouds.mjs): one hanging from each top corner, the sun tucked under
+//              the right one, and a bank rising behind the garden; a little soft, drifting
 //   beams      warm light falling from the sun in four long wedges, breathing slowly
 //   dust       soft specks drifting up through the light, each its own size and pace,
 //              twinkling as they turn
@@ -15,7 +15,7 @@
 //
 // Riso, as About is: flat inks through the screen, no gradients. All of it is decoration, so
 // screen readers skip it and it never takes a tap. How it moves is the caller's (global.css,
-// "The air"): on the cover it runs on its own with a pause button, as About's does, and settles
+// "The air"): on the cover it runs on its own with a pause button, as About's does, looping
 // with the garden; on the foot it only follows the scroll. Under Reduce Motion it is still.
 import { rng } from './pen';
 
@@ -53,11 +53,26 @@ export const AIR = {
 
 const r1 = (n: number) => Math.round(n * 10) / 10;
 
-/** One of the riso clouds (scripts/sprites.mjs), filling its box's width. The print is square;
- *  the cloud sits across its middle. */
-const CLOUD_PX = { tower: 576, bank: 576, small: 576 };
-export function SkyCloud({ kind }: { kind: keyof typeof CLOUD_PX }) {
-  return <img src={`/sprite/cloud-${kind}.png`} alt="" width={CLOUD_PX[kind]} height={CLOUD_PX[kind]} loading="lazy" decoding="async" style={{ display: 'block', width: '100%', height: 'auto' }} />;
+/** The cover's clouds (scripts/clouds.mjs, the same boxes): where each sits on a 1440 × 760
+ *  cover, in px, `[x, y, width, height]` (each print is one dot every 2px there), its size in
+ *  dots, and how it drifts: `[x, y]` px each way and how long one way takes.
+ *  - left: hangs into the sky from the top-left corner, over the wordmark, clear of the headline
+ *  - bank: rises along the bottom behind the garden, its towers clear of the words
+ *  - sun: hangs from the top-right corner with the sun tucked under it, its upper half behind
+ *    the cloud. Its box is from the sun (at 1245, 211 on that cover), and it's printed 360px
+ *    taller above, out of sight there, for narrower covers where the sun sits lower.
+ *  Closed edges run 90px past the frame, so they drift without ever showing a cut. */
+export const COVER_CLOUDS = {
+  left: { box: [-90, -90, 650, 330], dots: [325, 165], drift: [16, 0, 50] },
+  bank: { box: [360, 500, 1170, 350], dots: [585, 175], drift: [20, 0, 44] },
+  sun: { box: [1000, -426, 530, 760], dots: [265, 380], drift: [9, 5, 32], at: [1245, 211] },
+} as const;
+export type CoverCloudName = keyof typeof COVER_CLOUDS;
+
+/** One of the cover's clouds, the size of its box (its dots stay square: pixelated). */
+export function CoverCloud({ name }: { name: CoverCloudName }) {
+  const [w, h] = COVER_CLOUDS[name].dots;
+  return <img src={`/sprite/cover-cloud-${name}.png`} alt="" width={w} height={h} decoding="async" style={{ display: 'block', width: '100%', height: 'auto', maxWidth: 'none', imageRendering: 'pixelated' }} />;
 }
 
 /** The sun's beams, centred on the box's middle (put the box's middle on the sun), each long

@@ -12,6 +12,7 @@
     "og": "node scripts/og.mjs",
     "garden": "node scripts/garden.mjs",
     "sprites": "node scripts/sprites.mjs",
+    "clouds": "node scripts/clouds.mjs",
     "typecheck": "tsc --noEmit",
     "deploy": "node scripts/build.mjs && wrangler deploy"
   },

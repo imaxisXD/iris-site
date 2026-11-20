@@ -67,8 +67,8 @@
  *  9050ms   the stamp pops away (140ms)
  *  9850ms   the cover's flower stays (the app's folds and sinks): its front fall
  *           grows back out of the heart (320ms)
- * 12000ms   the loop comes round. After three loops it settles: the garden at rest,
- *           no panel, nothing flying, every part held still (client.ts)
+ * 12000ms   the loop comes round, for as long as the cover is on screen; the cover's
+ *           pause button holds it (client.ts)
  * ───────────────────────────────────────────────────────── */
 import * as stylex from '@stylexjs/stylex';
 import type React from 'react';
@@ -78,7 +78,7 @@ import { Panel, panel } from './Panel';
 import { KeyRow } from './parts';
 import { DONE as APP_DONE, flightOf, ReplacedNote, STAMP_BOX, StampFace, trailOf } from './Done';
 import { font, ink } from './tokens.stylex';
-import { Beams } from './Atmosphere';
+import { Beams, COVER_CLOUDS, CoverCloud } from './Atmosphere';
 
 const TIMING = {
   loop:        12000,  // one round of the garden
@@ -89,7 +89,6 @@ const TIMING = {
   flyOut:      2500,   // the first butterfly leaves for its word
   lands:       3200,   // the first lands, and its pink is swiped on
   flyHome:     6500,   // the first lifts off again: the last has been down 2880ms
-  loops:       3,      // rounds played before the garden settles at rest for good (client.ts)
   returnKey:   7900,   // Replace takes the press
   replace:     8050,   // the panel goes, the flower stamps the fix, Iris says "replaced" (DONE)
 };
@@ -502,6 +501,19 @@ const flap = stylex.keyframes({
   if (T.loop % (SUN.notchMs * 16) !== 0) throw new Error('Garden: the sun must turn a whole number of times a loop');
 }
 
+/** The sun's cloud (Atmosphere.tsx's COVER_CLOUDS): its box is in px on a 1440 cover, where
+ *  the garden is 27vw wide; here it's from the sun, in the garden's own units, so it comes with
+ *  the sun wherever the garden puts it, at the garden's scale. */
+const sunCloud = (() => {
+  const { box: [x, y, w], drift: [dx, dy, s], at: [sx, sy] } = COVER_CLOUDS.sun;
+  const k = BOX.width / (1440 * 0.27);
+  return {
+    left: `calc(var(--sx) + ${cq((x - sx) * k)})`,
+    top: `calc(var(--sy) + ${cq((y - sy) * k)})`,
+    width: cq(w * k),
+    ...vars({ '--dx': cq(dx * k), '--dy': cq(dy * k), '--dd': `${s}s`, '--dl': '-9s' }),
+  };
+})();
 /** The panel's width at a cover width between 1280 and 1440px. */
 const deskAt = (w: 1280 | 1440) => Math.round(PANEL.natural.plain * (w === 1280 ? PANEL.scale.at1280 : PANEL.scale.at1440));
 const loops = { animationDuration: ms(TIMING.loop), animationIterationCount: 'infinite', animationFillMode: 'both' } as const;
@@ -744,7 +756,7 @@ export function Garden() {
     );
   };
   return (
-    <div {...stylex.props(g.garden)} aria-hidden="true" data-garden data-loop={TIMING.loop} data-loops={TIMING.loops} data-keys={`${TIMING.keysPress},${TIMING.keyGap},${TIMING.wakes}`}>
+    <div {...stylex.props(g.garden)} aria-hidden="true" data-garden data-loop={TIMING.loop} data-keys={`${TIMING.keysPress},${TIMING.keyGap},${TIMING.wakes}`}>
       {/* 1. The sun, far away, its light falling across the sky (About's beams, Atmosphere.tsx):
           behind the sun and everything in front of it, centred on it wherever it is. */}
       <Depth plane={DEPTH.sun}>
@@ -766,6 +778,11 @@ export function Garden() {
           <div {...stylex.props(g.fill, g.hop)} style={vars({ '--hop': cq(SUN.hop) })}>
             <Sprite name="sun-face" dots={44} />
           </div>
+        </div>
+        {/* The cloud the sun is tucked under, hanging from the cover's top-right corner, in
+            front of the sun on its plane (Atmosphere.tsx's COVER_CLOUDS; from 1024px). */}
+        <div data-sun-cloud style={sunCloud}>
+          <CoverCloud name="sun" />
         </div>
       </Depth>
 

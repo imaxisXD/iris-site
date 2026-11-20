@@ -521,7 +521,7 @@ if (desk && chapterList) {
 // ── The cover's garden (Garden.tsx) ───────────────────────────────────────────────────
 // It runs in CSS too. This holds it while the cover is scrolled away, presses the cover's own
 // ⌃ ⌥ G just before the garden wakes, on the same clock as the CSS (one loop, started
-// together), and after a few loops settles it for good: the garden at rest, every part held.
+// together). It loops for as long as the cover is on screen; the pause button holds it.
 const note = document.querySelector<HTMLElement>('[data-garden]');
 // Where the panel's words are, for the butterflies that land on them, and the panel's shape:
 // the Panel wraps its own text, so this is measured, as shares of the panel (they hold at any scale).
@@ -547,15 +547,13 @@ if (note && !still && 'getAnimations' in note) {
   const caps = $$<HTMLElement>('[role="img"] kbd', note.closest('header')!).filter((k) => !note.contains(k)); // the cover's keys, not the panel's
   let keys: Animation[] = [];
   let seen = true;
-  let settled = false;
-  // The air round the cover (Atmosphere.tsx): it runs with the garden, holds with it while the
-  // cover is scrolled away, and settles with it. The pause button stops all of it, as About's
-  // does (WCAG 2.2.2); once everything has settled there's nothing left to stop, so it goes.
+  // The air round the cover (Atmosphere.tsx): it runs with the garden and holds with it while
+  // the cover is scrolled away. The pause button stops all of it, as About's does (WCAG 2.2.2).
   const header = note.closest('header')!;
   const air = () => $$<HTMLElement>('[data-air="live"]', header).flatMap((el) => el.getAnimations({ subtree: true }));
   const pause = header.querySelector<HTMLButtonElement>('[data-air-pause]');
   let held = false;
-  const everything = () => (settled ? [] : [...note.getAnimations({ subtree: true }), ...keys, ...air()]);
+  const everything = () => [...note.getAnimations({ subtree: true }), ...keys, ...air()];
   const apply = () => {
     for (const a of everything()) seen && !held ? a.play() : a.pause();
   };
@@ -597,21 +595,6 @@ if (note && !still && 'getAnimations' in note) {
     });
     cover.addEventListener('pointerleave', () => look(0, 0));
   }
-  // The panel's pop comes round once a loop, and only while the garden plays, so scrolling
-  // away never loses the count. After the last loop everything is held at its rest frame.
-  let rounds = Number(note.dataset.loops);
-  note.querySelector('[inert]')?.addEventListener('animationiteration', (e) => {
-    if (e.target !== e.currentTarget || --rounds > 0) return;
-    settled = true;
-    keys.forEach((a) => a.cancel());
-    for (const a of note.getAnimations({ subtree: true })) {
-      a.currentTime = 0;
-      a.pause();
-    }
-    // The air settles where it is, in the light.
-    for (const a of air()) a.pause();
-    if (pause) pause.hidden = true;
-  });
   start();
 }
 

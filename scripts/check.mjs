@@ -178,7 +178,7 @@ for (const reduce of [false, true]) {
       return { running: all.filter((a) => a.playState === 'running').length };
     });
   const air = await page.locator('header').evaluate((h) => ({
-    clouds: h.querySelectorAll('[data-cloud]').length,
+    clouds: [...h.querySelectorAll('[data-cover-cloud], [data-sun-cloud]')].filter((c) => c.getBoundingClientRect().width > 0).length,
     beams: h.querySelectorAll('[data-garden] [data-beam]').length,
     dust: h.querySelectorAll('[data-dust]').length,
     petals: h.querySelectorAll('[data-petal]').length,
@@ -186,7 +186,7 @@ for (const reduce of [false, true]) {
     fly: h.querySelectorAll('[data-close-fly]').length,
     quiet: [...h.querySelectorAll('[data-air="live"]')].every((e) => getComputedStyle(e).pointerEvents === 'none' && e.closest('[aria-hidden="true"]') !== null),
   }));
-  ok(air.clouds >= 1 && air.beams === 4 && air.dust > 10 && air.petals >= 3 && air.lens === 2 && air.fly === 1, `the cover has About's air: ${air.clouds} clouds, ${air.beams} beams, ${air.dust} specks, ${air.petals} petals, ${air.lens} lens corners, a close butterfly`);
+  ok(air.clouds === 3 && air.beams === 4 && air.dust > 10 && air.petals >= 3 && air.lens === 2 && air.fly === 1, `the cover has About's air: ${air.clouds} clouds (one in each top corner, the sun under the right, a bank behind the garden), ${air.beams} beams, ${air.dust} specks, ${air.petals} petals, ${air.lens} lens corners, a close butterfly`);
   ok(air.quiet, 'and it never takes a tap, and screen readers skip it');
   const pauseBtn = page.locator('[data-air-pause]');
   if (reduce) {
@@ -369,9 +369,9 @@ for (const width of [320, 390]) {
   await page.close();
 }
 
-// Once the garden has played its loops it settles for good, and the air round it with it: with
-// nothing left moving on the cover, the pause button goes. (Its loops are counted off the panel's
-// pop, so they're told here instead of waited out.)
+// The garden and the air round it keep looping, loop after loop (the panel's pop comes round
+// once a loop: told here instead of waited out), and the pause button stays: it holds all of
+// it, and lets it go again.
 {
   const page = await browser.newPage({ viewport: { width: 1280, height: 860 } });
   await page.goto(url, { waitUntil: 'networkidle' });
@@ -379,12 +379,18 @@ for (const width of [320, 390]) {
   ok(await pauseBtn.isVisible(), 'while the garden plays, the cover offers its pause button');
   await page.evaluate(() => {
     const pop = document.querySelector('[data-garden] [inert]');
-    for (let i = 0; i < 5; i++) pop.dispatchEvent(new AnimationEvent('animationiteration'));
+    for (let i = 0; i < 8; i++) pop.dispatchEvent(new AnimationEvent('animationiteration'));
   });
   await page.waitForTimeout(200);
-  const running = await page.locator('header').evaluate((h) => [...h.querySelectorAll('[data-air="live"], [data-garden]')].flatMap((e) => e.getAnimations({ subtree: true })).filter((a) => a.playState === 'running').length);
-  ok(running === 0, `once the garden settles, the air settles with it (${running} still moving)`);
-  ok(!(await pauseBtn.isVisible()), 'and with nothing left moving, the pause button goes');
+  const moving = () => page.locator('header').evaluate((h) => [...h.querySelectorAll('[data-air="live"], [data-garden]')].flatMap((e) => e.getAnimations({ subtree: true })).filter((a) => a.playState === 'running').length);
+  const loopsOn = await moving();
+  ok(loopsOn > 20 && (await pauseBtn.isVisible()), `loop after loop the cover keeps moving (${loopsOn} animations running) and keeps its pause button`);
+  await pauseBtn.click();
+  const held = await moving();
+  ok(held === 0 && (await pauseBtn.getAttribute('aria-label')) === 'Play the animation', `the pause button holds all of it (${held} still running)`);
+  await pauseBtn.click();
+  const again = await moving();
+  ok(again >= loopsOn, `and pressed again it all plays on (${again} running)`);
   await page.close();
 }
 

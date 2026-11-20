@@ -31,7 +31,8 @@ import { Bud, CHAPTERS, Desk, doneCss, Flight, FLOWER_PX, ON_FOOT, SHUT_MS, WALL
 import { DONE, LANDS, SaysNote } from './Done';
 import { Pattern } from './Patterns';
 import { Branch, type BranchSpec, type Depth } from './Branches';
-import { CloseButterfly, Dust, Lens, Petals, SkyCloud } from './Atmosphere';
+import { CloseButterfly, COVER_CLOUDS, CoverCloud, Dust, Lens, Petals } from './Atmosphere';
+import type { CoverCloudName } from './Atmosphere';
 import { Garden } from './Garden';
 import { draft, issues, links, month, pageTones, pressTones, tones, windows } from './content';
 import { Marks, MessageStack, Panel, panel } from './Panel';
@@ -374,6 +375,21 @@ const s = stylex.create({
 
 
 // ── Cover ─────────────────────────────────────────────────────────────────────────────
+/** Where one of the cover's clouds sits (Atmosphere.tsx's COVER_CLOUDS), held to the frame
+ *  edges it runs off and scaled with the cover (`--u`, global.css), and how it drifts. */
+function coverCloud(name: CoverCloudName, x: 'left' | 'right', y: 'top' | 'bottom', delay: number, lift = '0px'): React.CSSProperties {
+  const { box: [l, t, w, h], drift: [dx, dy, s] } = COVER_CLOUDS[name];
+  const u = (v: number) => `calc(${v} * var(--u))`;
+  return {
+    [x]: u(x === 'left' ? l : 1440 - l - w),
+    [y]: `calc(${y === 'top' ? t : 760 - t - h} * var(--u) - ${lift})`,
+    width: u(w),
+    ['--dx' as string]: u(dx),
+    ['--dy' as string]: u(dy),
+    ['--dd' as string]: `${s}s`,
+    ['--dl' as string]: `${delay}s`,
+  };
+}
 function Cover() {
   return (
     <header {...stylex.props(s.coverClip)}>
@@ -381,21 +397,20 @@ function Cover() {
         <span {...stylex.props(s.ghostClip)}>
           <GhostWord lines={['TO', 'NE']} tone="sky" style={{ left: '0.3vw', top: 70, fontSize: 'clamp(180px, 30vw, 440px)' }} />
         </span>
-        {/* The air in the sky, behind the words (About's meadow, Atmosphere.tsx): the garden's
-            riso clouds round the sun, dust drifting in its light, a few petals on the breeze. */}
+        {/* The air in the sky, behind the words (About's meadow, Atmosphere.tsx): riso cumulus
+            hanging from the top-left corner and rising behind the garden (the one the sun is
+            tucked under is the garden's, in the sun's own plane), dust drifting in its light, a
+            few petals on the breeze. */}
         <div aria-hidden style={{ position: 'absolute', inset: 0, overflow: 'clip', pointerEvents: 'none' }}>
         <div data-air-depth="far" style={{ position: 'absolute', inset: 0 }}>
           <div data-air="live">
-            {/* In focus: the sun's cloud, on the plane of the flower and the panel. */}
-            <span data-cloud data-cloud-depth="focus" style={{ left: '73%', top: '6%', width: '20%' }}>
-              <SkyCloud kind="tower" />
+            {/* Narrower, the headline sits higher and further left, under the cloud's deepest
+                part: the cloud rises a little with it (--lift, global.css), so it stays clear. */}
+            <span data-cover-cloud style={coverCloud('left', 'left', 'top', -18, 'var(--lift)')}>
+              <CoverCloud name="left" />
             </span>
-            {/* Farther off: smaller, softer, printed a step toward the sky. */}
-            <span data-cloud data-cloud-depth="far" data-air-wide style={{ left: '49%', top: '-3%', width: '12%', ['--cloud-delay' as string]: '-40s' }}>
-              <SkyCloud kind="bank" />
-            </span>
-            <span data-cloud data-cloud-depth="far" data-air-wide style={{ left: '92%', top: '22%', width: '9%', ['--cloud-delay' as string]: '-80s' }}>
-              <SkyCloud kind="small" />
+            <span data-cover-cloud style={coverCloud('bank', 'right', 'bottom', -31)}>
+              <CoverCloud name="bank" />
             </span>
             <Dust seed={21} count={30} area={[38, 100, 12, 92]} />
             <Petals seed={33} count={5} band={[16, 64]} />
@@ -460,12 +475,6 @@ function Cover() {
           </div>
         <div data-air-depth="near" style={{ position: 'absolute', inset: 0 }}>
           <div data-air="live" data-air-front>
-            {/* Right in front of the lens: a big cloud drifting past the left edge, out of focus,
-                its right edge kept in the margin, clear of the headline (from 1300px, where the
-                margin has room for it). */}
-            <span data-cloud data-cloud-depth="near" data-air-xwide style={{ right: 'calc(100% - max(clamp(20px, 5vw, 72px), (100% - 1280px) / 2 + clamp(20px, 5vw, 72px)) + 22px)', top: '24%', width: 340, ['--cloud-delay' as string]: '-20s' }}>
-              <SkyCloud kind="bank" />
-            </span>
             <span data-close-box data-air-xwide style={{ left: '24%', top: '3%', width: '26%', height: '13%' }}>
               <span data-close-path style={{ width: 'clamp(56px, 5.6vw, 84px)' }}>
                 <CloseButterfly />
