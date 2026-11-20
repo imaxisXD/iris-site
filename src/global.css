@@ -121,10 +121,11 @@
    with the night-to-day story (--air-r, the foot's --reveal). Never under Reduce Motion. */
 /* --u: one px of a 1440 cover, scaled with the cover, and no bigger than the garden gets (it
    stops growing at 420px, 27vw of 1555). */
-[data-air] { position: absolute; inset: 0; pointer-events: none; container-type: size; --u: min(100cqw / 1440, 1.0802px); --lift: clamp(0px, (1440px - 100cqw) * 0.4, 60px); }
-/* How far the cover's top-left cloud rises out of the headline's way (Page.tsx); on a phone the
-   headline starts lower, and the clouds keep a size you can see. */
-@media (max-width: 1023px) { [data-air] { --lift: 24px; } }
+[data-air] { position: absolute; inset: 0; pointer-events: none; container-type: size; --u: min(100cqw / 1440, 1.0802px); --lift: clamp(0px, (1440px - 100cqw) * 0.4, 60px); --sink: clamp(0px, (700px - 100cqh) * 0.6, 90px); }
+/* How far the cover's top-left cloud rises out of the headline's way, and its bank sinks out of
+   the words' way on a short cover (Page.tsx); on a phone the headline starts lower, and the
+   clouds keep a size you can see. */
+@media (max-width: 1023px) { [data-air] { --lift: 40px; } }
 @media (max-width: 760px) { [data-air] { --u: max(100cqw / 1440, 0.42px); --lift: 0px; } }
 /* The cover's clouds (Atmosphere.tsx's COVER_CLOUDS), a little soft through the lens, as About's
    far hill is (blur 1.2): the two in the sky paler too, a step toward it; the one the sun hangs

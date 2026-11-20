@@ -376,13 +376,14 @@ const s = stylex.create({
 
 // ── Cover ─────────────────────────────────────────────────────────────────────────────
 /** Where one of the cover's clouds sits (Atmosphere.tsx's COVER_CLOUDS), held to the frame
- *  edges it runs off and scaled with the cover (`--u`, global.css), and how it drifts. */
-function coverCloud(name: CoverCloudName, x: 'left' | 'right', y: 'top' | 'bottom', delay: number, lift = '0px'): React.CSSProperties {
+ *  edges it runs off and scaled with the cover (`--u`, global.css), and how it drifts. `out`:
+ *  how much further out through its top or bottom edge it sits. */
+function coverCloud(name: CoverCloudName, x: 'left' | 'right', y: 'top' | 'bottom', delay: number, out = '0px'): React.CSSProperties {
   const { box: [l, t, w, h], drift: [dx, dy, s] } = COVER_CLOUDS[name];
   const u = (v: number) => `calc(${v} * var(--u))`;
   return {
     [x]: u(x === 'left' ? l : 1440 - l - w),
-    [y]: `calc(${y === 'top' ? t : 760 - t - h} * var(--u) - ${lift})`,
+    [y]: `calc(${y === 'top' ? t : 760 - t - h} * var(--u) - ${out})`,
     width: u(w),
     ['--dx' as string]: u(dx),
     ['--dy' as string]: u(dy),
@@ -409,7 +410,8 @@ function Cover() {
             <span data-cover-cloud style={coverCloud('left', 'left', 'top', -18, 'var(--lift)')}>
               <CoverCloud name="left" />
             </span>
-            <span data-cover-cloud style={coverCloud('bank', 'right', 'bottom', -31)}>
+            {/* On a short cover the words come down toward it: it sinks (--sink, global.css). */}
+            <span data-cover-cloud style={coverCloud('bank', 'right', 'bottom', -31, 'var(--sink)')}>
               <CoverCloud name="bank" />
             </span>
             <Dust seed={21} count={30} area={[38, 100, 12, 92]} />
