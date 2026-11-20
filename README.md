@@ -26,6 +26,14 @@ the code.
   per part sit at the top, and the build fails if a keyframe drifts from them. It plays
   on a loop, pauses while scrolled away or at the cover's pause button, and holds still under
   Reduce Motion.
+- **The cover's entry** (`src/Entry.ts`) plays once as the page shows, as About's camera pulls
+  focus on the sky: the clouds come into focus from their corners, TONE prints in, the headline
+  rises line by line and its ✻ spins in, the copy rises and stamps down, ⌃ ⌥ G drop in, the
+  flower grows from its foot and the butterflies flutter in; then, at 1.5s, the garden wakes.
+  A storyboard, one `TIMING` and a config per element sit at the top; its springs are real
+  springs, written into CSS `linear()` easing at build time. CSS only, so the words are there
+  without the script, and never under Reduce Motion. While reviewing it, `?entry` lets R
+  replay it.
 - **The air round both skies** (`src/Atmosphere.tsx`) is About's meadow in the app
   (`MakersJourney.swift`), the same pieces at the same values. On the cover, towering cumulus
   as anime background art paints them, grown and lit as one billowing surface and printed in

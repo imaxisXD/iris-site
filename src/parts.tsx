@@ -194,12 +194,14 @@ const pt = stylex.create({
 });
 /** A stair headline in condensed caps: the second line steps right behind a ✻. With `lead`,
  *  the ✻ stands in the first line instead, after the lead word, where a comma would be:
- *  "Fix ✻ or change / the tone". */
-export function PageTitle({ lines, lead, small = false, id, level = 2, xstyle }: { lines: [string, string]; lead?: string; small?: boolean; id?: string; level?: 1 | 2; xstyle?: stylex.StyleXStyles }) {
+ *  "Fix ✻ or change / the tone". `attrs` and `starAttrs` go onto the heading and the ✻ (the
+ *  cover's entry, Entry.ts). */
+type Attrs = Record<string, unknown> & { style?: React.CSSProperties };
+export function PageTitle({ lines, lead, small = false, id, level = 2, xstyle, attrs, starAttrs }: { lines: [string, string]; lead?: string; small?: boolean; id?: string; level?: 1 | 2; xstyle?: stylex.StyleXStyles; attrs?: Attrs; starAttrs?: Attrs }) {
   const H = level === 1 ? 'h1' : 'h2';
-  const star = <span aria-hidden {...stylex.props(pt.star, lead != null && lines[0] !== '' && pt.starInline)}>✻</span>;
+  const star = <span aria-hidden {...starAttrs} {...stylex.props(pt.star, lead != null && lines[0] !== '' && pt.starInline)} style={starAttrs?.style}>✻</span>;
   return (
-    <H id={id} {...stylex.props(pt.title, small && pt.small, xstyle)}>
+    <H id={id} {...attrs} {...stylex.props(pt.title, small && pt.small, xstyle)} style={attrs?.style}>
       <span {...stylex.props(pt.line)}>
         {lead != null && <>{lead}{' '}{star}</>}
         {lines[0]}{' '}

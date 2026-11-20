@@ -79,6 +79,8 @@ import { KeyRow } from './parts';
 import { DONE as APP_DONE, flightOf, ReplacedNote, STAMP_BOX, StampFace, trailOf } from './Done';
 import { font, ink } from './tokens.stylex';
 import { Beams, COVER_CLOUDS, CoverCloud } from './Atmosphere';
+import { ENTER, TIMING as ENTRY, withEnter } from './Entry';
+import type { EnterCue } from './Entry';
 
 const TIMING = {
   loop:        12000,  // one round of the garden
@@ -703,9 +705,10 @@ function DoneNote() {
 const swings = (deg: number, oneWay: number, lag = 0) => vars({ '--deg': `${deg}deg`, '--ms': ms(oneWay), '--lag': ms(-oneWay * 2 + lag) });
 
 /** One plane of the scene: what's on it follows the pointer and sways as far as its depth says. */
-function Depth({ plane, children }: { plane: Plane; children: React.ReactNode }) {
+function Depth({ plane, children, enter }: { plane: Plane; children: React.ReactNode; enter?: EnterCue }) {
+  const look = vars({ '--lx': `${plane.look[0]}px`, '--ly': `${plane.look[1]}px` });
   return (
-    <div {...stylex.props(g.fill, g.look)} style={vars({ '--lx': `${plane.look[0]}px`, '--ly': `${plane.look[1]}px` })}>
+    <div {...stylex.props(g.fill, g.look)} {...(enter ? withEnter(enter, look) : { style: look })}>
       <div {...stylex.props(g.fill, g.sway)} style={vars({ '--drift': cq(plane.drift) })}>
         {children}
       </div>
@@ -756,14 +759,14 @@ export function Garden() {
     );
   };
   return (
-    <div {...stylex.props(g.garden)} aria-hidden="true" data-garden data-loop={TIMING.loop} data-keys={`${TIMING.keysPress},${TIMING.keyGap},${TIMING.wakes}`}>
+    <div {...stylex.props(g.garden)} aria-hidden="true" data-garden data-loop={TIMING.loop} data-wake={ENTRY.gardenWakes} data-keys={`${TIMING.keysPress},${TIMING.keyGap},${TIMING.wakes}`}>
       {/* 1. The sun, far away, its light falling across the sky (About's beams, Atmosphere.tsx):
           behind the sun and everything in front of it, centred on it wherever it is. */}
       <Depth plane={DEPTH.sun}>
-        <div aria-hidden data-sun-beams style={{ position: 'absolute', left: 'var(--sx)', top: 'var(--sy)', width: cq(3000), aspectRatio: '1', translate: '-50% -50%', pointerEvents: 'none' }}>
+        <div aria-hidden data-sun-beams {...withEnter(ENTER.beams, { position: 'absolute', left: 'var(--sx)', top: 'var(--sy)', width: cq(3000), aspectRatio: '1', translate: '-50% -50%', pointerEvents: 'none' })}>
           <Beams />
         </div>
-        <div {...stylex.props(g.layer, g.square)} style={{ left: `calc(var(--sx) - ${cq((SUN.size * DEPTH.sun.scale) / 2)})`, opacity: DEPTH.sun.ink, top: `calc(var(--sy) - ${cq((SUN.size * DEPTH.sun.scale) / 2)})`, width: cq(SUN.size * DEPTH.sun.scale), ...vars({ '--turn': ms(SUN.notchMs * 16) }) }}>
+        <div {...stylex.props(g.layer, g.square)} {...withEnter(ENTER.sun, { left: `calc(var(--sx) - ${cq((SUN.size * DEPTH.sun.scale) / 2)})`, opacity: DEPTH.sun.ink, top: `calc(var(--sy) - ${cq((SUN.size * DEPTH.sun.scale) / 2)})`, width: cq(SUN.size * DEPTH.sun.scale), ...vars({ '--turn': ms(SUN.notchMs * 16) }) })}>
           <div style={{ position: 'absolute', inset: SUN.halo.reach, borderRadius: '50%', opacity: SUN.halo.ink, backgroundImage: `radial-gradient(closest-side, ${SUN.halo.color}, transparent)` }} />
           <div {...stylex.props(g.fill, g.beam)} style={vars({ '--beam': SUN.beam, '--cheer': SUN.cheer })}>
             <div {...stylex.props(g.fill, g.tick)}>
@@ -781,16 +784,16 @@ export function Garden() {
         </div>
         {/* The cloud the sun is tucked under, hanging from the cover's top-right corner, in
             front of the sun on its plane (Atmosphere.tsx's COVER_CLOUDS; from 1024px). */}
-        <div data-sun-cloud style={sunCloud}>
+        <div data-sun-cloud {...withEnter(ENTER.cloudSun, sunCloud)}>
           <CoverCloud name="sun" />
         </div>
       </Depth>
 
       {/* 2. The far butterflies, behind the panel */}
-      <Depth plane={DEPTH.far}>{B.items.filter((b) => b.plane === 'far').map(butterfly)}</Depth>
+      <Depth plane={DEPTH.far} enter={ENTER.butterflies}>{B.items.filter((b) => b.plane === 'far').map(butterfly)}</Depth>
 
       {/* 3 and 4. Iris's panel, popped out of the bloom, and in front of it the butterflies that land on it */}
-      <Depth plane={DEPTH.panel}>
+      <Depth plane={DEPTH.panel} enter={ENTER.butterflies}>
         <div {...stylex.props(g.layer, g.pop)} style={vars({ '--from': PANEL.from, '--over': PANEL.over })} inert>
           <div {...stylex.props(g.fit)}>
             <Panel tabs={NOTE.tones} app={{ name: NOTE.app, icon: NOTE.app.toLowerCase() }} hooks={{ tabs: stylex.props(g.tabs) as { className: string }, keys: stylex.props(g.hints) as { className: string }, replaceWrap: stylex.props(g.push) as { className: string } }} seed={51}>
@@ -820,14 +823,14 @@ export function Garden() {
       <div
         {...stylex.props(g.layer, g.flower)}
         data-flower
-        style={{
+        {...withEnter(ENTER.flower, {
           ...on([0, 0]),
           ...vars({ '--phone': FLOWER.phone }),
           left: pct(FLOWER.foot[0] + FLOWER.room.left * FLOWER.unit, BOX.width),
           top: pct(FLOWER.foot[1] + FLOWER.room.top * FLOWER.unit, BOX.height),
           width: pct(FLOWER.room.width * FLOWER.unit, BOX.width),
           aspectRatio: `${FLOWER.room.width} / ${FLOWER.room.height}`,
-        }}
+        })}
       >
         {/* The far side of the earth, behind the stem and leaf: the ground lies back in depth. */}
         <Part name="ground-back" at={[0, 0]} />

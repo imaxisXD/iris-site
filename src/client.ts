@@ -541,21 +541,35 @@ if (note) {
   document.fonts?.ready.then(measure);
   addEventListener('resize', measure);
 }
+// The cover's entry (Entry.ts) is CSS, once, on load. While reviewing it, `?entry` in the
+// address lets R play it again.
+const isEntry = (a: Animation) => (a as CSSAnimation).animationName?.startsWith('enter-') ?? false;
+if (new URLSearchParams(location.search).has('entry'))
+  addEventListener('keydown', (e) => {
+    if (e.key !== 'r' || e.metaKey || e.ctrlKey) return;
+    for (const a of document.getAnimations()) if (isEntry(a)) (a.cancel(), a.play());
+  });
 if (note && !still && 'getAnimations' in note) {
   const loop = Number(note.dataset.loop);
   const [press, gap, up] = note.dataset.keys!.split(',').map(Number);
   const caps = $$<HTMLElement>('[role="img"] kbd', note.closest('header')!).filter((k) => !note.contains(k)); // the cover's keys, not the panel's
   let keys: Animation[] = [];
   let seen = true;
+  // The garden waits at rest for the cover's entry, then wakes (data-wake, Entry.ts's TIMING).
+  let awake = false;
+  const parts = () => note.getAnimations({ subtree: true }).filter((a) => !isEntry(a));
+  for (const a of parts()) (a.pause(), (a.currentTime = 0));
   // The air round the cover (Atmosphere.tsx): it runs with the garden and holds with it while
   // the cover is scrolled away. The pause button stops all of it, as About's does (WCAG 2.2.2).
   const header = note.closest('header')!;
   const air = () => $$<HTMLElement>('[data-air="live"]', header).flatMap((el) => el.getAnimations({ subtree: true }));
   const pause = header.querySelector<HTMLButtonElement>('[data-air-pause]');
   let held = false;
-  const everything = () => [...note.getAnimations({ subtree: true }), ...keys, ...air()];
+  const entry = () => header.getAnimations({ subtree: true }).filter(isEntry);
+  const everything = () => [...(awake ? [...parts(), ...keys] : []), ...air(), ...entry()];
+  // (What has finished stays finished: playing it again would replay the entry.)
   const apply = () => {
-    for (const a of everything()) seen && !held ? a.play() : a.pause();
+    for (const a of everything()) if (a.playState !== 'finished') seen && !held ? a.play() : a.pause();
   };
   if (pause) {
     pause.hidden = false;
@@ -567,8 +581,8 @@ if (note && !still && 'getAnimations' in note) {
     });
   }
   const start = () => {
+    awake = true;
     keys.forEach((a) => a.cancel());
-    const parts = note.getAnimations({ subtree: true });
     keys = caps.map((cap, i) => {
       const down = (press + i * gap) / loop;
       const rest = { translate: '0 0', scale: '1' }, pressed = { translate: '-1px 2px', scale: '0.97' };
@@ -577,7 +591,7 @@ if (note && !still && 'getAnimations' in note) {
         { duration: loop, iterations: Infinity },
       );
     });
-    for (const a of [...parts, ...keys]) a.currentTime = 0;
+    for (const a of [...parts(), ...keys]) a.currentTime = 0;
     apply();
   };
   new IntersectionObserver(([e]) => {
@@ -595,7 +609,7 @@ if (note && !still && 'getAnimations' in note) {
     });
     cover.addEventListener('pointerleave', () => look(0, 0));
   }
-  start();
+  setTimeout(start, Number(note.dataset.wake) || 0);
 }
 
 // ── The foot coming out from under the page (Page.tsx's sheet, Footer.tsx) ─────────────

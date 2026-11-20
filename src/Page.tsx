@@ -32,6 +32,7 @@ import { DONE, LANDS, SaysNote } from './Done';
 import { Pattern } from './Patterns';
 import { Branch, type BranchSpec, type Depth } from './Branches';
 import { CloseButterfly, COVER_CLOUDS, CoverCloud, Dust, Lens, Petals } from './Atmosphere';
+import { ENTER, withEnter } from './Entry';
 import type { CoverCloudName } from './Atmosphere';
 import { Garden } from './Garden';
 import { draft, issues, links, month, pageTones, pressTones, tones, windows } from './content';
@@ -395,7 +396,7 @@ function Cover() {
   return (
     <header {...stylex.props(s.coverClip)}>
       <div {...stylex.props(s.plate)}>
-        <span {...stylex.props(s.ghostClip)}>
+        <span {...stylex.props(s.ghostClip)} {...ENTER.ghost}>
           <GhostWord lines={['TO', 'NE']} tone="sky" style={{ left: '0.3vw', top: 70, fontSize: 'clamp(180px, 30vw, 440px)' }} />
         </span>
         {/* The air in the sky, behind the words (About's meadow, Atmosphere.tsx): riso cumulus
@@ -407,11 +408,11 @@ function Cover() {
           <div data-air="live">
             {/* Narrower, the headline sits higher and further left, under the cloud's deepest
                 part: the cloud rises a little with it (--lift, global.css), so it stays clear. */}
-            <span data-cover-cloud style={coverCloud('left', 'left', 'top', -18, 'var(--lift)')}>
+            <span data-cover-cloud {...withEnter(ENTER.cloudLeft, coverCloud('left', 'left', 'top', -18, 'var(--lift)'))}>
               <CoverCloud name="left" />
             </span>
             {/* On a short cover the words come down toward it: it sinks (--sink, global.css). */}
-            <span data-cover-cloud style={coverCloud('bank', 'right', 'bottom', -31, 'var(--sink)')}>
+            <span data-cover-cloud {...withEnter(ENTER.cloudBank, coverCloud('bank', 'right', 'bottom', -31, 'var(--sink)'))}>
               <CoverCloud name="bank" />
             </span>
             <Dust seed={21} count={30} area={[38, 100, 12, 92]} />
@@ -421,10 +422,10 @@ function Cover() {
         </div>
         <div {...stylex.props(s.wrap, s.plateInner)}>
           <div {...stylex.props(s.masthead)}>
-            <a href="/" aria-label="Iris, home" style={{ textDecoration: 'none' }}>
+            <a href="/" aria-label="Iris, home" {...withEnter(ENTER.wordmark, { textDecoration: 'none' })}>
               <Wordmark size="clamp(34px, 3.4vw, 44px)" />
             </a>
-            <nav aria-label="On this page" {...stylex.props(s.nav)}>
+            <nav aria-label="On this page" {...stylex.props(s.nav)} {...ENTER.nav}>
               <a href="#moment" {...stylex.props(s.navLink)}>How it works</a>
               <a href="#private" {...stylex.props(s.navLink)}>Privacy</a>
               <a href="#install" {...stylex.props(s.navLink)}>Install</a>
@@ -432,28 +433,30 @@ function Cover() {
             </nav>
           </div>
           <div {...stylex.props(s.coverBody)}>
-            <PageTitle level={1} lines={['Fix your grammar', 'Change your tone']} xstyle={s.coverTitle} />
-            <p {...stylex.props(s.lede)}>
+            <PageTitle level={1} lines={['Fix your grammar', 'Change your tone']} xstyle={s.coverTitle} attrs={ENTER.title} starAttrs={ENTER.star} />
+            <p {...stylex.props(s.lede)} {...ENTER.lede}>
               <span data-tones="lede">Grammar and tone in every app on your Mac.</span>
             </p>
             {/* The promise, said plainly: Iris has no server to send anything to. */}
-            <p {...stylex.props(s.promise)}>
-              <InkLabel>100% on your Mac</InkLabel>
+            <p {...stylex.props(s.promise)} {...ENTER.promise}>
+              <span {...ENTER.promiseStamp}>
+                <InkLabel>100% on your Mac</InkLabel>
+              </span>
               {['No servers', 'No account', 'Works offline'].map((t) => (
                 <span key={t} {...stylex.props(s.promiseItem)}>
                   <HandTick size={15} color="rgb(42 26 22)" /> {t}
                 </span>
               ))}
             </p>
-            <div {...stylex.props(s.cta)}>
+            <div {...stylex.props(s.cta)} {...ENTER.cta}>
               <GetIris />
-              <span {...stylex.props(s.ctaMeta)}>
+              <span {...stylex.props(s.ctaMeta)} {...ENTER.ctaMeta}>
                 <Platforms />
               </span>
             </div>
-            <div {...stylex.props(s.keysNote)}>
+            <div {...stylex.props(s.keysNote)} {...ENTER.keys}>
               <KeyRow keys={['⌃', '⌥', 'G']} labeled />
-              <span {...stylex.props(s.keysWords)}>
+              <span {...stylex.props(s.keysWords)} {...ENTER.keysWords}>
                 <OnMac>in any text box</OnMac>
                 <OnTouch>on your Mac, in any text box</OnTouch>
               </span>
@@ -468,16 +471,16 @@ function Cover() {
         <div aria-hidden style={{ position: 'absolute', inset: 0, zIndex: 3, overflow: 'clip', pointerEvents: 'none' }}>
           {/* Rooted below the frame, as the flower is: they sway, but never leave the edge. */}
           <div data-air="live" data-air-front>
-            <span data-lens style={{ left: 0, width: 'min(9.5vw, 150px)', ['--d' as string]: '6.4s', ['--delay' as string]: '-2s' }}>
+            <span data-lens {...withEnter(ENTER.lens, { left: 0, width: 'min(9.5vw, 150px)', ['--d' as string]: '6.4s', ['--delay' as string]: '-2s' })}>
               <Lens side="left" seed={5} />
             </span>
-            <span data-lens style={{ right: 0, width: 'min(12vw, 180px)', ['--d' as string]: '7.2s', ['--delay' as string]: '-5s' }}>
+            <span data-lens {...withEnter(ENTER.lens, { right: 0, width: 'min(12vw, 180px)', ['--d' as string]: '7.2s', ['--delay' as string]: '-5s' })}>
               <Lens side="right" seed={9} />
             </span>
           </div>
         <div data-air-depth="near" style={{ position: 'absolute', inset: 0 }}>
           <div data-air="live" data-air-front>
-            <span data-close-box data-air-xwide style={{ left: '24%', top: '3%', width: '26%', height: '13%' }}>
+            <span data-close-box data-air-xwide {...withEnter(ENTER.closeFly, { left: '24%', top: '3%', width: '26%', height: '13%' })}>
               <span data-close-path style={{ width: 'clamp(56px, 5.6vw, 84px)' }}>
                 <CloseButterfly />
               </span>
@@ -486,7 +489,7 @@ function Cover() {
         </div>
         </div>
         {/* Stops everything on the cover that moves on its own, as About's does (WCAG 2.2.2). */}
-        <button type="button" data-air-pause aria-label="Pause the animation" hidden {...stylex.props(s.airPause)}>
+        <button type="button" data-air-pause aria-label="Pause the animation" hidden {...stylex.props(s.airPause)} {...ENTER.pause}>
           <svg aria-hidden viewBox="0 0 26 26" width={26} height={26}>
             <circle cx={13} cy={13} r={12} fill="rgb(255 252 249 / 0.92)" />
             <path d="M13,1.6C19.6,1.3 24.6,6.4 24.4,13.2C24.2,19.7 19.1,24.6 12.7,24.4C6.4,24.2 1.5,19.2 1.7,12.8C1.9,6.6 6.8,1.8 13,1.6Z" fill="none" stroke="rgb(42 26 22 / 0.55)" strokeWidth={1.1} />

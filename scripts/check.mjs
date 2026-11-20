@@ -152,7 +152,7 @@ for (const reduce of [false, true]) {
   const gardenState = () =>
     page.locator('[data-garden]').evaluate((g) => {
       const all = g.getAnimations({ subtree: true });
-      return { running: all.filter((a) => a.playState === 'running').length, paused: all.filter((a) => a.playState === 'paused').length };
+      return { running: all.filter((a) => a.playState === 'running' && !(a instanceof CSSTransition)).length, paused: all.filter((a) => a.playState === 'paused').length };
     });
   ok(await page.locator('[data-garden]').isVisible(), 'the cover shows its garden');
   ok((await page.locator('[data-garden] [data-panel], [data-garden] [role="tablist"]').count()) > 0, 'with Iris\'s panel in it');
@@ -175,7 +175,7 @@ for (const reduce of [false, true]) {
   const airState = () =>
     page.locator('header').evaluate((h) => {
       const all = [...h.querySelectorAll('[data-air="live"], [data-garden]')].flatMap((e) => e.getAnimations({ subtree: true }));
-      return { running: all.filter((a) => a.playState === 'running').length };
+      return { running: all.filter((a) => a.playState === 'running' && !(a instanceof CSSTransition)).length };
     });
   const air = await page.locator('header').evaluate((h) => ({
     clouds: [...h.querySelectorAll('[data-cover-cloud], [data-sun-cloud]')].filter((c) => c.getBoundingClientRect().width > 0).length,
@@ -382,7 +382,7 @@ for (const width of [320, 390]) {
     for (let i = 0; i < 8; i++) pop.dispatchEvent(new AnimationEvent('animationiteration'));
   });
   await page.waitForTimeout(200);
-  const moving = () => page.locator('header').evaluate((h) => [...h.querySelectorAll('[data-air="live"], [data-garden]')].flatMap((e) => e.getAnimations({ subtree: true })).filter((a) => a.playState === 'running').length);
+  const moving = () => page.locator('header').evaluate((h) => [...h.querySelectorAll('[data-air="live"], [data-garden]')].flatMap((e) => e.getAnimations({ subtree: true })).filter((a) => a.playState === 'running' && !(a instanceof CSSTransition)).length);
   const loopsOn = await moving();
   ok(loopsOn > 20 && (await pauseBtn.isVisible()), `loop after loop the cover keeps moving (${loopsOn} animations running) and keeps its pause button`);
   await pauseBtn.click();
@@ -391,6 +391,45 @@ for (const width of [320, 390]) {
   await pauseBtn.click();
   const again = await moving();
   ok(again >= loopsOn, `and pressed again it all plays on (${again} running)`);
+  await page.close();
+}
+
+// The cover's entry (Entry.ts): once, on load, everything in place by about 2s; the garden at
+// rest until it's done, then waking. Never under Reduce Motion.
+for (const reduce of [false, true]) {
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, reducedMotion: reduce ? 'reduce' : 'no-preference' });
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  const entering = () => page.evaluate(() => document.getAnimations().filter((a) => a.animationName?.startsWith('enter-')).map((a) => ({ state: a.playState, end: a.effect.getComputedTiming().endTime })));
+  const garden = () => page.locator('[data-garden]').evaluate((g) => g.getAnimations({ subtree: true }).filter((a) => !a.animationName?.startsWith('enter-') && !(a instanceof CSSTransition) && a.playState === 'running').length);
+  const first = await entering();
+  if (reduce) {
+    ok(first.length === 0, 'under Reduce Motion the cover has no entry: it is simply there');
+  } else {
+    const wake = Number(await page.locator('[data-garden]').getAttribute('data-wake'));
+    ok(first.length > 20 && Math.max(...first.map((a) => a.end)) <= 2200, `the cover enters: ${first.length} parts, all in place by ${Math.round(Math.max(...first.map((a) => a.end)))}ms`);
+    const before = await garden();
+    ok(before === 0, `and the garden waits at rest while it does (${before} parts moving)`);
+    await page.waitForTimeout(wake + 900);
+    const after = await garden();
+    ok(after > 20, `then wakes at ${wake}ms (${after} parts moving)`);
+    const replayed = await page.evaluate(() => document.getAnimations().filter((a) => a.animationName?.startsWith('enter-') && a.playState !== 'finished').length);
+    ok(replayed === 0, `and the garden waking never plays the entry again (${replayed} replaying)`);
+    // Held and let go, scrolled away and back: still never again.
+    await page.locator('[data-air-pause]').click();
+    await page.locator('[data-air-pause]').click();
+    await page.evaluate(() => window.scrollTo(0, 2400));
+    await page.waitForTimeout(300);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(300);
+    const again = await page.evaluate(() => document.getAnimations().filter((a) => a.animationName?.startsWith('enter-') && a.playState !== 'finished').length);
+    ok(again === 0, `nor pausing and playing, nor scrolling away and back (${again} replaying)`);
+    const done = await page.evaluate(() => {
+      const els = [...document.querySelectorAll('[data-enter], [data-enter-kids] > *, [data-enter-grandkids] > * > *')].filter((e) => e.getClientRects().length && getComputedStyle(e).display !== 'contents');
+      const off = els.filter((e) => { const cs = getComputedStyle(e); return +cs.opacity < 0.99 || (cs.transform !== 'none' && cs.transform !== 'matrix(1, 0, 0, 1, 0, 0)'); });
+      return { all: els.length, off: off.map((e) => e.getAttribute('class')?.slice(0, 24) ?? e.tagName), running: document.getAnimations().filter((a) => a.animationName?.startsWith('enter-') && a.playState === 'running').length };
+    });
+    ok(done.running === 0 && done.off.length === 0, `and once it's in, all ${done.all} parts stand where they belong, in full (${done.off.join(', ') || 'none out of place'})`);
+  }
   await page.close();
 }
 

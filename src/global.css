@@ -380,3 +380,38 @@
 @media (prefers-reduced-motion: reduce) {
   [data-penlink-ribbon], [data-penlink-arrow] { transition: none; }
 }
+
+/* ── The cover's entry (Entry.ts: its storyboard, TIMING and springs) ─────────────────────
+   Each element carries its cue as variables: which motion (--enter), when (--enter-at), how
+   long and on what curve (a spring, as linear()), and where it starts from (--e*). It moves
+   itself (data-enter), or its children (data-enter-kids) or their children
+   (data-enter-grandkids), in order, --enter-gap apart. Transform, opacity, filter and
+   clip-path only, so it never fights the drift, the sway, the depth or the garden's own keys.
+   Once, on load; never under Reduce Motion. Where linear() isn't known the cue is dropped
+   whole and everything is simply there. */
+span[data-enter] { display: inline-block; }
+@media (prefers-reduced-motion: no-preference) {
+  [data-enter], [data-enter-kids] > *, [data-enter-grandkids] > * > * {
+    animation: var(--enter) var(--enter-dur) var(--enter-ease) calc(var(--enter-at) + var(--i, 0) * var(--enter-gap)) both;
+  }
+  [data-enter-kids] > :nth-child(2), [data-enter-grandkids] > * > :nth-child(2) { --i: 1; }
+  [data-enter-kids] > :nth-child(3), [data-enter-grandkids] > * > :nth-child(3) { --i: 2; }
+  [data-enter-kids] > :nth-child(4), [data-enter-grandkids] > * > :nth-child(4) { --i: 3; }
+  [data-enter-kids] > :nth-child(5), [data-enter-grandkids] > * > :nth-child(5) { --i: 4; }
+  [data-enter-kids] > :nth-child(6), [data-enter-grandkids] > * > :nth-child(6) { --i: 5; }
+}
+/* Rises (or drops, or grows from its foot, or stamps down) into place from its offset. */
+@keyframes enter-rise { from { opacity: 0; transform: translate(var(--ex, 0px), var(--ey, 0px)) rotate(var(--er, 0deg)) scale(var(--esx, 1), var(--esy, 1)); } }
+/* A headline line, rising out of its own slot. */
+@keyframes enter-line {
+  from { opacity: 0; transform: translateY(var(--ey, 0px)); clip-path: inset(-25% -10% 100% -10%); }
+  to { clip-path: inset(-25% -10% -25% -10%); }
+}
+/* Through the lens: out of focus and off to one side, coming into focus where it is. */
+@keyframes enter-focus { from { opacity: 0; filter: blur(var(--eb, 0px)); transform: translate(var(--ex, 0px), var(--ey, 0px)) scale(var(--es, 1)); } }
+/* Written on with the brush, left to right. */
+@keyframes enter-write {
+  from { clip-path: inset(-30% 100% -30% -5%); }
+  to { clip-path: inset(-30% -5% -30% -5%); }
+}
+@keyframes enter-fade { from { opacity: 0; } }
