@@ -541,14 +541,9 @@ if (note) {
   document.fonts?.ready.then(measure);
   addEventListener('resize', measure);
 }
-// The cover's entry (Entry.ts) is CSS, once, on load. While reviewing it, `?entry` in the
-// address lets R play it again.
+// The cover's entry (Entry.ts) is CSS, once, on load: the garden's own animations are told
+// apart from it by name.
 const isEntry = (a: Animation) => (a as CSSAnimation).animationName?.startsWith('enter-') ?? false;
-if (new URLSearchParams(location.search).has('entry'))
-  addEventListener('keydown', (e) => {
-    if (e.key !== 'r' || e.metaKey || e.ctrlKey) return;
-    for (const a of document.getAnimations()) if (isEntry(a)) (a.cancel(), a.play());
-  });
 if (note && !still && 'getAnimations' in note) {
   const loop = Number(note.dataset.loop);
   const [press, gap, up] = note.dataset.keys!.split(',').map(Number);

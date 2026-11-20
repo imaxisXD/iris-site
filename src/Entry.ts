@@ -171,8 +171,8 @@ const timed = (duration: number, ease: string) => ({ duration, ease });
 
 /** Each element's entry, ready to spread onto it: `<p {...ENTER.lede}>`. Styles merge with
  *  `withEnter` where the element has its own. */
-/** Each cue carries its own name on its attribute (`data-enter="title"`), so it can be found and
- *  retimed while reviewing. */
+/** Each cue carries its own name on its attribute (`data-enter="title"`), so the CSS can single
+ *  one out (the sun, on a narrow cover, global.css). */
 const named = <T extends Record<string, ReturnType<typeof cue>>>(cues: T): T =>
   Object.fromEntries(Object.entries(cues).map(([k, c]) => [k, Object.fromEntries(Object.entries(c).map(([a, v]) => [a, a.startsWith('data-enter') ? k : v]))])) as T;
 export const ENTER = named({
