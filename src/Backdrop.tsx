@@ -41,7 +41,7 @@ const TORN = [
   'polygon(0% 2.4%, 15% 0.6%, 33% 2%, 52% 0%, 70% 1.6%, 88% 0.2%, 100% 1.8%, 98.9% 22%, 100% 45%, 98.6% 68%, 99.8% 90%, 98.5% 100%, 79% 98.2%, 58% 99.8%, 37% 98%, 18% 99.6%, 1.2% 98%, 0% 76%, 1.4% 52%, 0.2% 28%)',
 ];
 const ps = stylex.create({
-  scene: { position: 'relative', paddingTop: 'clamp(40px, 5vw, 64px)', paddingBottom: 'clamp(40px, 6vw, 80px)', isolation: 'isolate' },
+  scene: { position: 'relative', paddingTop: 'clamp(40px, 5vw, 64px)', paddingBottom: 'clamp(40px, 6vw, 80px)', paddingInline: { default: 0, [MOBILE]: 12 }, isolation: 'isolate' },
   sheet: { position: 'absolute', zIndex: -1, overflow: 'hidden', isolation: 'isolate' },
   tan: { backgroundColor: ink.tan, backgroundImage: `${tex.screen}, ${tex.streaks}`, backgroundSize: '96px 96px, 128px 128px' },
   // The sheets lie flat on the page (only the panel on top casts a shadow), dimmed as if in the
@@ -50,17 +50,17 @@ const ps = stylex.create({
   // The page's own riso screen and streaks over a print, so no sheet reads as flat colour.
   texture: { position: 'absolute', inset: 0, backgroundImage: `${tex.screen}, ${tex.streaks}`, backgroundSize: '96px 96px, 128px 128px', pointerEvents: 'none' },
   // Back: the tan print with Iris's flower, behind the panel's right two thirds and out past it.
-  garden: { clipPath: TORN[1], top: 0, bottom: '9%', left: '22%', right: 'calc(-1 * clamp(8px, 2.6vw, 40px))', [MOBILE]: { left: '14%', right: -20 } },
+  garden: { clipPath: TORN[1], top: 0, bottom: { default: '9%', [MOBILE]: '5%' }, left: '22%', right: 'calc(-1 * clamp(8px, 2.6vw, 40px))', [MOBILE]: { left: '16%', right: -16 } },
   // Middle: a pale pink sheet with the page's ghost word, behind the panel's left half.
   tone: {
-    top: -14,
+    top: { default: -14, [MOBILE]: -10 },
     left: 'calc(-1 * clamp(12px, 2.6vw, 36px))',
     width: '60%',
     height: '74%',
     transform: 'rotate(1.4deg)',
     clipPath: TORN[2],
     backgroundColor: 'rgb(249 205 226)',
-    [MOBILE]: { left: -14, width: '70%' },
+    [MOBILE]: { left: -14, width: '68%' },
   },
   toneWord: {
     position: 'absolute',
@@ -85,7 +85,7 @@ const ps = stylex.create({
     aspectRatio: '3 / 4',
     transform: 'rotate(-2deg)',
     clipPath: TORN[0],
-    [MOBILE]: { left: -12, width: '42%', bottom: 12 },
+    [MOBILE]: { left: -16, width: '42%', bottom: 8 },
   },
   over: { position: 'relative' },
 });

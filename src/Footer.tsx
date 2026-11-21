@@ -202,20 +202,20 @@ const f = stylex.create({
     maxWidth: 1280,
     marginInline: 'auto',
     paddingInline: 'clamp(20px, 5vw, 72px)',
-    paddingTop: 'clamp(40px, 5vw, 64px)',
+    paddingTop: { default: 'clamp(40px, 5vw, 64px)', [MOBILE]: 32 },
     display: 'grid',
     gridTemplateColumns: 'minmax(0, 1fr) auto',
-    gap: '24px clamp(24px, 4vw, 56px)',
+    gap: { default: '24px clamp(24px, 4vw, 56px)', [MOBILE]: 16 },
     alignItems: 'end',
     [MOBILE]: { gridTemplateColumns: 'minmax(0, 1fr)' },
   },
   // The last call.
   // Above the wordmark's layers, so on a phone, where the wordmark sits under it, the sun's rings
   // go behind the stub instead of being drawn over its words.
-  call: { position: 'relative', zIndex: 3, display: 'flex', flexDirection: 'column', gap: 26, alignItems: 'flex-start', paddingBottom: 'clamp(28px, 3vw, 40px)' },
-  cta: { display: 'flex', alignItems: 'center', gap: '14px 22px', flexWrap: 'wrap' },
-  ctaMeta: { fontSize: 12.5, lineHeight: 1.5 },
-  links: { display: 'flex', flexWrap: 'wrap', gap: '12px 26px', alignItems: 'center' },
+  call: { position: 'relative', zIndex: 3, display: 'flex', flexDirection: 'column', gap: { default: 26, [MOBILE]: 18 }, alignItems: 'flex-start', paddingBottom: { default: 'clamp(28px, 3vw, 40px)', [MOBILE]: 16 } },
+  cta: { display: 'flex', alignItems: { default: 'center', [MOBILE]: 'flex-start' }, flexDirection: { default: 'row', [MOBILE]: 'column' }, gap: { default: '14px 22px', [MOBILE]: 10 }, flexWrap: 'wrap' },
+  ctaMeta: { fontSize: { default: 12.5, [MOBILE]: 11.5 }, lineHeight: { default: 1.5, [MOBILE]: 1.45 } },
+  links: { display: 'flex', flexWrap: 'wrap', gap: { default: '12px 26px', [MOBILE]: '10px 18px' }, alignItems: 'center' },
 
   // The wordmark, cut off by the page's bottom edge, the sun behind it, butterflies on it.
   markCell: { position: 'relative', justifySelf: 'end', maxWidth: '100%', [MOBILE]: { justifySelf: 'center' } },
@@ -245,13 +245,14 @@ const f = stylex.create({
   stub: {
     position: 'relative',
     display: 'grid',
-    gridTemplateColumns: 'auto auto',
-    gap: '4px 18px',
+    gridTemplateColumns: { default: 'auto auto', [MOBILE]: 'auto minmax(0, 1fr)' },
+    gap: { default: '4px 18px', [MOBILE]: '4px 14px' },
     alignItems: 'center',
-    padding: '12px 16px 12px 22px',
+    padding: { default: '12px 16px 12px 22px', [MOBILE]: '10px 14px 10px 20px' },
+    width: { default: 'auto', [MOBILE]: '100%' },
     backgroundColor: ink.paper,
     color: ink.i12,
-    transform: 'rotate(-1.2deg)',
+    transform: { default: 'rotate(-1.2deg)', [MOBILE]: 'rotate(-0.4deg)' },
     boxShadow: '0 1px 1px rgb(42 26 22 / 0.08), 0 10px 22px -12px rgb(42 26 22 / 0.4)',
     // Perforated along its left edge: a row of bites out of the paper.
     maskImage: 'radial-gradient(circle at 0 6px, transparent 3.5px, black 4px)',
@@ -262,10 +263,10 @@ const f = stylex.create({
     WebkitMaskRepeat: 'repeat-y',
   },
   perf: { position: 'absolute', left: 9, top: 6, bottom: 6, borderLeftWidth: 1.5, borderLeftStyle: 'dashed', borderLeftColor: 'rgb(42 26 22 / 0.45)' },
-  stubWord: { fontFamily: font.brush, fontSize: 26, lineHeight: 1, textTransform: 'none', letterSpacing: 0, fontWeight: 400 },
+  stubWord: { fontFamily: font.brush, fontSize: { default: 26, [MOBILE]: 22 }, lineHeight: 1, textTransform: 'none', letterSpacing: 0, fontWeight: 400 },
   keys: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 },
-  keysNote: { fontFamily: font.brush, fontSize: 17, lineHeight: 1 },
-  stubSmall: { fontSize: 10.5, lineHeight: 1.5, maxWidth: '30ch', margin: 0 },
+  keysNote: { fontFamily: font.brush, fontSize: { default: 17, [MOBILE]: 15 }, lineHeight: 1 },
+  stubSmall: { fontSize: { default: 10.5, [MOBILE]: 10 }, lineHeight: { default: 1.5, [MOBILE]: 1.45 }, maxWidth: '30ch', margin: 0 },
   rays: {
     animationName: { default: turn, [STILL]: 'none' },
     animationDuration: ms(SUN.turnMs),
@@ -323,7 +324,7 @@ function Stub() {
         <span {...stylex.props(f.stubWord)}>
           Made by Abhishek
         </span>
-        <p {...stylex.props(f.stubSmall)}>Gemma 4 (Gemma Terms of Use), Apple MLX (MIT), fonts under the SIL OFL. MIT license.</p>
+        <p {...stylex.props(f.stubSmall)}>Free &amp; open source · Built with Gemma 4 &amp; Apple MLX</p>
       </span>
     </div>
   );
@@ -420,7 +421,7 @@ export function Footer() {
             <PenLink ribbon="paper" out={false} href="#install">Install</PenLink>
             <PenLink ribbon="paper" out={false} href="#questions">Questions</PenLink>
             <PenLink ribbon="paper" out={false} href="#private">Privacy</PenLink>
-            <PenLink ribbon="paper" href={links.code}>The code</PenLink>
+            <PenLink ribbon="paper" href={links.code}>Source code</PenLink>
             <PenLink ribbon="paper" href={links.problem}>Report a problem</PenLink>
           </nav>
           <Stub />

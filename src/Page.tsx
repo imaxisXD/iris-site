@@ -69,14 +69,17 @@ const s = stylex.create({
   pressAt: { position: 'absolute', top: 0, left: 0 },
   pressNote: { zIndex: 31 },
   pressScale: { width: 720, zoom: 0.76 }, // 720: Panel.tsx's PANEL_LAYOUT
-  psst: { position: 'fixed', zIndex: 20, right: 16, bottom: 16, display: 'flex', alignItems: 'center', gap: 8, paddingBlock: 8, paddingInline: 14, backgroundColor: ink.paper, color: ink.i12, fontFamily: font.brush, fontSize: 20, lineHeight: 1.1, transform: 'rotate(-2deg)', boxShadow: '0 1px 1px rgb(42 26 22 / 0.08), 0 12px 28px -12px rgb(42 26 22 / 0.45)', maxWidth: 'calc(100vw - 32px)' },
+  psst: { position: 'fixed', zIndex: 20, right: 16, bottom: 16, display: { default: 'flex', [MOBILE]: 'none' }, alignItems: 'center', gap: 8, paddingBlock: 8, paddingInline: 14, backgroundColor: ink.paper, color: ink.i12, fontFamily: font.brush, fontSize: 20, lineHeight: 1.1, transform: 'rotate(-2deg)', boxShadow: '0 1px 1px rgb(42 26 22 / 0.08), 0 12px 28px -12px rgb(42 26 22 / 0.45)', maxWidth: 'calc(100vw - 24px)', cursor: 'pointer' },
 
   // Layout
   wrap: { width: '100%', maxWidth: 1280, marginInline: 'auto', paddingInline: 'clamp(20px, 5vw, 72px)', position: 'relative' },
-  spread: { position: 'relative', paddingBlock: 'clamp(56px, 7vw, 96px)', overflow: 'clip' },
+  spread: { position: 'relative', paddingBlock: { default: 'clamp(56px, 7vw, 96px)', [MOBILE]: 44 }, scrollMarginTop: { default: 0, [MOBILE]: 52 }, overflow: 'clip' },
+  spreadGap72: { gap: { default: 'clamp(40px, 6vw, 72px)', [MOBILE]: 26 } },
+  spreadGap64: { gap: { default: 'clamp(40px, 6vw, 64px)', [MOBILE]: 26 } },
+  menuIntro: { gridArea: 'intro', gap: { default: 30, [MOBILE]: 20 } },
   stack: { display: 'flex', flexDirection: 'column' },
   row: { display: 'flex', alignItems: 'center', flexWrap: 'wrap' },
-  body: { fontSize: 15, lineHeight: 1.7, color: ink.i11, margin: 0, maxWidth: '52ch' },
+  body: { fontSize: { default: 15, [MOBILE]: 14 }, lineHeight: { default: 1.7, [MOBILE]: 1.65 }, color: ink.i11, margin: 0, maxWidth: '52ch' },
   meta: { fontSize: 12.5, lineHeight: 1.6, color: ink.i10, margin: 0 },
   srOnly: { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)', whiteSpace: 'nowrap' },
   // Hidden until the first Tab lands on it, then a paper slip over the cover's corner.
@@ -93,20 +96,20 @@ const s = stylex.create({
     overflow: 'clip',
     overflowClipMargin: '160px',
   },
-  ghostClip: { position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' },
-  plateInner: { minHeight: 'min(760px, 92svh)', display: 'flex', flexDirection: 'column', paddingTop: 24, paddingBottom: 'clamp(56px, 8vw, 96px)', [MOBILE]: { minHeight: 0, paddingBottom: 260 } },
+  ghostClip: { position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', opacity: { default: 1, [MOBILE]: 0.55 } },
+  plateInner: { minHeight: 'min(760px, 92svh)', display: 'flex', flexDirection: 'column', paddingTop: { default: 24, [MOBILE]: 18 }, paddingBottom: { default: 'clamp(56px, 8vw, 96px)', [MOBILE]: 272 }, [MOBILE]: { minHeight: 0 } },
   masthead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, position: 'relative', zIndex: 2 },
   nav: { display: 'flex', alignItems: 'center', gap: 'clamp(14px, 2.4vw, 32px)', fontSize: 13, [MOBILE]: { display: 'none' } },
   navLink: { color: ink.i12, textDecoration: 'none', paddingBlock: 6, backgroundImage: 'linear-gradient(rgb(42 26 22 / 0.0), rgb(42 26 22 / 0.0))', textDecorationLine: { default: 'none', [HOVER]: { default: 'none', ':hover': 'underline' } }, textDecorationThickness: '1.5px', textUnderlineOffset: '5px' },
-  coverBody: { paddingTop: 'clamp(48px, 7vw, 104px)', display: 'flex', flexDirection: 'column', gap: 28, position: 'relative', zIndex: 2, maxWidth: 'min(1000px, 72%)', [NARROW]: { maxWidth: '100%' } },
-  coverTitle: { fontSize: 'clamp(40px, 5.5vw, 92px)', whiteSpace: 'nowrap', [MOBILE]: { whiteSpace: 'normal' } },
-  promise: { margin: 0, marginTop: -12, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 18px', fontSize: 14, color: ink.i12 },
+  coverBody: { paddingTop: { default: 'clamp(48px, 7vw, 104px)', [MOBILE]: 22 }, display: 'flex', flexDirection: 'column', gap: { default: 28, [MOBILE]: 16 }, position: 'relative', zIndex: 2, maxWidth: 'min(1000px, 72%)', [NARROW]: { maxWidth: '100%' } },
+  coverTitle: { fontSize: { default: 'clamp(40px, 5.5vw, 92px)', [MOBILE]: 'clamp(26px, 7.6vw, 38px)' }, whiteSpace: { default: 'nowrap', [MOBILE]: 'normal' } },
+  promise: { margin: 0, marginTop: { default: -12, [MOBILE]: -4 }, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: { default: '8px 18px', [MOBILE]: '6px 12px' }, fontSize: { default: 14, [MOBILE]: 12.5 }, color: ink.i12 },
   promiseItem: { display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' },
-  lede: { fontSize: 'clamp(15px, 1.4vw, 17px)', lineHeight: 1.6, color: ink.i12, margin: 0, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px 14px' },
-  cta: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '18px 28px' },
-  ctaMeta: { fontSize: 12.5, lineHeight: 1.5, color: ink.i12 },
-  keysNote: { display: 'flex', alignItems: 'flex-end', gap: 14, flexWrap: 'wrap' },
-  keysWords: { fontFamily: font.brush, fontSize: 22, lineHeight: 1, color: ink.i12, paddingBottom: 6 },
+  lede: { fontSize: { default: 'clamp(15px, 1.4vw, 17px)', [MOBILE]: 14 }, lineHeight: { default: 1.6, [MOBILE]: 1.5 }, color: ink.i12, margin: 0, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px 14px' },
+  cta: { display: 'flex', flexWrap: 'wrap', alignItems: { default: 'center', [MOBILE]: 'flex-start' }, flexDirection: { default: 'row', [MOBILE]: 'column' }, gap: { default: '18px 28px', [MOBILE]: 10 } },
+  ctaMeta: { fontSize: { default: 12.5, [MOBILE]: 11.5 }, lineHeight: { default: 1.5, [MOBILE]: 1.45 }, color: ink.i12 },
+  keysNote: { display: 'flex', alignItems: { default: 'flex-end', [MOBILE]: 'center' }, gap: { default: 14, [MOBILE]: '8px 12px' }, flexWrap: 'wrap' },
+  keysWords: { fontFamily: font.brush, fontSize: { default: 22, [MOBILE]: 18 }, lineHeight: 1, color: ink.i12, paddingBottom: { default: 6, [MOBILE]: 0 } },
   // Butterflies may loop past the plate's right edge: cut them there, never widen the page.
   // Only sideways, so the garden still stands below the plate.
   coverClip: { overflowX: 'clip' },
@@ -135,38 +138,49 @@ const s = stylex.create({
   // Square to the page: a turned video is resampled every frame, and its text goes soft.
   print: { position: 'relative', padding: 10, [MOBILE]: { padding: 6 } },
   video: { display: 'block', width: '100%', height: 'auto', backgroundColor: ink.paper },
-  steps: { listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 30 },
-  step: { display: 'flex', flexDirection: 'column', gap: 8, transitionProperty: 'opacity', transitionDuration: '250ms' },
+  steps: { listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: { default: 30, [MOBILE]: 18 } },
+  step: { display: 'flex', flexDirection: 'column', gap: { default: 8, [MOBILE]: 6 }, transitionProperty: 'opacity', transitionDuration: '250ms' },
   stepButton: { display: 'block', padding: '2px 0', margin: 0, borderWidth: 0, backgroundColor: 'transparent', textAlign: 'start', cursor: 'pointer', color: 'inherit', font: 'inherit' },
   // A thin pen track under each step; the playing step's fills as the video goes.
-  stepTrack: { position: 'relative', display: 'block', height: 2, maxWidth: 260, backgroundColor: 'rgb(42 26 22 / 0.14)', overflow: 'hidden' },
+  stepTrack: { position: 'relative', display: 'block', height: 2, maxWidth: { default: 260, [MOBILE]: '100%' }, backgroundColor: 'rgb(42 26 22 / 0.14)', overflow: 'hidden' },
   stepBar: { position: 'absolute', inset: 0, backgroundColor: ink.pinkText, transformOrigin: '0 50%', scale: 'var(--p, 0) 1' },
-  stepTitle: { fontFamily: font.brush, fontSize: 28, lineHeight: 1, color: ink.i12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
-  stepText: { fontSize: 14, lineHeight: 1.65, color: ink.i11, margin: 0, maxWidth: '44ch' },
-  caption: { fontSize: 12, color: ink.i10, marginTop: 18, display: 'flex', gap: 10, alignItems: 'baseline' },
+  stepTitle: { fontFamily: font.brush, fontSize: { default: 28, [MOBILE]: 23 }, lineHeight: 1, color: ink.i12, display: 'flex', alignItems: 'center', gap: { default: 12, [MOBILE]: 8 }, flexWrap: 'wrap' },
+  stepText: { fontSize: { default: 14, [MOBILE]: 13.5 }, lineHeight: { default: 1.65, [MOBILE]: 1.55 }, color: ink.i11, margin: 0, maxWidth: { default: '44ch', [MOBILE]: 'none' } },
+  caption: { fontSize: { default: 12, [MOBILE]: 11.5 }, color: ink.i10, marginTop: { default: 18, [MOBILE]: 12 }, display: 'flex', gap: 10, alignItems: { default: 'baseline', [MOBILE]: 'center' } },
   toggle: { marginLeft: 'auto', flex: 'none', minHeight: 24, letterSpacing: '0.08em', textTransform: 'uppercase', textDecorationLine: 'underline', textUnderlineOffset: '4px' },
 
   // Tones
   tonesHead: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 32, flexWrap: 'wrap', position: 'relative' },
   corner: { position: 'relative', minWidth: 300, height: 170, flex: 'none', [MOBILE]: { display: 'none' } },
-  panelStage: { position: 'relative', marginTop: 'clamp(24px, 4vw, 48px)', display: 'grid', gridTemplateColumns: 'minmax(0, 680px) minmax(0, 1fr)', gap: 'clamp(20px, 3vw, 40px)', alignItems: 'start', [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
+  panelStage: { position: 'relative', marginTop: { default: 'clamp(24px, 4vw, 48px)', [MOBILE]: 14 }, display: 'grid', gridTemplateColumns: 'minmax(0, 680px) minmax(0, 1fr)', gap: { default: 'clamp(20px, 3vw, 40px)', [MOBILE]: 20 }, alignItems: 'start', [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
   hint: { display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, letterSpacing: '0.08em', borderWidth: 0, backgroundColor: 'transparent', padding: 0, fontFamily: font.mono, cursor: 'pointer', color: { default: ink.i10, [HOVER]: { default: ink.i10, ':hover': ink.i12 } } },
   note: { position: 'absolute', left: -6, top: -52, display: 'flex', alignItems: 'flex-end', gap: 4, fontFamily: font.brush, fontSize: 22, color: ink.i12, transform: 'rotate(-3deg)', [MOBILE]: { display: 'none' } },
   aside: { display: 'flex', flexDirection: 'column', gap: 18 },
   // The margin notes beside the panel: each placed level with what it points at.
-  notes: { position: 'relative', alignSelf: 'stretch', minHeight: 380, [NARROW]: { minHeight: 0, display: 'flex', flexDirection: 'column', gap: 18 } },
-  marginNote: { position: 'absolute', left: 0, right: 0, margin: 0, display: 'flex', alignItems: 'flex-start', gap: 10, transformOrigin: '0 50%', [NARROW]: { position: 'static' } },
+  notes: { position: 'relative', alignSelf: 'stretch', minHeight: 380, [NARROW]: { minHeight: 0, display: 'flex', flexDirection: 'column', gap: 14 } },
+  marginNote: { position: 'absolute', left: 0, right: 0, margin: 0, display: 'flex', alignItems: 'flex-start', gap: 10, transformOrigin: '0 50%', rotate: { default: 'var(--tilt, 0deg)', [NARROW]: '0deg' }, [NARROW]: { position: 'static' } },
   // Stacked under the panel on narrow pages, the notes don't point sideways.
   noteArrow: { display: 'flex', flex: 'none', [NARROW]: { display: 'none' } },
-  marginWord: { display: 'block', fontFamily: font.brush, fontSize: 'clamp(22px, 2vw, 27px)', lineHeight: 1.05, color: ink.i12 },
-  marginMore: { display: 'block', marginTop: 4, fontSize: 13, lineHeight: 1.5, color: ink.i11, maxWidth: '30ch' },
+  marginWord: { display: 'block', fontFamily: font.brush, fontSize: { default: 'clamp(22px, 2vw, 27px)', [MOBILE]: 22 }, lineHeight: 1.05, color: ink.i12 },
+  marginMore: { display: 'block', marginTop: 4, fontSize: 13, lineHeight: 1.5, color: ink.i11, maxWidth: { default: '30ch', [NARROW]: 'none' } },
 
   // The example under Fix's lead: one line, marked the way the panel marks it.
   example: { padding: '16px 20px', maxWidth: 560, rotate: '-0.6deg' },
   exampleText: { position: 'relative', margin: 0, fontSize: 'clamp(14px, 1.3vw, 16px)', fontWeight: 540, lineHeight: 1.8, color: ink.i12 },
   // A fact: its picture and its words, on the grid's two rows (subgrid), so pictures and
   // headings line up across each row however long the words run.
-  fact: { display: 'grid', gridTemplateRows: 'subgrid', gridRow: 'span 2', rowGap: 18, minWidth: 0, [MOBILE]: { gridTemplateRows: 'auto auto' } },
+  // On a phone each fact becomes a swipeable card on a horizontal scroll-snap rail, keeping the
+  // full asymmetrical riso collage intact while cutting ~2,500px of vertical scroll.
+  fact: {
+    display: { default: 'grid', [MOBILE]: 'flex' },
+    flexDirection: { default: null, [MOBILE]: 'column' },
+    gridTemplateRows: { default: 'subgrid', [MOBILE]: 'auto' },
+    gridRow: { default: 'span 2', [MOBILE]: 'auto' },
+    rowGap: { default: 18, [MOBILE]: 16 },
+    gap: { default: null, [MOBILE]: 16 },
+    minWidth: 0,
+    [MOBILE]: { flex: '0 0 85%', scrollSnapAlign: 'start' },
+  },
   factArt: { width: 'min(100%, 470px)', display: 'grid', justifyItems: 'center' },
   // The whole panel, laid out at its own width (Panel.tsx's PANEL_LAYOUT) and zoomed to fit the
   // tile by client.ts, so its footer stays on one line; 0.62 until the script has measured.
@@ -187,18 +201,72 @@ const s = stylex.create({
   mailText: { fontSize: 'clamp(13px, 1.3vw, 14.5px)', fontWeight: 540, lineHeight: 1.9, color: ink.i12, paddingBottom: 26 },
   leftAlone: { margin: 0, fontFamily: font.brush, fontSize: 19, lineHeight: 1, color: ink.i11, rotate: '-1.5deg', justifySelf: 'end' },
   // Iris's note, hung over the window's bottom edge as it sits by a text box.
-  overlap: { position: 'relative', marginTop: -26, width: { default: '108%', [MOBILE]: '100%' }, display: 'grid', justifyItems: 'center', rotate: '-1deg' },
-  irisNote: { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px 14px', paddingBlock: 12, paddingInline: { default: 16, [MOBILE]: 12 }, maxWidth: '100%' },
+  overlap: { position: 'relative', marginTop: { default: -26, [MOBILE]: -14 }, width: { default: '108%', [MOBILE]: '100%' }, display: 'grid', justifyItems: 'center', rotate: { default: '-1deg', [MOBILE]: '0deg' } },
+  irisNote: { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: { default: '8px 14px', [MOBILE]: '6px 10px' }, paddingBlock: { default: 12, [MOBILE]: 10 }, paddingInline: { default: 16, [MOBILE]: 12 }, maxWidth: '100%' },
   noteIcon: { position: 'relative', display: 'grid', placeItems: 'center' },
   noteText: { position: 'relative', display: 'grid', gap: 4, flex: '1 1 0', minWidth: 'min(150px, 100%)' },
-  noteTitle: { fontFamily: font.brush, fontSize: 24, lineHeight: 1, color: ink.i12 },
+  noteTitle: { fontFamily: font.brush, fontSize: { default: 24, [MOBILE]: 21 }, lineHeight: 1, color: ink.i12 },
   noteLine: { fontSize: 11.5, lineHeight: 1.4, color: ink.i10 },
   noteEnd: { position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 14, marginLeft: 'auto' },
   keepBtn: { position: 'relative', paddingBlock: 6, paddingInline: 12, fontSize: 13, fontWeight: 600, color: ink.i12 },
   noBtn: { fontSize: 13, color: ink.i10 },
   fixedWord: { position: 'relative', isolation: 'isolate', display: 'inline-block', paddingInline: 3 },
   undo: { display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, color: ink.i11 },
-  facts3: { marginTop: 'clamp(48px, 6vw, 80px)', display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 'clamp(36px, 4vw, 56px) clamp(28px, 4vw, 64px)', [NARROW]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }, [MOBILE]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
+  facts3: {
+    marginTop: { default: 'clamp(48px, 6vw, 80px)', [MOBILE]: 0 },
+    display: { default: 'grid', [MOBILE]: 'flex' },
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: { default: 'clamp(36px, 4vw, 56px) clamp(28px, 4vw, 64px)', [MOBILE]: 26 },
+    [NARROW]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' },
+    [MOBILE]: {
+      overflowX: 'auto',
+      scrollSnapType: 'x mandatory',
+      scrollPaddingInline: 'clamp(20px, 5vw, 72px)',
+      marginInline: 'calc(-1 * clamp(20px, 5vw, 72px))',
+      paddingInline: 'clamp(20px, 5vw, 72px)',
+      paddingTop: 22,
+      paddingBottom: 18,
+      scrollbarWidth: 'none',
+    },
+  },
+  railWrap: { display: { default: 'contents', [MOBILE]: 'flex' }, flexDirection: 'column', gap: 6 },
+  railWrapFix: { [MOBILE]: { marginTop: 8 } },
+  railControls: { display: { default: 'none', [MOBILE]: 'flex' }, alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingTop: 2 },
+  railMeta: { display: 'flex', alignItems: 'center', gap: 12 },
+  railFolio: { fontSize: 11.5, fontWeight: 560, letterSpacing: '0.08em', color: ink.i10, fontVariantNumeric: 'tabular-nums' },
+  railPips: { display: 'flex', alignItems: 'center', gap: 6 },
+  railPip: {
+    appearance: 'none',
+    borderWidth: 0,
+    padding: 0,
+    width: 7,
+    height: 7,
+    borderRadius: 999,
+    backgroundColor: 'rgb(42 26 22 / 0.22)',
+    cursor: 'pointer',
+    transitionProperty: 'width, background-color',
+    transitionDuration: '220ms',
+    transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
+  },
+  railArrows: { display: 'flex', alignItems: 'center', gap: 8 },
+  railArrow: {
+    position: 'relative',
+    appearance: 'none',
+    borderWidth: 0,
+    backgroundColor: ink.paper,
+    backgroundImage: tex.paper,
+    backgroundSize: '64px 64px',
+    color: ink.i12,
+    width: 34,
+    height: 34,
+    display: 'grid',
+    placeItems: 'center',
+    fontFamily: font.mono,
+    fontSize: 14,
+    cursor: 'pointer',
+    padding: 0,
+    ':disabled': { opacity: 0.32, cursor: 'default' },
+  },
   tanPlate: {
     position: 'relative',
     isolation: 'isolate',
@@ -222,21 +290,23 @@ const s = stylex.create({
     backgroundImage: `${tex.screen}, ${tex.streaks}`,
     backgroundSize: '96px 96px, 128px 128px',
     color: ink.i12,
+    scrollMarginTop: { default: 0, [MOBILE]: 52 },
     overflow: 'clip',
   },
   onPink: { color: ink.i12 },
   // Under the title: what Iris does with your words on the left, the figures on the right.
-  privateBody: { display: 'grid', gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 1fr)', gap: '28px clamp(32px, 6vw, 96px)', alignItems: 'start', marginTop: 'clamp(36px, 5vw, 64px)', position: 'relative', zIndex: 1, [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
+  privateBody: { display: 'grid', gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 1fr)', gap: { default: '28px clamp(32px, 6vw, 96px)', [MOBILE]: 24 }, alignItems: 'start', marginTop: { default: 'clamp(36px, 5vw, 64px)', [MOBILE]: 24 }, position: 'relative', zIndex: 1, [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
   figures: { display: 'flex', gap: 'clamp(20px, 3vw, 44px)', flexWrap: 'wrap', marginTop: 8 },
   privateGhost: { display: { default: 'contents', [MOBILE]: 'none' } },
   // The privacy stickers: paper slips stuck on the pink, each a drawing and a word.
-  stickers: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 'clamp(12px, 1.6vw, 18px)', maxWidth: 440, [MOBILE]: { gap: 12 } },
+  stickers: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: { default: 'clamp(12px, 1.6vw, 18px)', [MOBILE]: 10 }, maxWidth: { default: 440, [MOBILE]: '100%' } },
   sticker: {
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
-    gap: 12,
-    padding: '10px 14px 10px 10px',
+    gap: { default: 12, [MOBILE]: 8 },
+    padding: { default: '10px 14px 10px 10px', [MOBILE]: '10px 10px 10px 8px' },
+    rotate: { default: 'var(--tilt, 0deg)', [MOBILE]: '0deg' },
     // Paper slips, the white of Iris's panels, the drawings in ink with a sky plate under.
     backgroundColor: ink.paper,
     backgroundImage: tex.paper,
@@ -244,24 +314,26 @@ const s = stylex.create({
     boxShadow: '0 1px 1px rgb(42 26 22 / 0.08), 0 10px 18px -10px rgb(42 26 22 / 0.45)',
     clipPath: 'polygon(0.8% 2%, 30% 0.4%, 62% 1.8%, 99.2% 0.6%, 100% 50%, 99% 98.4%, 66% 100%, 34% 98.6%, 0.4% 99.6%, 1.4% 48%)',
   },
-  stickerArt: { position: 'relative', flex: 'none', width: 'clamp(54px, 5vw, 68px)', aspectRatio: '1' },
+  stickerArt: { position: 'relative', flex: 'none', width: { default: 'clamp(54px, 5vw, 68px)', [MOBILE]: 42 }, aspectRatio: '1' },
   stickerSvg: { display: 'block', width: '100%', height: '100%', imageRendering: 'pixelated' },
   // Our red brush X on what Iris doesn't need, on the pin's corner, the pin left readable.
   stickerCross: { position: 'absolute', inset: '52% -8% -8% 52%' },
-  stickerWord: { fontFamily: font.brush, fontSize: 'clamp(18px, 1.6vw, 21px)', lineHeight: 1.05, color: ink.i12 },
-  pinkBody: { fontSize: 16, lineHeight: 1.75, margin: 0, maxWidth: '44ch', color: ink.i12 },
+  stickerWord: { fontFamily: font.brush, fontSize: { default: 'clamp(18px, 1.6vw, 21px)', [MOBILE]: 17 }, lineHeight: 1.05, color: ink.i12 },
+  pinkBody: { fontSize: { default: 16, [MOBILE]: 14.5 }, lineHeight: { default: 1.75, [MOBILE]: 1.65 }, margin: 0, maxWidth: '44ch', color: ink.i12 },
 
   // Make it yours: the list beside a torn sheet of How it works' green, Iris's Settings window
   // lying on it. On wide pages the sheet is as tall as the list and the window fills it to its foot.
   // On narrow pages the window comes between the title and the list, so a tap shows its page in view.
   yoursGrid: { display: 'grid', gridTemplateColumns: { default: 'minmax(0, 0.72fr) minmax(0, 1.28fr)', [NARROW]: 'minmax(0, 1fr)' }, gridTemplateRows: { default: 'auto 1fr', [NARROW]: 'auto' },
-    gridTemplateAreas: { default: '"title stage" "list stage"', [NARROW]: '"title" "stage" "list"' }, columnGap: 'clamp(32px, 4vw, 64px)', rowGap: 40, alignItems: 'start' },
+    gridTemplateAreas: { default: '"title stage" "list stage"', [NARROW]: '"title" "stage" "list"' }, columnGap: 'clamp(32px, 4vw, 64px)', rowGap: { default: 40, [MOBILE]: 24 }, alignItems: 'start' },
+  yoursList: { [MOBILE]: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '16px 14px' } },
+  yoursText: { [MOBILE]: { fontSize: 12.5, lineHeight: 1.5 } },
   yoursStage: { gridArea: 'stage', position: 'relative', isolation: 'isolate', alignSelf: { default: 'stretch', [NARROW]: 'start' }, containerType: 'inline-size',
     display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', backgroundImage: `${tex.screen}, ${tex.streaks}`, backgroundSize: '96px 96px, 128px 128px',
     // The window sits on the sheet with the sheet showing round it, below as at the sides.
-    padding: 'clamp(56px, 5.4vw, 76px) clamp(16px, 4.5%, 44px) clamp(16px, 4.5%, 44px)',
+    padding: { default: 'clamp(56px, 5.4vw, 76px) clamp(16px, 4.5%, 44px) clamp(16px, 4.5%, 44px)', [MOBILE]: '42px 12px 12px' },
     clipPath: 'polygon(0.6% 1%, 27% 0%, 55% 1.4%, 81% 0.2%, 99.4% 1.2%, 100% 31%, 99.2% 66%, 100% 99%, 70% 99.8%, 41% 98.8%, 16% 100%, 0.4% 99%, 1.2% 62%, 0% 28%)' },
-  yoursNote: { position: 'absolute', zIndex: 1, left: 'clamp(28px, 5vw, 64px)', top: 'clamp(14px, 1.6vw, 22px)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'flex-start', gap: 4, fontFamily: font.brush, fontSize: 22, lineHeight: 1, color: ink.paper, transform: 'rotate(-3deg)' },
+  yoursNote: { position: 'absolute', zIndex: 1, left: { default: 'clamp(28px, 5vw, 64px)', [MOBILE]: 14 }, top: { default: 'clamp(14px, 1.6vw, 22px)', [MOBILE]: 10 }, whiteSpace: 'nowrap', display: 'flex', alignItems: 'flex-start', gap: 4, fontFamily: font.brush, fontSize: { default: 22, [MOBILE]: 18 }, lineHeight: 1, color: ink.paper, transform: 'rotate(-3deg)' },
   yoursStep: { cursor: 'pointer' },
   // At least 62% as tall as it's wide (on narrow pages, just that). The pages have no foot, so
   // below a short one the window runs on in the same paper; a long one fades into that paper
@@ -278,11 +350,12 @@ const s = stylex.create({
   methodText: { fontSize: 13.5, lineHeight: 1.6, color: ink.i11, margin: 0 },
 
   // How it works: the steps, and the desk beside them as tall as they are.
-  momentGrid: { display: 'grid', gridTemplateColumns: 'minmax(max-content, 0.85fr) minmax(0, 1.8fr)', gap: 'clamp(32px, 4vw, 52px)', alignItems: 'stretch', [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
-  deskFigure: { margin: 0, display: 'flex', flexDirection: 'column', minWidth: 0 },
+  // On narrow pages the desk comes right under the title, so tapping a step shows it in view.
+  momentGrid: { display: 'grid', gridTemplateColumns: { default: 'minmax(max-content, 0.85fr) minmax(0, 1.8fr)', [NARROW]: 'minmax(0, 1fr)' }, gridTemplateRows: { default: 'auto 1fr', [NARROW]: 'auto' }, gridTemplateAreas: { default: '"title stage" "steps stage"', [NARROW]: '"title" "stage" "steps"' }, columnGap: 'clamp(32px, 4vw, 52px)', rowGap: { default: 44, [NARROW]: 24 }, alignItems: 'stretch' },
+  deskFigure: { gridArea: 'stage', margin: 0, display: 'flex', flexDirection: 'column', minWidth: 0 },
   deskStage: {
     position: 'relative', isolation: 'isolate', flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end',
-    padding: 'clamp(24px, 3vw, 44px) 0 0 clamp(24px, 3vw, 44px)',
+    padding: { default: 'clamp(24px, 3vw, 44px) 0 0 clamp(24px, 3vw, 44px)', [MOBILE]: '14px 10px 0 10px' },
     backgroundColor: 'rgb(248 200 222)', backgroundImage: `${tex.screen}, ${tex.streaks}`, backgroundSize: '96px 96px, 128px 128px',
     // At least this tall, so the Mac can take the sheet's whole width.
     minHeight: 'clamp(460px, 40vw, 600px)',
@@ -290,36 +363,55 @@ const s = stylex.create({
     clipPath: 'polygon(0.4% 1%, 21% 0%, 48% 1.4%, 76% 0.2%, 99.4% 1.2%, 100% 31%, 99.2% 66%, 100% 99.2%, 74% 100%, 46% 98.8%, 20% 99.8%, 0.6% 98.6%, 0% 70%, 1.2% 36%)',
   },
   // Menu
-  menuGrid: { display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: 'clamp(32px, 5vw, 80px)', alignItems: 'stretch', [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
+  // On narrow pages the title and explanation come first, then the Mac menu bar, then setup steps.
+  menuGrid: { display: 'grid', gridTemplateColumns: { default: 'minmax(0, 1.2fr) minmax(0, 1fr)', [NARROW]: 'minmax(0, 1fr)' }, gridTemplateRows: { default: 'auto 1fr', [NARROW]: 'auto' }, gridTemplateAreas: { default: '"stage intro" "stage steps"', [NARROW]: '"intro" "stage" "steps"' }, columnGap: 'clamp(32px, 5vw, 80px)', rowGap: { default: 30, [MOBILE]: 24 }, alignItems: 'stretch' },
   // The arrow's tip lands on the menu bar's flower (40% across the screen, in the corner's own
   // units, so it follows the flower at every size); the words trail off up and to the right.
   // A torn tan sheet under the Mac, rings spreading from where Iris's flower sits. The Mac sits
   // in its bottom left corner, cut by the sheet's torn edges.
-  macStage: { position: 'relative', isolation: 'isolate', backgroundColor: ink.tan, backgroundImage: `${tex.screen}, ${tex.streaks}`, backgroundSize: '96px 96px, 128px 128px', // The Mac runs to the sheet's bottom and left edges; room is left above it and to its right.
-    padding: 'clamp(52px, 4.6vw, 66px) clamp(28px, 4vw, 56px) 0 0', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start',
+  macStage: { gridArea: 'stage', position: 'relative', isolation: 'isolate', backgroundColor: ink.tan, backgroundImage: `${tex.screen}, ${tex.streaks}`, backgroundSize: '96px 96px, 128px 128px', // The Mac runs to the sheet's bottom and left edges; room is left above it and to its right.
+    padding: { default: 'clamp(52px, 4.6vw, 66px) clamp(28px, 4vw, 56px) 0 0', [MOBILE]: '56px 14px 0 0' }, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start',
     // As tall as the words beside it; the Mac grows to fill it (Backdrop.tsx), keeping its shape.
     alignSelf: 'stretch', containerType: 'size', [NARROW]: { containerType: 'normal' }, clipPath: 'polygon(0.6% 1.4%, 24% 0.2%, 52% 1.6%, 79% 0%, 99.4% 1%, 100% 34%, 99.2% 68%, 100% 99%, 72% 99.8%, 44% 98.6%, 18% 100%, 0.4% 98.8%, 1.2% 64%, 0% 30%)', justifySelf: 'stretch' },
-  menuNote: { position: 'absolute', zIndex: 1, left: 'calc(40cqw - 14px)', bottom: 'calc(100% + 3px)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'flex-start', gap: 4, fontFamily: font.brush, fontSize: 22, lineHeight: 1, color: ink.i12, transformOrigin: '0 100%', transform: 'rotate(-4deg)' },
+  menuNote: { position: 'absolute', zIndex: 1, left: 'calc(40cqw - 14px)', bottom: 'calc(100% + 3px)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'flex-start', gap: 4, fontFamily: font.brush, fontSize: { default: 22, [MOBILE]: 18 }, lineHeight: 1, color: ink.i12, transformOrigin: '0 100%', transform: 'rotate(-4deg)' },
   menuImg: { width: '100%', height: 'auto' },
   setupList: { listStyle: 'none', margin: 0, padding: 0 },
-  setupItem: { display: 'flex', flexDirection: 'column', gap: 4, paddingBlock: 14 },
-  setupTitle: { fontFamily: font.brush, fontSize: 24, lineHeight: 1.1, color: ink.i12 },
+  setupItem: { display: 'flex', flexDirection: 'column', gap: 4, paddingBlock: { default: 14, [MOBILE]: 10 } },
+  setupTitle: { fontFamily: font.brush, fontSize: { default: 24, [MOBILE]: 21 }, lineHeight: 1.1, color: ink.i12 },
 
   // Install
-  installHead: { display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '28px 48px', flexWrap: 'wrap' },
-  installSteps: { listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 'clamp(36px, 4vw, 56px) clamp(24px, 3vw, 48px)', [NARROW]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }, [MOBILE]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
-  installFoot: { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 'clamp(40px, 6vw, 96px)', alignItems: 'start', [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
-  specs: { margin: 0, display: 'flex', flexDirection: 'column', fontSize: 13.5 },
-  needs: { display: 'flex', flexDirection: 'column', gap: 36 },
+  installHead: { display: 'flex', alignItems: { default: 'flex-end', [MOBILE]: 'flex-start' }, flexDirection: { default: 'row', [MOBILE]: 'column' }, justifyContent: 'space-between', gap: { default: '28px 48px', [MOBILE]: 16 }, flexWrap: 'wrap' },
+  installSteps: {
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+    display: { default: 'grid', [MOBILE]: 'flex' },
+    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+    gap: { default: 'clamp(36px, 4vw, 56px) clamp(24px, 3vw, 48px)', [MOBILE]: 26 },
+    [NARROW]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' },
+    [MOBILE]: {
+      overflowX: 'auto',
+      scrollSnapType: 'x mandatory',
+      scrollPaddingInline: 'clamp(20px, 5vw, 72px)',
+      marginInline: 'calc(-1 * clamp(20px, 5vw, 72px))',
+      paddingInline: 'clamp(20px, 5vw, 72px)',
+      paddingTop: 22,
+      paddingBottom: 18,
+      scrollbarWidth: 'none',
+    },
+  },
+  installFoot: { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: { default: 'clamp(40px, 6vw, 96px)', [MOBILE]: 32 }, alignItems: 'start', [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' } },
+  specs: { margin: 0, display: 'flex', flexDirection: 'column', fontSize: { default: 13.5, [MOBILE]: 12.5 } },
+  needs: { display: 'flex', flexDirection: 'column', gap: { default: 36, [MOBILE]: 24 } },
   needGroup: { display: 'flex', flexDirection: 'column', gap: 4 },
-  needTitle: { margin: 0, display: 'flex', alignItems: 'center', gap: 10, fontFamily: font.brush, fontWeight: 400, fontSize: 28, lineHeight: 1, color: ink.i12 },
+  needTitle: { margin: 0, display: 'flex', alignItems: 'center', gap: 10, fontFamily: font.brush, fontWeight: 400, fontSize: { default: 28, [MOBILE]: 24 }, lineHeight: 1, color: ink.i12 },
   needAction: { display: 'flex', paddingTop: 14 },
   specRow: { display: 'grid', gridTemplateColumns: 'auto 1fr', backgroundRepeat: 'no-repeat', backgroundPosition: 'bottom', backgroundSize: '100% 6px' },
-  specTerm: { fontSize: 11.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: ink.i10, paddingBlock: 12, paddingRight: 24 },
-  specDef: { margin: 0, paddingBlock: 12, textAlign: 'right', color: ink.i12, lineHeight: 1.5 },
-  why: { padding: 'clamp(22px, 3vw, 32px)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 12, rotate: '0.8deg' },
-  whyTitle: { position: 'relative', fontFamily: font.brush, fontSize: 28, lineHeight: 1, color: ink.i12 },
-  whyText: { position: 'relative', margin: 0, fontSize: 14, lineHeight: 1.7, color: ink.i11, maxWidth: '52ch' },
+  specTerm: { fontSize: { default: 11.5, [MOBILE]: 11 }, letterSpacing: '0.14em', textTransform: 'uppercase', color: ink.i10, paddingBlock: { default: 12, [MOBILE]: 10 }, paddingRight: { default: 24, [MOBILE]: 14 } },
+  specDef: { margin: 0, paddingBlock: { default: 12, [MOBILE]: 10 }, textAlign: 'right', color: ink.i12, lineHeight: 1.5 },
+  why: { padding: { default: 'clamp(22px, 3vw, 32px)', [MOBILE]: '20px 18px' }, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 12, rotate: { default: '0.8deg', [MOBILE]: '0deg' } },
+  whyTitle: { position: 'relative', fontFamily: font.brush, fontSize: { default: 28, [MOBILE]: 24 }, lineHeight: 1, color: ink.i12 },
+  whyText: { position: 'relative', margin: 0, fontSize: { default: 14, [MOBILE]: 13.5 }, lineHeight: { default: 1.7, [MOBILE]: 1.65 }, color: ink.i11, maxWidth: '52ch' },
   // The drawings on the steps' collages.
   finderRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-around', gap: 10, paddingBlock: '14px 6px' },
   finderItem: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 },
@@ -372,6 +464,96 @@ const s = stylex.create({
   changes: { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 },
   change: { display: 'grid', gridTemplateColumns: '18px 1fr', gap: 10, fontSize: 13.5, lineHeight: 1.55, color: ink.i11 },
   changeTitle: { color: ink.i12, display: 'block' },
+  // Sticky compact mobile jump bar: hidden on desktop, slides in on phones once past the cover.
+  jumpBar: {
+    display: { default: 'none', [MOBILE]: 'flex' },
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 25,
+    flexDirection: 'column',
+    backgroundColor: 'rgb(255 252 249 / 0.96)',
+    backgroundImage: tex.paper,
+    backgroundSize: '64px 64px',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
+    boxShadow: '0 8px 20px -14px rgb(42 26 22 / 0.45)',
+    paddingTop: 'max(6px, env(safe-area-inset-top))',
+  },
+  jumpInner: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    paddingInline: 14,
+    paddingBottom: 7,
+    minHeight: 40,
+  },
+  jumpBrand: {
+    appearance: 'none',
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+    padding: '2px 0',
+    margin: 0,
+    cursor: 'pointer',
+    flex: 'none',
+    display: 'inline-flex',
+    alignItems: 'center',
+  },
+  jumpLinks: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 2,
+    overflowX: 'auto',
+    scrollbarWidth: 'none',
+    flex: '1 1 auto',
+    minWidth: 0,
+  },
+  jumpBtn: {
+    position: 'relative',
+    isolation: 'isolate',
+    appearance: 'none',
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+    fontFamily: font.mono,
+    fontSize: 11,
+    fontWeight: 500,
+    color: ink.i10,
+    padding: '6px 7px',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    flex: 'none',
+  },
+  jumpMark: {
+    position: 'absolute',
+    zIndex: -1,
+    left: 2,
+    right: 2,
+    bottom: 3,
+    height: 9,
+    transform: 'scaleX(0)',
+    transformOrigin: 'left center',
+    pointerEvents: 'none',
+  },
+  jumpGet: {
+    position: 'relative',
+    isolation: 'isolate',
+    appearance: 'none',
+    borderWidth: 0,
+    backgroundColor: ink.i12,
+    backgroundImage: tex.inkDark,
+    backgroundSize: '210px 210px',
+    color: ink.paper,
+    fontFamily: font.mono,
+    fontSize: 11,
+    fontWeight: 600,
+    padding: '5px 10px',
+    borderRadius: 2,
+    cursor: 'pointer',
+    flex: 'none',
+    whiteSpace: 'nowrap',
+  },
+  jumpRule: { display: 'block', width: '100%', lineHeight: 0 },
 });
 
 
@@ -437,14 +619,14 @@ function Cover() {
           <div {...stylex.props(s.coverBody)}>
             <PageTitle level={1} lines={['Fix your grammar', 'Change your tone']} xstyle={s.coverTitle} attrs={ENTER.title} starAttrs={ENTER.star} />
             <p {...stylex.props(s.lede)} {...ENTER.lede}>
-              <span data-tones="lede">Grammar and tone in every app on your Mac.</span>
+              <span data-tones="lede">Works right inside any app on your Mac. No copy-pasting.</span>
             </p>
             {/* The promise, said plainly: Iris has no server to send anything to. */}
             <p {...stylex.props(s.promise)} {...ENTER.promise}>
               <span {...ENTER.promiseStamp}>
                 <InkLabel>100% on your Mac</InkLabel>
               </span>
-              {['No servers', 'No account', 'Works offline'].map((t) => (
+              {['No cloud', 'No sign-up', 'Works offline'].map((t) => (
                 <span key={t} {...stylex.props(s.promiseItem)}>
                   <HandTick size={15} color="rgb(42 26 22)" /> {t}
                 </span>
@@ -518,17 +700,17 @@ const MOMENT_STEPS: { title: string; keys?: string[]; text: React.ReactNode }[] 
     keys: ['⌃', '⌥', 'G'],
     text: (
       <>
-        In any text box: <AppName app="slack" />, <AppName app="mail" />, <AppName app="messages" />, <AppName app="notes" />, <AppName app="chrome" />, <AppName app="safari" />. Select some text first to fix just that.
+        In any app: <AppName app="slack" />, <AppName app="mail" />, <AppName app="messages" />, <AppName app="notes" />, <AppName app="chrome" />, <AppName app="safari" />, and more. Highlight text to fix just that part.
       </>
     ),
   },
-  { title: 'Read', text: 'Iris shows what it would change.' },
+  { title: 'Read', text: 'See every fix highlighted before anything changes.' },
   {
     title: 'Replace',
     keys: ['↵'],
     text: (
       <>
-        Nothing changes until you say so. <KeyRow keys={['⌘', 'Z']} /> in your app takes it back.
+        Press Return to swap it in. Hit <KeyRow keys={['⌘', 'Z']} /> anytime to undo.
       </>
     ),
   },
@@ -537,29 +719,29 @@ const MOMENT_STEPS: { title: string; keys?: string[]; text: React.ReactNode }[] 
 function Moment() {
   return (
     <section id="moment" aria-labelledby="moment-title" {...stylex.props(s.spread)}>
-      <div {...stylex.props(s.wrap, s.stack)} style={{ gap: 'clamp(40px, 6vw, 72px)' }}>
+      <div {...stylex.props(s.wrap, s.stack, s.spreadGap72)}>
         <RunningHead seed={21} cols={['How it works']} />
         <div {...stylex.props(s.momentGrid)}>
-          <div {...stylex.props(s.stack)} style={{ gap: 44 }}>
+          <div style={{ gridArea: 'title' }}>
             <PageTitle id="moment-title" lines={['One', 'shortcut']} small />
-            {/* The steps are chapters of the recording beside them: pick one to see it; as the
-                video plays, the step it's on lights up and its line fills (client.ts). */}
-            <ol {...stylex.props(s.steps)} data-chapters={CHAPTERS.join(',')}>
-              {MOMENT_STEPS.map((st, i) => (
-                <li key={st.title} {...stylex.props(s.step)} data-chapter={i} data-active={i === 0}>
-                  <button type="button" {...stylex.props(s.stepButton)} aria-label={`Show step ${i + 1}: ${st.title}`}>
-                    <span {...stylex.props(s.stepTitle)}>
-                      {st.title} {st.keys && <KeyRow keys={st.keys} />}
-                    </span>
-                  </button>
-                  <span aria-hidden {...stylex.props(s.stepTrack)}>
-                    <span data-chapter-bar {...stylex.props(s.stepBar)} />
-                  </span>
-                  <p {...stylex.props(s.stepText)}>{st.text}</p>
-                </li>
-              ))}
-            </ol>
           </div>
+          {/* The steps are chapters of the recording beside them: pick one to see it; as the
+              video plays, the step it's on lights up and its line fills (client.ts). */}
+          <ol {...stylex.props(s.steps)} data-chapters={CHAPTERS.join(',')} style={{ gridArea: 'steps' }}>
+            {MOMENT_STEPS.map((st, i) => (
+              <li key={st.title} {...stylex.props(s.step)} data-chapter={i} data-active={i === 0}>
+                <button type="button" {...stylex.props(s.stepButton)} aria-label={`Show step ${i + 1}: ${st.title}`}>
+                  <span {...stylex.props(s.stepTitle)}>
+                    {st.title} {st.keys && <KeyRow keys={st.keys} />}
+                  </span>
+                </button>
+                <span aria-hidden {...stylex.props(s.stepTrack)}>
+                  <span data-chapter-bar {...stylex.props(s.stepBar)} />
+                </span>
+                <p {...stylex.props(s.stepText)}>{st.text}</p>
+              </li>
+            ))}
+          </ol>
           <figure {...stylex.props(s.deskFigure)}>
             {/* A torn pink sheet with waves, the Mac flush to its right and bottom (as the menu bar's Mac is to its left). */}
             <div {...stylex.props(s.deskStage)}>
@@ -567,9 +749,7 @@ function Moment() {
               <Desk />
             </div>
             <figcaption {...stylex.props(s.caption)}>
-              <span>
-                Iris in <AppName app="slack" size={18} />, <AppName app="mail" size={18} />, <AppName app="messages" size={18} />, <AppName app="notes" size={18} />, <AppName app="chrome" size={18} /> and <AppName app="safari" size={18} />. The messages are made up.
-              </span>
+              <span>Tap any step to jump ahead.</span>
               <button type="button" data-moment-toggle {...stylex.props(s.hint, s.toggle)}>Pause</button>
               <span {...stylex.props(s.srOnly)}>
                 An animation: on a Mac, a reply is waiting in Slack. ⌃ ⌥ G is pressed, Iris’s flower grows by the text box and its panel marks the fixes; Return puts them in. Then the same in Mail, Messages, Notes, Chrome and Safari.
@@ -587,8 +767,8 @@ function Moment() {
  * the stage's top), level with the part it points at. */
 const PANEL_NOTES: { text: string; more: React.ReactNode; top: number; tilt: number; seed: number }[] = [
   { text: 'or change the tone', more: 'Professional, Friendly, Shorter, Clearer, or your own', top: 70, tilt: -2, seed: 81 },
-  { text: 'fixes, not rewrites', more: 'your words struck, Iris’s in pink. Your “hey” stays', top: 168, tilt: 1.5, seed: 82 },
-  { text: 'nothing changes until you press it', more: <><KeyRow keys={['⌘', 'Z']} /> in your app takes it back</>, top: 300, tilt: -1.5, seed: 83 },
+  { text: 'fixes, not rewrites', more: 'crossed out = removed, pink = fixed. Your “hey” stays', top: 168, tilt: 1.5, seed: 82 },
+  { text: 'you stay in control', more: <>nothing pastes until you hit Return. <KeyRow keys={['⌘', 'Z']} /> undoes it</>, top: 300, tilt: -1.5, seed: 83 },
 ];
 
 /** A pen arrow pointing left, at the panel. */
@@ -609,7 +789,7 @@ const PHONE_PANEL = 440;
 function Tones() {
   return (
     <section id="tones" aria-labelledby="tones-title" {...stylex.props(s.spread)}>
-      <div {...stylex.props(s.wrap, s.stack)} style={{ gap: 'clamp(40px, 6vw, 72px)' }}>
+      <div {...stylex.props(s.wrap, s.stack, s.spreadGap72)}>
         <RunningHead seed={31} cols={['Fix and tones']} />
         <div {...stylex.props(s.tonesHead)}>
           <PageTitle id="tones-title" lead="Fix" lines={['', 'or change tone']} small />
@@ -663,7 +843,7 @@ function Tones() {
               panel it's about. On narrow pages they stack under the panel. */}
           <div {...stylex.props(s.notes)}>
             {PANEL_NOTES.map((n) => (
-              <p key={n.text} {...stylex.props(s.marginNote)} style={{ top: n.top, rotate: `${n.tilt}deg` }}>
+              <p key={n.text} {...stylex.props(s.marginNote)} style={{ top: n.top, ['--tilt' as string]: `${n.tilt}deg` }}>
                 <span {...stylex.props(s.noteArrow)}>
                   <NoteArrow seed={n.seed} />
                 </span>
@@ -675,23 +855,24 @@ function Tones() {
             ))}
           </div>
         </div>
-        {/* The small print of Fix, two by two: each fact on its own small collage, shown with the
-            app's own pieces (its panel, its notes) on a Mac window. The pictures are drawings:
-            screen readers get one line saying what each shows. */}
-        <div {...stylex.props(s.facts3)}>
-          {FIX_FACTS.map((f, i) => (
-            <div key={f.title} {...stylex.props(s.fact)}>
-              <FactStage look={f.look} seed={61 + i * 7}>
-                <div inert aria-hidden {...stylex.props(s.factArt)}>
-                  {f.art}
-                </div>
-                <p {...stylex.props(s.srOnly)}>{f.alt}</p>
-              </FactStage>
-              <SectionHead title={f.title} seed={43 + i}>
-                {f.text}
-              </SectionHead>
-            </div>
-          ))}
+        {/* The small print of Fix, two by two on desktop; swipeable collage rail on phones. */}
+        <div {...stylex.props(s.railWrap, s.railWrapFix)} data-rail="fix">
+          <div {...stylex.props(s.facts3)} data-scrolls data-rail-track>
+            {FIX_FACTS.map((f, i) => (
+              <div key={f.title} {...stylex.props(s.fact)} data-rail-slide>
+                <FactStage look={f.look} seed={61 + i * 7}>
+                  <div inert aria-hidden {...stylex.props(s.factArt)}>
+                    {f.art}
+                  </div>
+                  <p {...stylex.props(s.srOnly)}>{f.alt}</p>
+                </FactStage>
+                <SectionHead title={f.title} seed={43 + i}>
+                  {f.text}
+                </SectionHead>
+              </div>
+            ))}
+          </div>
+          <RailControls count={FIX_FACTS.length} label="Fix details" seed={47} />
         </div>
       </div>
     </section>
@@ -752,7 +933,7 @@ const FIX_FACTS: { title: string; look: FactLook; art: React.ReactNode; alt: str
     title: 'Leaves things alone',
     look: 'sky',
     alt: 'A Slack message: “hey @sam, can’t make #launch on friday 🙃”. Iris fixed “cant” and left @sam, #launch and the emoji as they were.',
-    text: '@mentions, #channels, emoji, links and code stay as you typed them.',
+    text: 'Names, @mentions, links, and emoji stay untouched.',
     art: (
       <MacWindow title="Slack" icon="slack">
         <p {...stylex.props(s.chatPrev)}>
@@ -769,7 +950,7 @@ const FIX_FACTS: { title: string; look: FactLook; art: React.ReactNode; alt: str
     title: 'Learns your words',
     look: 'tan',
     alt: 'An email reads “Thanks Kayleigh, the slides look great!”. Iris asks: keep “Kayleigh”? You changed it back, so Iris won’t touch it again. Keep it, or No.',
-    text: 'Put a word back once and Iris asks to keep it. It never touches it again.',
+    text: 'Change a word back once and Iris remembers it for good.',
     art: (
       <>
         <MacWindow title="Mail" icon="mail">
@@ -800,7 +981,7 @@ const FIX_FACTS: { title: string; look: FactLook; art: React.ReactNode; alt: str
     title: 'Any language in',
     look: 'pink',
     alt: 'Iris’s panel, on Fix: “The order will arrive by tomorrow, tell the customer.” Under it, “You wrote: bhai order kal tak aa jayega, customer ko bol do”, and a note: translated to English, check it reads right.',
-    text: 'Write in Hinglish or another language; Fix gives it back in English, with what you wrote beside it.',
+    text: 'Write in Hinglish, Spanish, or any language. Iris turns it into natural English, with your original underneath.',
     art: (
       <div data-fit-panel="780" {...stylex.props(s.factPanel)}>
         {/* 780: its footer note, "into Slack" and Replace need a little more than the usual 720. */}
@@ -824,7 +1005,7 @@ const FIX_FACTS: { title: string; look: FactLook; art: React.ReactNode; alt: str
     alt: 'A note reads “I’m running late. Start without me and save me a seat.”, four words fixed. Iris’s note by it: fixed 4 words, undo with Command Z.',
     text: (
       <>
-        <KeyRow keys={['⌃', '⌥', '⇧', 'G']} /> skips the panel and fixes the box you’re in, in about 0.3 seconds. <KeyRow keys={['⌘', 'Z']} /> undoes it.
+        <KeyRow keys={['⌃', '⌥', '⇧', 'G']} /> skips the popup and fixes your text right away, in 0.3 seconds. <KeyRow keys={['⌘', 'Z']} /> undoes it.
       </>
     ),
     art: (
@@ -867,15 +1048,15 @@ function Private() {
       <span {...stylex.props(s.privateGhost)}>
       <GhostWord lines={['PRIVATE', '']} tone="pink" style={{ backgroundImage: 'url(/tex/streaks.png), linear-gradient(rgb(255 252 249), rgb(255 252 249))', opacity: 0.85, left: 'calc(-0.08em + 5px)', top: '50%', fontSize: 'clamp(110px, 13vw, 200px)', transformOrigin: '0 0', transform: 'rotate(-90deg) translate(-50%, 0)' }} />
       </span>
-      <div {...stylex.props(s.wrap)} style={{ paddingBlock: 'clamp(64px, 9vw, 120px)' }}>
+      <div {...stylex.props(s.wrap)} style={{ paddingBlock: 'clamp(48px, 9vw, 120px)' }}>
         <PageTitle id="private-title" lines={['Your words stay', 'on your Mac']} xstyle={s.onPink} />
         <div {...stylex.props(s.privateBody)}>
           <div {...stylex.props(s.stack)} style={{ gap: 20 }}>
             <p {...stylex.props(s.pinkBody)} data-tones="private">
-              Iris runs entirely on your Mac: a 5 GB model you download once, on Apple’s MLX. What you write is never sent anywhere. There’s no server, no account and no tracking, and once the model is in, it works offline.
+              Iris runs its AI directly on your Mac. No cloud, no account, and no tracking. After a one-time download during setup, nothing you type ever leaves your computer, and it works without Wi-Fi.
             </p>
             <p {...stylex.props(s.pinkBody)} style={{ fontSize: '0.84375rem' }}>
-              Iris never reads password fields, and stays out of password managers from the start.
+              Automatically ignores password fields and password managers.
             </p>
           </div>
           <div {...stylex.props(s.stickers)}>
@@ -892,7 +1073,7 @@ function Private() {
 // The privacy stickers: what Iris doesn't need, crossed out with the brush, and where your words
 // stay. Paper slips, each with a printed picture (scripts/privacy-icons.mjs).
 const STICKERS = [
-  { label: 'no server', picture: 'cloud', crossed: true, tilt: -2.5, seed: 61 },
+  { label: 'no cloud', picture: 'cloud', crossed: true, tilt: -2.5, seed: 61 },
   { label: 'no sign-up', picture: 'card', crossed: true, tilt: 2, seed: 62 },
   { label: 'works offline', picture: 'wifi', crossed: true, tilt: 1.5, seed: 63 },
   { label: 'stays on your Mac', picture: 'mac', crossed: false, tilt: -1.5, seed: 64 },
@@ -902,7 +1083,7 @@ const STICKERS = [
  *  Iris doesn't need, and its word. */
 function Sticker({ label, picture, crossed, tilt, seed }: (typeof STICKERS)[number]) {
   return (
-    <div {...stylex.props(s.sticker)} style={{ rotate: `${tilt}deg` }}>
+    <div {...stylex.props(s.sticker)} style={{ ['--tilt' as string]: `${tilt}deg` }}>
       <span aria-hidden {...stylex.props(s.stickerArt)}>
         <img src={`/privacy/${picture}.png`} alt="" width={320} height={320} loading="lazy" decoding="async" {...stylex.props(s.stickerSvg)} />
         {crossed && (
@@ -924,25 +1105,25 @@ const YOURS: { name: string; page: Parameters<typeof Picture>[0]['name']; text: 
   {
     name: 'Tones',
     page: 'settings-tones',
-    text: 'Your style in your own words (“never use exclamation marks”), and tones of your own.',
+    text: 'Add rules in plain English (“never use exclamation marks”) or make your own tones.',
     alt: 'Iris’s Settings at Tones: which tones the panel shows and in what order, a box to add a tone of your own, and your style.',
   },
   {
     name: 'Words',
     page: 'words',
-    text: 'Product names, people’s names and jargon, kept exactly as written.',
+    text: 'Names, brands, and special terms you never want Iris to change.',
     alt: 'Iris’s Settings at Words: Northwind, OKR, Kubernetes and ACME-2041 on the list of words Iris never changes.',
   },
   {
     name: 'Apps',
     page: 'settings-apps',
-    text: 'A starting tone per app, like Professional in Mail. Password managers are off from the start.',
+    text: 'Pick a default tone per app, like Professional in Mail or Friendly in Messages.',
     alt: 'Iris’s Settings at Apps: Iris turned off in 1Password, Keychain Access, Passwords and Bitwarden, and a tone to start in for each app.',
   },
   {
     name: 'Shortcuts',
     page: 'settings-shortcuts',
-    text: 'Your own keys, for both the panel and Quick Fix.',
+    text: 'Change the keyboard shortcuts to whatever feels natural.',
     alt: 'Iris’s Settings at Shortcuts: Control Option G opens Iris, Control Option Shift G is Quick Fix, and the keys that work in the panel.',
   },
 ];
@@ -950,13 +1131,13 @@ const YOURS: { name: string; page: Parameters<typeof Picture>[0]['name']; text: 
 function Yours() {
   return (
     <section id="yours" aria-labelledby="yours-title" {...stylex.props(s.spread)}>
-      <div {...stylex.props(s.wrap, s.stack)} style={{ gap: 'clamp(40px, 6vw, 64px)' }}>
-        <RunningHead seed={61} cols={['Settings', 'Settings… in the menu bar', 'Everything stays on your Mac']} />
+      <div {...stylex.props(s.wrap, s.stack, s.spreadGap64)}>
+        <RunningHead seed={61} cols={['Settings']} />
         <div {...stylex.props(s.yoursGrid)}>
           <div style={{ gridArea: 'title' }}>
             <PageTitle id="yours-title" lines={['Make it', 'yours']} small />
           </div>
-          <ol role="tablist" aria-label="Settings" aria-orientation="vertical" data-yours {...stylex.props(s.steps)} style={{ gridArea: 'list' }}>
+          <ol role="tablist" aria-label="Settings" aria-orientation="vertical" data-yours {...stylex.props(s.steps, s.yoursList)} style={{ gridArea: 'list' }}>
             {YOURS.map((y, i) => (
               <li key={y.name} role="presentation" data-yours-step data-active={i === 0} {...stylex.props(s.step, s.yoursStep)}>
                 <button type="button" role="tab" id={`yours-tab-${i}`} aria-controls={`yours-page-${i}`} aria-selected={i === 0} tabIndex={i === 0 ? 0 : -1} {...stylex.props(s.stepButton)}>
@@ -965,14 +1146,14 @@ function Yours() {
                 <span aria-hidden data-yours-track {...stylex.props(s.stepTrack)}>
                   <span data-yours-bar {...stylex.props(s.stepBar)} />
                 </span>
-                <p {...stylex.props(s.stepText)}>{y.text}</p>
+                <p {...stylex.props(s.stepText, s.yoursText)}>{y.text}</p>
               </li>
             ))}
           </ol>
           <div {...stylex.props(s.yoursStage)} style={{ backgroundColor: WALL.plate }}>
             <Pattern kind="loops" color={WALL.loops} seed={57} scale={1.2} count={9} />
             <span {...stylex.props(s.yoursNote)} aria-hidden>
-              <span style={{ paddingTop: 2 }}>Settings, as Iris draws it</span>
+              <span style={{ paddingTop: 2 }}>Inside Settings</span>
               <HandArrow width={44} height={40} seed={6} />
             </span>
             <div data-yours-window {...stylex.props(s.yoursFrame)}>
@@ -1000,14 +1181,14 @@ function Yours() {
 // ── 07 Menu bar and setup ─────────────────────────────────────────────────────────────
 function MenuBar() {
   const steps = [
-    ['Allow', 'Let Iris read the text box you’re typing in. macOS asks once.'],
-    ['Get the model', 'One download, then it’s on your Mac for good.'],
+    ['Allow access', 'Give Iris permission to fix your text. Your Mac asks just once.'],
+    ['One-time offline download', 'Downloads the built-in AI once, so Iris works privately without internet.'],
     ['Try it', 'Fix a practice sentence, and you’re set.'],
   ];
   return (
     <section id="menu" aria-labelledby="menu-title" {...stylex.props(s.spread)} style={{ paddingTop: 0 }}>
-      <div {...stylex.props(s.wrap, s.stack)} style={{ gap: 'clamp(40px, 6vw, 64px)' }}>
-        <RunningHead seed={71} cols={['Menu bar', 'No Dock icon, no window', 'Setup takes about five minutes']} />
+      <div {...stylex.props(s.wrap, s.stack, s.spreadGap64)}>
+        <RunningHead seed={71} cols={['Menu bar', 'Out of your way', '5-minute setup']} />
         <div {...stylex.props(s.menuGrid)}>
           <div {...stylex.props(s.macStage)}>
           <Pattern kind="ripples" color="rgb(210 177 146)" seed={71} at={[0.5, 0.2]} scale={1.3} />
@@ -1029,25 +1210,25 @@ function MenuBar() {
             }
           />
           </div>
-          <div {...stylex.props(s.stack)} style={{ gap: 30 }}>
+          <div {...stylex.props(s.stack, s.menuIntro)}>
             <PageTitle id="menu-title" lines={['Lives in your', 'menu bar']} small />
             <p {...stylex.props(s.body)} data-tones="menu">
-              The flower in your menu bar shows what Iris is doing. It wakes the model when you need it, and frees its memory by itself when you haven’t used it for a while.
+              Iris sits quietly as a little flower at the top of your screen, with no cluttered window or Dock icon. It only runs when you call it, then goes to sleep automatically so it won’t slow your Mac down.
             </p>
-            <div>
-              <SectionHead title="Set up in three steps" seed={73} />
-              <ol {...stylex.props(s.setupList)}>
-                {steps.map(([t, d], i) => (
-                  <li key={t}>
-                    <div {...stylex.props(s.setupItem)}>
-                      <span {...stylex.props(s.setupTitle)}>{t}</span>
-                      <span {...stylex.props(s.methodText)}>{d}</span>
-                    </div>
-                    {i < steps.length - 1 && <PenRule seed={74 + i} />}
-                  </li>
-                ))}
-              </ol>
-            </div>
+          </div>
+          <div style={{ gridArea: 'steps' }}>
+            <SectionHead title="First time you open Iris" seed={73} />
+            <ol {...stylex.props(s.setupList)}>
+              {steps.map(([t, d], i) => (
+                <li key={t}>
+                  <div {...stylex.props(s.setupItem)}>
+                    <span {...stylex.props(s.setupTitle)}>{t}</span>
+                    <span {...stylex.props(s.methodText)}>{d}</span>
+                  </div>
+                  {i < steps.length - 1 && <PenRule seed={74 + i} />}
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
       </div>
@@ -1060,10 +1241,10 @@ function Install() {
   // What each computer needs: the Mac's from the app's README and ModelChoice (Best quality from
   // 16 GB, as Iris recommends at setup), Windows' from content.ts. The price is the same on both, so it's said once, under them.
   const mac: [string, string][] = [
-    ['Chip', 'Apple silicon, M1 or later'],
-    ['macOS', '15 or later'],
-    ['Memory', 'Best quality from 16 GB, Lighter on Macs with less'],
-    ['Disk', 'About 5 GB for the model'],
+    ['Mac', 'M1, M2, M3, or newer (2020+)'],
+    ['macOS', '15 (Sequoia) or newer'],
+    ['Memory', '8 GB works, 16 GB+ for best quality'],
+    ['Storage', 'About 5 GB of free space'],
   ];
   const win: [string, string][] = windows.requirements.length ? windows.requirements : [['Needs', 'To be announced']];
   const rows = (list: [string, string][], seed: number) =>
@@ -1075,32 +1256,33 @@ function Install() {
     ));
   return (
     <section id="install" aria-labelledby="install-title" {...stylex.props(s.spread)}>
-      <div {...stylex.props(s.wrap, s.stack)} style={{ gap: 'clamp(40px, 6vw, 72px)' }}>
-        <RunningHead seed={81} cols={['Install', 'The Mac app, in three steps']} />
+      <div {...stylex.props(s.wrap, s.stack, s.spreadGap72)}>
+        <RunningHead seed={81} cols={['Install', '3 quick steps']} />
         <div {...stylex.props(s.installHead)}>
           <PageTitle id="install-title" lines={['Get', 'Iris']} small />
           <div {...stylex.props(s.cta)}>
             <GetIris />
-            <PenLink href={links.source}>Build it from source</PenLink>
           </div>
         </div>
-        {/* Three steps, each on its own small collage with the Mac's own pieces drawn on it, as
-            the Fix facts are. The pictures are drawings: screen readers get one line for each. */}
-        <ol {...stylex.props(s.installSteps)}>
-          {INSTALL_STEPS.map((st, i) => (
-            <li key={st.title} {...stylex.props(s.fact)}>
-              <FactStage look={st.look} seed={86 + i * 7}>
-                <div inert aria-hidden {...stylex.props(s.factArt)}>
-                  {st.art}
-                </div>
-                <p {...stylex.props(s.srOnly)}>{st.alt}</p>
-              </FactStage>
-              <SectionHead title={st.title} seed={96 + i}>
-                {st.text}
-              </SectionHead>
-            </li>
-          ))}
-        </ol>
+        {/* Three steps, each on its own small collage; swipeable rail on phones. */}
+        <div {...stylex.props(s.railWrap)} data-rail="install">
+          <ol {...stylex.props(s.installSteps)} data-scrolls data-rail-track>
+            {INSTALL_STEPS.map((st, i) => (
+              <li key={st.title} {...stylex.props(s.fact)} data-rail-slide>
+                <FactStage look={st.look} seed={86 + i * 7}>
+                  <div inert aria-hidden {...stylex.props(s.factArt)}>
+                    {st.art}
+                  </div>
+                  <p {...stylex.props(s.srOnly)}>{st.alt}</p>
+                </FactStage>
+                <SectionHead title={st.title} seed={96 + i}>
+                  {st.text}
+                </SectionHead>
+              </li>
+            ))}
+          </ol>
+          <RailControls count={INSTALL_STEPS.length} label="Install steps" seed={99} />
+        </div>
         <div {...stylex.props(s.installFoot)}>
           <div {...stylex.props(s.needs)}>
             <div {...stylex.props(s.needGroup)}>
@@ -1122,7 +1304,7 @@ function Install() {
                 </span>
               )}
             </div>
-            <dl {...stylex.props(s.specs)}>{rows([['Price', 'Free on both, MIT license']], 99)}</dl>
+            <dl {...stylex.props(s.specs)}>{rows([['Price', 'Free forever on Mac & Windows']], 99)}</dl>
           </div>
           {/* A paper slip taped to the page, like Iris's notes: why step 3 asks. */}
           <div {...stylex.props(panel.sheet, s.why)}>
@@ -1130,10 +1312,10 @@ function Install() {
             <Tape style={{ left: '50%', top: -12, width: 96, height: 24, transform: 'translateX(-50%) rotate(-3deg)' }} />
             <span {...stylex.props(s.whyTitle)}>Why does macOS ask?</span>
             <p {...stylex.props(s.whyText)} data-tones="why">
-              Apple charges a yearly fee to vouch for apps, and Iris is free, so it doesn’t pay it. Every release is signed with the same certificate instead: you confirm Iris once and allow it once, and both stick through updates. The code is all public if you’d rather check it.
+              Apple charges developers a yearly fee to remove that first-time warning. Since Iris is completely free, we skip the fee. Your Mac asks you to confirm just once and remembers through future updates. Our code is public so anyone can check it’s safe.
             </p>
             <span style={{ position: 'relative' }}>
-              <PenLink href={links.code}>Read the code</PenLink>
+              <PenLink href={links.code}>See the public code</PenLink>
             </span>
           </div>
         </div>
@@ -1206,7 +1388,7 @@ const INSTALL_STEPS: { title: string; look: FactLook; art: React.ReactNode; alt:
     title: 'Download',
     look: 'step1',
     alt: 'A Finder window, Downloads: Iris.zip, and Iris, the app that came out of it.',
-    text: 'Get Iris.zip and open it. Iris comes out of it.',
+    text: 'Download Iris.zip and double-click it to unzip the app.',
     art: (
       <MacWindow title="Downloads">
         <div {...stylex.props(s.finderRow)}>
@@ -1221,7 +1403,7 @@ const INSTALL_STEPS: { title: string; look: FactLook; art: React.ReactNode; alt:
     title: 'Drag it to Applications',
     look: 'step2',
     alt: 'Iris dragged across a Finder window onto the Applications folder.',
-    text: 'Move Iris into your Applications folder, where updates find it.',
+    text: 'Drag Iris into your Applications folder so it can update itself.',
     art: (
       <MacWindow title="Downloads">
         <div {...stylex.props(s.finderRow)}>
@@ -1239,7 +1421,7 @@ const INSTALL_STEPS: { title: string; look: FactLook; art: React.ReactNode; alt:
     title: 'Open it, once',
     look: 'step3',
     alt: 'macOS says “Iris” Not Opened, with Done ringed. Then System Settings, Privacy & Security: “Iris” was blocked to protect your Mac, with Open Anyway ringed.',
-    text: 'macOS stops the first open: click Done. In System Settings › Privacy & Security, click Open Anyway and confirm. After that Iris opens like any app.',
+    text: 'The first time, macOS shows a warning. Click Done, open System Settings › Privacy & Security, click Open Anyway, and confirm. After that, it opens normally.',
     art: (
       <div {...stylex.props(s.askStack)}>
         <div {...stylex.props(panel.sheet, s.dialog)}>
@@ -1382,7 +1564,7 @@ const qa = stylex.create({
     backgroundSize: '96px 96px, 128px 128px',
     overflowAnchor: 'none',
     // Room at the foot for the near branches, clear of the last question.
-    paddingBottom: { default: 'clamp(120px, 14vw, 200px)', [MOBILE]: 240 },
+    paddingBottom: { default: 'clamp(120px, 14vw, 200px)', [MOBILE]: 96 },
   },
   // The depths, each a layer over the plate: far behind the words, near in front of them.
   far: { position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' },
@@ -1392,25 +1574,25 @@ const qa = stylex.create({
   grid: {
     display: 'grid',
     gridTemplateColumns: 'minmax(0, 4fr) minmax(0, 8fr)',
-    gap: 'clamp(32px, 5vw, 80px)',
+    gap: { default: 'clamp(32px, 5vw, 80px)', [MOBILE]: 24 },
     alignItems: 'start',
     [NARROW]: { gridTemplateColumns: 'minmax(0, 1fr)' },
   },
   list: { display: 'flex', flexDirection: 'column', gap: 4 },
-  item: { position: 'relative', paddingInline: 18, marginInline: -18 },
+  item: { position: 'relative', paddingInline: { default: 18, [MOBILE]: 14 }, marginInline: { default: -18, [MOBILE]: -6 } },
   // In the question's row, which shows even when it's folded (the rest of a closed <details> doesn't).
-  rule: { position: 'absolute', left: 18, right: 18, bottom: -3, pointerEvents: 'none' },
+  rule: { position: 'absolute', left: { default: 18, [MOBILE]: 14 }, right: { default: 18, [MOBILE]: 14 }, bottom: -3, pointerEvents: 'none' },
   q: {
     position: 'relative',
     display: 'flex',
     alignItems: 'baseline',
-    gap: 14,
-    paddingBlock: 18,
-    marginInline: -18,
-    paddingInline: 18,
+    gap: { default: 14, [MOBILE]: 10 },
+    paddingBlock: { default: 18, [MOBILE]: 14 },
+    marginInline: { default: -18, [MOBILE]: -14 },
+    paddingInline: { default: 18, [MOBILE]: 14 },
     cursor: 'pointer',
     listStyle: 'none',
-    fontSize: 'clamp(15px, 1.4vw, 17px)',
+    fontSize: { default: 'clamp(15px, 1.4vw, 17px)', [MOBILE]: 14.5 },
     fontWeight: 560,
     lineHeight: 1.45,
     color: ink.i12,
@@ -1422,40 +1604,43 @@ const qa = stylex.create({
   mark: { position: 'absolute', zIndex: -1, left: -6, right: -10, bottom: '-0.16em', height: '0.95em', transform: 'scaleX(0)', transformOrigin: 'left center', pointerEvents: 'none' },
   chev: { flex: 'none', alignSelf: 'center', marginLeft: 'auto', width: 16, height: 10 },
   body: { overflow: 'hidden' },
-  a: { display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 'calc(2.2ch + 14px)', paddingBottom: 26, paddingRight: 30, [MOBILE]: { paddingRight: 4 } },
-  lead: { fontFamily: font.brush, fontSize: 'clamp(22px, 2vw, 26px)', lineHeight: 1.1, color: ink.i12 },
-  detail: { fontSize: 14, lineHeight: 1.7, color: ink.i11, maxWidth: '58ch' },
+  a: { display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: { default: 'calc(2.2ch + 14px)', [MOBILE]: 0 }, paddingBottom: { default: 26, [MOBILE]: 18 }, paddingRight: { default: 30, [MOBILE]: 0 } },
+  lead: { fontFamily: font.brush, fontSize: { default: 'clamp(22px, 2vw, 26px)', [MOBILE]: 21 }, lineHeight: 1.1, color: ink.i12 },
+  detail: { fontSize: { default: 14, [MOBILE]: 13.5 }, lineHeight: { default: 1.7, [MOBILE]: 1.65 }, color: ink.i11, maxWidth: '58ch' },
 });
 /** The branches round the plate, by depth: each drawing, where it sits and how wide (a share of
  *  the plate, and at most), how a breeze sways it from its foot (degrees, seconds, delay: every
  *  one has settled by 5s, WCAG 2.2.2), and its width on a phone (`null` hides it there). Far and
  *  sharp ones keep to the margins and the room under the title; near ones only lean into the
  *  corners, so none of them covers a question. */
-const QA_BRANCHES: { depth: Depth; spec: BranchSpec; box: React.CSSProperties; width: [number, number]; phone: string | null; sway: [number, number, number] }[] = [
+const QA_BRANCHES: { depth: Depth; spec: BranchSpec; box: React.CSSProperties; width: [number, number]; phone: string | null; phoneLeft?: string; sway: [number, number, number] }[] = [
   // Far: hanging from the top between the running head's labels, and rising past the right edge.
-  { depth: 'far', spec: { seed: 23, w: 300, h: 300, base: [150, 0], stems: [{ angle: 95, len: 250, bend: 0.4 }] }, box: { left: '19%', top: 0 }, width: [14, 200], phone: '34%', sway: [1.2, 4.6, 0.3] },
+  // On a phone, tuck it into the open top-right corner instead of hanging onto "YOU ASK" or "Answered by Iris".
+  { depth: 'far', spec: { seed: 23, w: 300, h: 300, base: [150, 0], stems: [{ angle: 95, len: 250, bend: 0.4 }] }, box: { left: '19%', top: 0 }, width: [14, 200], phone: '20%', phoneLeft: '82%', sway: [1.2, 4.6, 0.3] },
   { depth: 'far', spec: { seed: 67, w: 300, h: 440, base: [250, 440], stems: [{ angle: -100, len: 380, bend: -0.3 }, { angle: -122, len: 260, bend: 0.3 }] }, box: { right: '-3%', bottom: 0 }, width: [16, 220], phone: null, sway: [1, 4.4, 0.6] },
   // Sharp: rising under the title, in focus with the words.
   { depth: 'mid', spec: { seed: 41, w: 300, h: 460, base: [120, 460], stems: [{ angle: -86, len: 420, bend: 0.4 }, { angle: -62, len: 260, bend: -0.3 }] }, box: { left: '5%', bottom: 0 }, width: [22, 300], phone: null, sway: [1.4, 4.2, 0.1] },
   // Near the lens: big and soft, leaning into the corners from past the plate's edge.
-  { depth: 'near', spec: { seed: 37, w: 340, h: 470, base: [60, 470], stems: [{ angle: -70, len: 430, bend: 0.25 }, { angle: -45, len: 300, bend: -0.2 }] }, box: { left: '-7%', bottom: '-12%' }, width: [36, 520], phone: '62%', sway: [2, 4.8, 0] },
+  { depth: 'near', spec: { seed: 37, w: 340, h: 470, base: [60, 470], stems: [{ angle: -70, len: 430, bend: 0.25 }, { angle: -45, len: 300, bend: -0.2 }] }, box: { left: '-7%', bottom: '-12%' }, width: [36, 520], phone: '36%', sway: [2, 4.8, 0] },
   { depth: 'near', spec: { seed: 11, w: 340, h: 300, base: [340, 30], stems: [{ angle: 160, len: 300, bend: 0.5 }, { angle: 135, len: 220, bend: -0.3 }] }, box: { right: '-7%', top: '-10%' }, width: [32, 460], phone: null, sway: [1.8, 4.5, 0.4] },
 ];
 /** A depth's branches, each at its place, swaying from its foot. */
 function BranchLayer({ depth }: { depth: Depth }) {
   return (
     <div aria-hidden {...stylex.props(depth === 'near' ? qa.near : qa.far)} data-depth={depth}>
-      {QA_BRANCHES.filter((b) => (depth === 'near' ? b.depth === 'near' : b.depth !== 'near')).map(({ depth: d, spec, box, width, phone, sway }) => (
+      {QA_BRANCHES.filter((b) => (depth === 'near' ? b.depth === 'near' : b.depth !== 'near')).map(({ depth: d, spec, box, width, phone, phoneLeft, sway }) => (
         <span
           key={spec.seed}
           data-branch
           data-branch-depth={d}
           data-branch-phone={phone == null ? 'hide' : undefined}
+          data-branch-shift={phoneLeft ? '' : undefined}
           {...stylex.props(qa.branch)}
           style={{
             ...box,
             width: `min(${width[0]}%, ${width[1]}px)`,
             ['--pw' as string]: phone ?? undefined,
+            ['--pl' as string]: phoneLeft ?? undefined,
             aspectRatio: `${spec.w} / ${spec.h}`,
             ['--o' as string]: `${(spec.base[0] / spec.w) * 100}% ${(spec.base[1] / spec.h) * 100}%`,
             ['--a' as string]: `${sway[0]}deg`,
@@ -1479,47 +1664,47 @@ const QUESTIONS: { q: string; lead: string; a: React.ReactNode }[] = [
       </>
     ),
   },
-  { q: 'Is it really free?', lead: 'yes. all of it', a: 'No trial, no paid plan and no account. Iris is open source under the MIT license, so anyone can read the code.' },
+  { q: 'Is it really free?', lead: 'yes. all of it', a: 'No trial, no subscription, and no account. Iris is free and open source, so anyone can check how it works.' },
   {
     q: 'Does what I write leave my computer?',
     lead: 'never. i live on your computer',
-    a: 'The model runs on your own computer, so your words are never sent anywhere. There’s no server and no tracking, and once the model is downloaded Iris works offline.',
+    a: 'Never. Everything runs directly on your Mac. Nothing goes to the cloud, nobody tracks you, and it works without Wi-Fi.',
   },
   {
     q: 'Which apps does it work in?',
     lead: 'anywhere you can type',
-    a: 'Slack, Mail, Messages, Notes, Chrome, Safari and any other app with a text box. There’s nothing to install in each one. Select some text first to fix just that part.',
+    a: 'Slack, Mail, Messages, Notes, Chrome, Safari, and any other app with a text box. No browser extension or plugin needed. Highlight text to fix just that part.',
   },
   {
     q: 'Will it change how I sound?',
     lead: 'only what’s wrong',
     a: (
       <>
-        Fix corrects mistakes and leaves your words, your style and your casual “hey” alone. @mentions, links, code and the names you add are never touched. Nothing changes until you press Return, and <KeyRow keys={['⌘', 'Z']} /> in your app takes it back.
+        Fix only corrects mistakes and keeps your voice intact, even your casual “hey.” Names, @mentions, links, and emoji stay untouched. Nothing changes until you press Return, and <KeyRow keys={['⌘', 'Z']} /> takes it back.
       </>
     ),
   },
   {
-    q: 'Can I write in Hindi or Hinglish?',
-    lead: 'yes, and i’ll answer in english',
-    a: 'Write in Hindi, or Hindi typed in English letters, and Fix turns it into English, with what you wrote shown beside it.',
+    q: 'Can I write in Hindi, Hinglish, or other languages?',
+    lead: 'yes, and i’ll give it back in english',
+    a: 'Type in Hindi, Hinglish (Hindi in English letters), or another language. Iris translates it into natural English, with your original shown underneath.',
   },
   {
     q: 'Will it slow my computer down?',
     lead: 'not while you’re not using me',
-    a: 'While it’s ready, the model takes about 3 to 4 GB of memory. When you haven’t used Iris for a while it frees that memory by itself, and you choose how long in Settings.',
+    a: 'Nope. Iris only runs when you use it, then goes to sleep automatically when you step away so your Mac stays fast. You can adjust how soon in Settings.',
   },
   {
     q: 'How do I get updates?',
     lead: 'one click, from the menu bar',
-    a: 'Choose Check for Updates… in Iris’s menu in the menu bar. Iris downloads the new version and reopens itself.',
+    a: 'Click the Iris flower in your top menu bar and choose Check for Updates… Iris downloads the new version and reopens itself.',
   },
   {
     q: 'Is there a Windows version?',
     lead: 'not yet. it’s on its way',
     a: (
       <>
-        Windows is coming as a beta. What a PC will need is under <a href="#install">Install</a>, and you can follow along on <a href={links.code}>GitHub</a>.
+        It’s on the way. You can check what a PC will need under <a href="#install">Install</a>, or <a href={links.code}>follow progress here</a>.
       </>
     ),
   },
@@ -1530,7 +1715,7 @@ function Questions() {
     <section id="questions" aria-labelledby="questions-title" {...stylex.props(s.spread, qa.plate)} data-sway-field>
       <BranchLayer depth="far" />
       <div {...stylex.props(s.wrap, s.stack, qa.above)} style={{ gap: 'clamp(32px, 5vw, 56px)' }}>
-        <RunningHead seed={91} cols={['Questions', 'Answered by Iris']} />
+        <RunningHead seed={91} cols={['Questions']} />
         <div {...stylex.props(qa.grid)}>
           <PageTitle id="questions-title" lines={['You ask', 'Iris answers']} small />
           <div {...stylex.props(qa.list)}>
@@ -1567,6 +1752,71 @@ function Questions() {
   );
 }
 
+/** Mobile-only folio + scrubber + hand-drawn arrows under a swipeable collage rail. */
+function RailControls({ count, label, seed }: { count: number; label: string; seed: number }) {
+  return (
+    <div {...stylex.props(s.railControls)} role="group" aria-label={label}>
+      <div {...stylex.props(s.railMeta)}>
+        <span {...stylex.props(s.railFolio)} data-rail-folio>
+          01 / {String(count).padStart(2, '0')}
+        </span>
+        <span {...stylex.props(s.railPips)}>
+          {Array.from({ length: count }, (_, i) => (
+            <button key={i} type="button" aria-label={`Show ${label} ${i + 1} of ${count}`} data-rail-pip={i} data-active={i === 0 ? 'true' : 'false'} {...stylex.props(s.railPip)} />
+          ))}
+        </span>
+      </div>
+      <div {...stylex.props(s.railArrows)}>
+        <button type="button" aria-label={`Previous ${label}`} data-rail-prev disabled {...stylex.props(s.railArrow)}>
+          <HandRect seed={seed} width={1.3} />←
+        </button>
+        <button type="button" aria-label={`Next ${label}`} data-rail-next {...stylex.props(s.railArrow)}>
+          <HandRect seed={seed + 1} width={1.3} />→
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const JUMP_ITEMS = [
+  { id: 'moment', label: 'How' },
+  { id: 'tones', label: 'Tones' },
+  { id: 'private', label: 'Privacy' },
+  { id: 'install', label: 'Install' },
+  { id: 'questions', label: 'FAQ' },
+] as const;
+
+/** Sticky compact mobile jump bar: paper + pen rule + pink marker swipe on the active section.
+ *  Hidden above 760px; slides in once the reader scrolls past the cover. Uses buttons instead of
+ *  <a> links so anchor counts in check.mjs stay exact. */
+function MobileJumpBar() {
+  return (
+    <nav aria-label="Jump to section" data-jump-bar data-shown="false" {...stylex.props(s.jumpBar)}>
+      <div {...stylex.props(s.jumpInner)}>
+        <button type="button" data-jump="top" aria-label="Back to top" {...stylex.props(s.jumpBrand)}>
+          <Wordmark size="20px" />
+        </button>
+        <div data-scrolls data-jump-list {...stylex.props(s.jumpLinks)}>
+          {JUMP_ITEMS.map((it, i) => (
+            <button key={it.id} type="button" data-jump={it.id} data-jump-active={i === 0 ? 'true' : 'false'} {...stylex.props(s.jumpBtn)}>
+              <span aria-hidden data-jump-mark {...stylex.props(s.jumpMark)}>
+                <Printed mask={markerMask(seedOf(it.label) + 11)} color="pink" />
+              </span>
+              {it.label}
+            </button>
+          ))}
+        </div>
+        <button type="button" data-jump="install" {...stylex.props(s.jumpGet)}>
+          Get
+        </button>
+      </div>
+      <span aria-hidden {...stylex.props(s.jumpRule)}>
+        <PenRule seed={19} color="rgb(42 26 22 / 0.25)" />
+      </span>
+    </nav>
+  );
+}
+
 export function Page() {
   return (
     <>
@@ -1588,6 +1838,7 @@ export function Page() {
       </main>
       </div>
       <Footer />
+      <MobileJumpBar />
       <PressPanel />
     </>
   );
@@ -1650,7 +1901,7 @@ function PressPanel() {
       </div>
       <span data-press-said role="status" {...stylex.props(s.srOnly)} />
       <div data-press-psst hidden aria-hidden {...stylex.props(s.psst)}>
-        <span data-psst-keys>psst: ⌃ ⌥ G works on this page too</span>
+        <span data-psst-keys>psst: try pressing ⌃ ⌥ G right now</span>
       </div>
     </>
   );

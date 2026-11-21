@@ -5,7 +5,7 @@ import { Page } from './Page';
 
 const title = 'Iris: fix your grammar, change your tone';
 const description =
-  'Iris fixes your grammar and changes your tone in any app on your Mac. Press ⌃ ⌥ G in a text box, read the fix, press Return. Free, open source, and it never sends your text anywhere.';
+  'A free, private Grammarly alternative for Mac. Fix grammar and change tone in any app with one shortcut. Works offline and never sends your writing to the cloud.';
 // What the share card shows, for people who can't see it.
 const cardAlt =
   'Iris: fix your grammar, change your tone. Iris’s panel fixes “cant”, “tmrw” and “their” in a note, under a sun and butterflies.';

@@ -1066,13 +1066,13 @@ if (press && pressJson && iris) {
     }
   });
 
-  // Once, a nudge: after the cover, a slip says the keys work here too.
+  // Once, a nudge on desktop: after the cover, a slip says the keys work here too. Tap to dismiss.
   const touch = !matchMedia('(hover: hover) and (pointer: fine)').matches;
-  if (touch) psst.querySelector('[data-psst-keys]')!.textContent = 'psst: tap the ⌃ ⌥ G keys';
+  psst.addEventListener('click', () => (psst.hidden = true));
   let seen = false;
   try { seen = sessionStorage.getItem('iris-psst') === '1'; } catch {}
   const cover = document.querySelector('header');
-  if (!seen && cover) {
+  if (!touch && !seen && cover) {
     new IntersectionObserver(([e], io) => {
       if (e.isIntersecting || pressed) return;
       io.disconnect();
@@ -1158,4 +1158,106 @@ for (const send of document.querySelectorAll<HTMLAnchorElement>('[data-send-to-m
         if (err.name !== 'AbortError') location.href = send.href;
       });
   });
+}
+
+// ── Mobile sticky jump bar (Page.tsx, MobileJumpBar) ──────────────────────────────────
+// Hidden above 760px. Slides in once the cover leaves view and highlights the section currently
+// on screen with Iris's pink marker swipe.
+{
+  const bar = document.querySelector<HTMLElement>('[data-jump-bar]');
+  const cover = document.querySelector('header');
+  if (bar && cover) {
+    const btns = $$<HTMLButtonElement>('[data-jump-active]', bar);
+    const ids = btns.map((b) => b.dataset.jump!);
+    const sections = ids.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => !!el);
+    let shown = false, activeId = ids[0] ?? '';
+
+    const setActive = (id: string) => {
+      if (id === activeId) return;
+      activeId = id;
+      btns.forEach((b) => {
+        const on = b.dataset.jump === id;
+        b.dataset.jumpActive = String(on);
+        if (on) b.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+      });
+    };
+
+    new IntersectionObserver(([e]) => {
+      shown = !e.isIntersecting;
+      bar.dataset.shown = String(shown);
+      if (shown) spy();
+    }, { threshold: 0.05 }).observe(cover);
+
+    let spyQueued = false;
+    const spy = () => {
+      spyQueued = false;
+      if (!shown || !sections.length) return;
+      const pivot = innerHeight * 0.34;
+      let pick = sections[0].id;
+      for (const sec of sections) if (sec.getBoundingClientRect().top <= pivot) pick = sec.id;
+      setActive(pick);
+    };
+    addEventListener('scroll', () => {
+      if (!spyQueued) (spyQueued = true), requestAnimationFrame(spy);
+    }, { passive: true });
+
+    for (const btn of $$<HTMLButtonElement>('[data-jump]', bar)) {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.jump!;
+        if (id === 'top') return window.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' });
+        const el = document.getElementById(id);
+        if (!el) return;
+        setActive(id);
+        el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+      });
+    }
+  }
+}
+
+// ── Mobile swipeable collage rails (Page.tsx, Fix & Install) ──────────────────────────
+// Native CSS scroll-snap handles swiping on phones; this keeps the folio (01 / 04), pink pip
+// scrubber, and hand-drawn prev/next arrows in sync with the scroll position.
+for (const rail of $$<HTMLElement>('[data-rail]')) {
+  const track = rail.querySelector<HTMLElement>('[data-rail-track]');
+  const slides = $$<HTMLElement>('[data-rail-slide]', rail);
+  const folio = rail.querySelector<HTMLElement>('[data-rail-folio]');
+  const pips = $$<HTMLButtonElement>('[data-rail-pip]', rail);
+  const prev = rail.querySelector<HTMLButtonElement>('[data-rail-prev]');
+  const next = rail.querySelector<HTMLButtonElement>('[data-rail-next]');
+  if (!track || !slides.length) continue;
+
+  let current = 0;
+  const sync = (i: number) => {
+    current = Math.max(0, Math.min(slides.length - 1, i));
+    if (folio) folio.textContent = `${String(current + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
+    pips.forEach((p, k) => (p.dataset.active = String(k === current)));
+    if (prev) prev.disabled = current === 0;
+    if (next) next.disabled = current === slides.length - 1;
+  };
+  const goTo = (i: number) => {
+    const idx = Math.max(0, Math.min(slides.length - 1, i));
+    const pad = parseFloat(getComputedStyle(track).paddingLeft) || 20;
+    track.scrollTo({ left: Math.max(0, slides[idx].offsetLeft - pad), behavior: still ? 'auto' : 'smooth' });
+    sync(idx);
+  };
+
+  let raf = 0;
+  track.addEventListener('scroll', () => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      const pad = parseFloat(getComputedStyle(track).paddingLeft) || 20;
+      const x = track.scrollLeft + pad;
+      let best = 0, dist = Infinity;
+      slides.forEach((sl, i) => {
+        const d = Math.abs(sl.offsetLeft - x);
+        if (d < dist) (dist = d), (best = i);
+      });
+      if (best !== current) sync(best);
+    });
+  }, { passive: true });
+
+  pips.forEach((p, i) => p.addEventListener('click', () => goTo(i)));
+  prev?.addEventListener('click', () => goTo(current - 1));
+  next?.addEventListener('click', () => goTo(current + 1));
 }

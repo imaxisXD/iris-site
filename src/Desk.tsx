@@ -57,13 +57,13 @@ export const TYPED = 18;
 export const CHAPTERS = [0, TIMING.panel, TIMING.enter];
 
 /** The canvas everything is laid out on, in px; client.ts zooms it to the screen. */
-export const CANVAS = { width: 800, height: 650, bar: 26, phone: 620 };
+export const CANVAS = { width: 800, height: 650, bar: 26, phone: 660 };
 
 /* The apps, in turn. Each: where its window is, its reply as written, and as Iris fixes it
  * (only the grammar: "pls" stays). */
 type App = { key: 'slack' | 'mail' | 'messages' | 'notes' | 'chrome' | 'safari'; name: string; draft: string; fixed: string };
 export const APPS: App[] = [
-  { key: 'slack', name: 'Slack', draft: 'hey team, the new build are ready for test, let me know if anything break', fixed: 'hey team, the new build is ready to test, let me know if anything breaks' },
+  { key: 'slack', name: 'Slack', draft: 'hey team, the new slides is ready for reviw, let me know if anything look off', fixed: 'hey team, the new slides are ready for review, let me know if anything looks off' },
   { key: 'mail', name: 'Mail', draft: 'Thank you for you’re notes, I will send the final deck tomorrow morning', fixed: 'Thank you for your notes. I will send the final deck tomorrow morning.' },
   { key: 'messages', name: 'Messages', draft: 'running abit late, save me a seat pls', fixed: 'running a bit late, save me a seat pls' },
   { key: 'notes', name: 'Notes', draft: 'bring the charger, the book’s for Ana and a umbrella', fixed: 'bring the charger, the books for Ana and an umbrella' },
@@ -87,7 +87,7 @@ const BUD = {
 
 // The screen's shape: the whole canvas wide; on a phone, CANVAS.phone px of it, following the app (client.ts).
 const SCREEN_SHAPE = '800 / 650';
-const PHONE_SHAPE = '620 / 650';
+const PHONE_SHAPE = '660 / 650';
 const SYS = 'system-ui, -apple-system, "Helvetica Neue", sans-serif';
 
 const pct = (v: number, of: number) => `${+((v / of) * 100).toFixed(3)}%`;
@@ -102,13 +102,15 @@ const d = stylex.create({
   // The sheet's whole width, and (beside the steps) its whole height, so the gaps above and to
   // the left are the sheet's padding, equal; the canvas grows taller to fill (client.ts).
   box: { position: 'relative', flex: 'none', width: '100%', alignSelf: { default: 'stretch', '@media (max-width: 1000px)': 'auto' }, display: 'flex', flexDirection: 'column', containerType: 'inline-size' },
-  bezel: { position: 'relative', flex: { default: 1, '@media (max-width: 1000px)': 'none' }, display: 'flex', flexDirection: 'column', backgroundColor: 'rgb(24 22 22)', paddingTop: '2.2cqw', paddingLeft: '2.2cqw', borderTopLeftRadius: '6cqw', boxShadow: 'inset 1px 1px 0 rgb(255 255 255 / 0.12), 0 24px 48px -28px rgb(42 26 22 / 0.55)' },
-  screen: { position: 'relative', flex: { default: 1, '@media (max-width: 1000px)': 'none' }, aspectRatio: { default: 'auto', '@media (max-width: 1000px)': SCREEN_SHAPE, '@media (max-width: 760px)': PHONE_SHAPE }, overflow: 'hidden', borderTopLeftRadius: '4.2cqw' },
+  bezel: { position: 'relative', flex: { default: 1, '@media (max-width: 1000px)': 'none' }, display: 'flex', flexDirection: 'column', backgroundColor: 'rgb(24 22 22)', paddingTop: '2.2cqw', paddingLeft: '2.2cqw', paddingRight: { default: 0, '@media (max-width: 760px)': '2.2cqw' }, borderTopLeftRadius: '6cqw', borderTopRightRadius: { default: 0, '@media (max-width: 760px)': '6cqw' }, boxShadow: 'inset 1px 1px 0 rgb(255 255 255 / 0.12), 0 24px 48px -28px rgb(42 26 22 / 0.55)' },
+  screen: { position: 'relative', flex: { default: 1, '@media (max-width: 1000px)': 'none' }, aspectRatio: { default: 'auto', '@media (max-width: 1000px)': SCREEN_SHAPE, '@media (max-width: 760px)': PHONE_SHAPE }, overflow: 'hidden', borderTopLeftRadius: '4.2cqw', borderTopRightRadius: { default: 0, '@media (max-width: 760px)': '4.2cqw' } },
   desk: { position: 'absolute', inset: 0 },
   // The canvas, zoomed to the screen's width by client.ts (--k).
   canvas: { position: 'absolute', left: 0, top: 0, width: 800, height: 650, zoom: 'var(--k, 0.6)', fontFamily: SYS, color: 'rgb(30 26 24)' },
   // ── The menu bar ──
-  bar: { position: 'absolute', insetInline: 0, top: 0, height: 26, display: 'flex', alignItems: 'center', gap: 20, paddingLeft: 26, backgroundColor: 'rgb(246 244 242 / 0.72)', backdropFilter: 'blur(14px) saturate(1.4)', WebkitBackdropFilter: 'blur(14px) saturate(1.4)', fontSize: 13, color: 'rgb(0 0 0 / 0.85)', zIndex: 3 },
+  // On a phone, the canvas pans horizontally (--cx) to follow the text box; counter-shift the
+  // menu bar so the app name and menus stay anchored at the left edge instead of slicing mid-word.
+  bar: { position: 'absolute', insetInline: 0, top: 0, height: 26, display: 'flex', alignItems: 'center', gap: 20, paddingLeft: 26, backgroundColor: 'rgb(246 244 242 / 0.72)', backdropFilter: 'blur(14px) saturate(1.4)', WebkitBackdropFilter: 'blur(14px) saturate(1.4)', fontSize: 13, color: 'rgb(0 0 0 / 0.85)', zIndex: 3, translate: 'calc(var(--cx, 0) * 1px) 0', transitionProperty: 'translate', transitionDuration: '700ms', transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)' },
   barName: { display: 'grid', fontWeight: 700 },
   barNameCell: { gridArea: '1 / 1' },
   // ── A window ──
@@ -403,7 +405,7 @@ function Screen({ app }: { app: App }) {
               <div>
                 <b {...stylex.props(d.who)}>Maya Chen</b>
                 <span {...stylex.props(d.muted)}>10:02</span>
-                <div>Build 214 is on staging 🎉</div>
+                <div>Updated slides are in the shared folder 🎉</div>
               </div>
             </div>
             <div {...stylex.props(d.msg)}>
@@ -411,7 +413,7 @@ function Screen({ app }: { app: App }) {
               <div>
                 <b {...stylex.props(d.who)}>Sam Lee</b>
                 <span {...stylex.props(d.muted)}>10:05</span>
-                <div>Nice, running through the checklist now</div>
+                <div>Nice, looking through them now</div>
               </div>
             </div>
             <div style={{ flex: 1 }} />

@@ -176,7 +176,7 @@ const pt = stylex.create({
     fontStretch: '75%',
     fontWeight: 400,
     textTransform: 'uppercase',
-    fontSize: 'clamp(40px, 6.4vw, 92px)',
+    fontSize: { default: 'clamp(40px, 6.4vw, 92px)', [MOBILE]: 'clamp(28px, 7.8vw, 40px)' },
     lineHeight: 0.98,
     letterSpacing: '-0.027em',
     color: ink.i12,
@@ -186,11 +186,11 @@ const pt = stylex.create({
   },
   line: { display: 'block' },
   // Each line steps right about an em, behind a ✻ set like the words (the app's 64pt at 66pt).
-  step: { paddingLeft: '0.97em' },
+  step: { paddingLeft: { default: '0.97em', [MOBILE]: '0.5em' } },
   star: { fontStretch: '75%', fontWeight: 400, marginRight: '0.21em' },
   // A mono space is wider than the gap after the ✻: pull it back so both sides match.
   starInline: { marginLeft: '-0.3em' },
-  small: { fontSize: 'clamp(34px, 4.4vw, 64px)' },
+  small: { fontSize: { default: 'clamp(34px, 4.4vw, 64px)', [MOBILE]: 'clamp(28px, 7.6vw, 38px)' } },
 });
 /** A stair headline in condensed caps: the second line steps right behind a ✻. With `lead`,
  *  the ✻ stands in the first line instead, after the lead word, where a comma would be:
@@ -219,16 +219,16 @@ const rh = stylex.create({
     display: 'grid',
     gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
     gap: 'clamp(16px, 4vw, 56px)',
-    alignItems: 'start',
-    fontSize: 12,
+    alignItems: { default: 'start', [MOBILE]: 'stretch' },
+    fontSize: { default: 12, [MOBILE]: 11.5 },
     lineHeight: 1.45,
     color: ink.i11,
     position: 'relative',
     zIndex: 1,
-    [MOBILE]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' },
+    [MOBILE]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 },
   },
-  col: { display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 200 },
-  rule: { width: 88 },
+  col: { display: 'flex', flexDirection: 'column', gap: 8, maxWidth: { default: 200, [MOBILE]: 'none' } },
+  rule: { width: 88, [MOBILE]: { marginTop: 'auto' } },
   hideSmall: { [MOBILE]: { display: 'none' } },
 });
 /** The zine's strip of small columns over a page: where you are, what's on it, one fact. */
@@ -290,11 +290,11 @@ const kc = stylex.create({
     isolation: 'isolate',
     lineHeight: 1,
   },
-  labeled: { width: 82, height: 50, minWidth: 0, placeItems: 'stretch', padding: '6px 8px', fontSize: 13 },
-  labeledLetter: { width: 50 },
-  sym: { justifySelf: 'end', fontSize: 15, lineHeight: 1 },
-  word: { alignSelf: 'end', fontSize: 12, fontWeight: 450 },
-  letter: { placeSelf: 'center', fontSize: 18 },
+  labeled: { width: { default: 82, [MOBILE]: 62 }, height: { default: 50, [MOBILE]: 38 }, minWidth: 0, placeItems: 'stretch', padding: { default: '6px 8px', [MOBILE]: '4px 6px' }, fontSize: { default: 13, [MOBILE]: 11 } },
+  labeledLetter: { width: { default: 50, [MOBILE]: 38 } },
+  sym: { justifySelf: 'end', fontSize: { default: 15, [MOBILE]: 12 }, lineHeight: 1 },
+  word: { alignSelf: 'end', fontSize: { default: 12, [MOBILE]: 10.5 }, fontWeight: 450 },
+  letter: { placeSelf: 'center', fontSize: { default: 18, [MOBILE]: 15 } },
   face: { position: 'relative', zIndex: 1 },
 });
 const capMask = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' preserveAspectRatio='none'><path d='M3,1.2C14,0.6 27,0.8 37.4,1.4C38.8,1.6 39,3 39,4L38.6,36.4C38.5,38 37.6,38.8 36,38.8L4,39C2,39 1,38 1.1,36.2L1,3.8C1,2.2 1.6,1.3 3,1.2Z'/></svg>")}")`;
@@ -413,12 +413,12 @@ const bt = stylex.create({
     position: 'relative',
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 14,
-    minHeight: 52,
-    paddingBlock: 12,
-    paddingLeft: 24,
-    paddingRight: 40,
-    fontSize: 16,
+    gap: { default: 14, [MOBILE]: 10 },
+    minHeight: { default: 52, [MOBILE]: 46 },
+    paddingBlock: { default: 12, [MOBILE]: 10 },
+    paddingLeft: { default: 24, [MOBILE]: 20 },
+    paddingRight: { default: 40, [MOBILE]: 34 },
+    fontSize: { default: 16, [MOBILE]: 15 },
     fontWeight: 560,
     color: ink.paper,
     textDecoration: 'none',
@@ -582,10 +582,10 @@ export function OsIcon({ os: name, size = 22 }: { os: 'mac' | 'windows'; size?: 
 export function Platforms() {
   return (
     <>
-      <span {...stylex.props(pf.line)}>Free and open source</span>
+      <span {...stylex.props(pf.line)}>Free forever</span>
       <span {...stylex.props(pf.os)}>
         <OsIcon os="mac" />
-        <span {...stylex.props(pf.words)}>For Mac: macOS 15 or later, Apple silicon</span>
+        <span {...stylex.props(pf.words)}>For Mac (M1 or newer · macOS 15+)</span>
       </span>
       <span {...stylex.props(pf.os)}>
         <OsIcon os="windows" />
@@ -626,10 +626,10 @@ export function PenButton({ href, children }: { href: string; children: ReactNod
 
 // ── Sections ──────────────────────────────────────────────────────────────────────────
 const sh = stylex.create({
-  head: { display: 'flex', flexDirection: 'column', gap: 10 },
+  head: { display: 'flex', flexDirection: 'column', gap: { default: 10, [MOBILE]: 8 } },
   top: { display: 'flex', alignItems: 'baseline', gap: 14 },
-  title: { fontFamily: font.brush, fontSize: 'clamp(26px, 2.6vw, 34px)', lineHeight: 1.1, margin: 0, fontWeight: 400, color: ink.i12 },
-  detail: { fontSize: 14, lineHeight: 1.65, color: ink.i11, margin: 0, maxWidth: '46ch' },
+  title: { fontFamily: font.brush, fontSize: { default: 'clamp(26px, 2.6vw, 34px)', [MOBILE]: 25 }, lineHeight: 1.1, margin: 0, fontWeight: 400, color: ink.i12 },
+  detail: { fontSize: { default: 14, [MOBILE]: 13.5 }, lineHeight: { default: 1.65, [MOBILE]: 1.6 }, color: ink.i11, margin: 0, maxWidth: '46ch' },
 });
 /** A small section: brush title, a heading rule, then one or two lines. */
 export function SectionHead({ title, children, seed }: { title: ReactNode; children?: ReactNode; seed: number }) {

@@ -134,7 +134,7 @@ const PANEL = {
   room: '100vw - clamp(-20px, 2vw, 40px) - 64.7cqw - max(0px, (100vw - 1280px) / 2) - clamp(20px, 5vw, 72px) - 511px',
   bottom: 'calc(102.857cqw - 72px)',     // 8px above the plate's bottom edge (the box hangs 64px below it)
   narrow: { at: ['calc(100cqw + 2vw - 8px)', '58cqw'], width: 'min(100vw - 553px, 294px)', corner: '72% 100%' },
-  phone:  { at: ['calc(100cqw - 12px)', '49.2cqw'], width: 'min(300px, 100vw - 24px)', corner: '72% 100%' },
+  phone:  { at: ['calc(100cqw - 20px)', '49.2cqw'], width: 'min(380px, 100vw - 40px)', corner: '72% 100%' },
   from: 0.15, over: 1.02,           // its scale as it pops: from, past, then 1
   popMs: [260, 140],                // out past full size, then settling
   swipeMs: 250,                     // a marker swiped on
@@ -225,7 +225,7 @@ const SUN = {
   // across there, so 40px in from the edge keeps its rays clear of it).
   wide:   ['57.6cqw', '-54.8cqw'],
   narrow: ['57.6cqw', '-55cqw'],                                                            // under 1024px
-  phone:  ['calc(100cqw - 40px)', '-75cqw'],                                               // 760px and under
+  phone:  ['calc(100cqw - 46px)', '-242cqw'],                                               // 760px and under
   notchMs: 375,                     // the rays move a sixteenth of a turn at a time
   beam: 1.2, beamMs: [150, 350],    // the rays as the garden wakes
   cheer: 1.28, cheerMs: [150, 450], // and at Return
