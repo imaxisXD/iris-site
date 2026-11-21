@@ -715,10 +715,12 @@ if (reveal && !still && 'getAnimations' in reveal) {
 
 const foot = document.querySelector<HTMLElement>('[data-foot]');
 const cursorFly = document.querySelector<HTMLElement>('[data-cursor-fly]');
+const spawnLayer = foot?.querySelector<HTMLElement>('[data-spawn-layer]');
 if (foot && cursorFly && !still && matchMedia('(hover: hover) and (pointer: fine)').matches) {
   const wings = cursorFly.querySelector<HTMLElement>('[data-cursor-wings]')!;
   foot.dataset.flyCursor = '';
   let x = 0, y = 0, tx = 0, ty = 0, tilt = 0, raf = 0, inside = false, last = 0;
+  let pulseUntil = 0, pulsePeak = 1.18;
   const flapping = wings.animate([{ scale: '1 1' }, { scale: '0.3 1' }], { duration: 140, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' });
   const tick = (t: number) => {
     const dt = Math.min(48, t - (last || t));
@@ -729,10 +731,16 @@ if (foot && cursorFly && !still && matchMedia('(hover: hover) and (pointer: fine
     y += vy;
     tilt += (Math.max(-28, Math.min(28, vx * 1.4)) - tilt) * 0.2;
     const speed = Math.hypot(vx, vy);
-    flapping.playbackRate = speed > 0.6 ? 1.6 : 0.45;
-    // A little bob as it hovers.
+    const pulsing = t < pulseUntil;
+    flapping.playbackRate = pulsing ? 2.4 : speed > 0.6 ? 1.6 : 0.45;
+    // A little bob as it hovers, plus a soft spring pop when releasing a butterfly.
     const bob = Math.sin(t / 260) * 2;
-    cursorFly.style.transform = `translate(${x - 17}px, ${y - 17 + bob}px) rotate(${tilt}deg)`;
+    let pop = 1;
+    if (pulsing) {
+      const p = 1 - (pulseUntil - t) / 240;
+      pop = 1 + Math.sin(p * Math.PI) * (pulsePeak - 1);
+    }
+    cursorFly.style.transform = `translate(${x - 17}px, ${y - 17 + bob}px) rotate(${tilt}deg) scale(${pop.toFixed(3)})`;
     raf = inside ? requestAnimationFrame(tick) : 0;
   };
   foot.addEventListener('pointermove', (e) => {
@@ -755,6 +763,444 @@ if (foot && cursorFly && !still && matchMedia('(hover: hover) and (pointer: fine
     cursorFly.hidden = true;
     cancelAnimationFrame(raf);
   });
+
+  // ── Click in the foot's sky to release a butterfly (spam-proof) ─────────────────────
+  // Cooldown (320ms) + token bucket (3 quick releases, refills 1 every 1.4s) + soft cap of
+  // 8 live butterflies (oldest flies up and away smoothly) + hard DOM ceiling of 10. When
+  // rate-limited, clicking still flutters the cursor and gently scatters nearby butterflies.
+  if (spawnLayer) {
+    const SPAWN = {
+      cooldownMs: 320,
+      maxTokens: 3,
+      refillMs: 1400,
+      maxLive: 8,
+      hardCap: 10,
+      lifeMs: [9000, 12500] as const,
+      dragPx: 8,
+      scatterRadius: 120,
+    };
+    const SPRITES = [
+      { name: 'monarch', px: 36 },
+      { name: 'rose', px: 34 },
+      { name: 'white', px: 26 },
+      { name: 'swallowtail', px: 40 },
+    ] as const;
+    type SpriteSpec = (typeof SPRITES)[number];
+    type RGB = readonly [number, number, number];
+    // Curated risograph wing palettes (forewing ink + hindwing ink) tuned to pop cleanly
+    // against the sky-blue footer while preserving the exact espresso pen & crema shadow plates.
+    const PALETTES: readonly { fore: RGB; hind: RGB; swap?: boolean }[] = [
+      { fore: [255, 116, 60], hind: [255, 190, 40], swap: true },   // sunset monarch
+      { fore: [240, 134, 176], hind: [255, 214, 228] },              // flamingo rose
+      { fore: [255, 190, 40], hind: [255, 236, 156] },               // marigold sun
+      { fore: [255, 252, 249], hind: [248, 226, 206] },              // paper moth
+      { fore: [250, 108, 96], hind: [255, 196, 154], swap: true },   // coral peach
+      { fore: [218, 72, 132], hind: [246, 154, 192], swap: true },   // wild berry
+      { fore: [255, 158, 92], hind: [255, 244, 218] },               // apricot cream
+      { fore: [214, 168, 246], hind: [246, 184, 218], swap: true },  // lilac meadow
+      { fore: [158, 230, 184], hind: [255, 250, 232] },              // meadow mint
+      { fore: [238, 86, 66], hind: [255, 204, 72], swap: true },     // poppy gold
+      { fore: [248, 228, 98], hind: [255, 164, 192], swap: true },   // lemon blossom
+      { fore: [244, 118, 148], hind: [255, 224, 132], swap: true },  // hibiscus honey
+    ];
+
+    const makeBag = <T,>(items: readonly T[]) => {
+      let bag: T[] = [];
+      let prev: T | undefined;
+      return () => {
+        if (!bag.length) {
+          bag = [...items];
+          for (let i = bag.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [bag[i], bag[j]] = [bag[j], bag[i]];
+          }
+          if (bag.length > 1 && bag[bag.length - 1] === prev) [bag[0], bag[bag.length - 1]] = [bag[bag.length - 1], bag[0]];
+        }
+        return (prev = bag.pop()!);
+      };
+    };
+    const pickSprite = makeBag(SPRITES);
+    const pickPalette = makeBag(PALETTES.map((_, i) => i));
+
+    // Preload the 4 base wing plates at native riso resolution so procedural recoloring is instant.
+    const basePlates = new Map<string, ImageData>();
+    const tintedCache = new Map<string, string>();
+    let platesLoaded = false;
+    const loadPlates = () => {
+      if (platesLoaded) return;
+      platesLoaded = true;
+      for (const sp of SPRITES) {
+        const img = new Image();
+        img.decoding = 'async';
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = sp.px;
+          c.height = sp.px;
+          const ctx = c.getContext('2d', { willReadFrequently: true });
+          if (!ctx) return;
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(img, 0, 0, sp.px, sp.px);
+          basePlates.set(sp.name, ctx.getImageData(0, 0, sp.px, sp.px));
+        };
+        img.src = `/sprite/${sp.name}-wings.png`;
+      }
+    };
+    foot.addEventListener('pointerenter', loadPlates, { once: true });
+
+    /** Recolors only the wing ink plate (keeping espresso outline & crema shadow exact). */
+    const tintedWings = (sp: SpriteSpec, palIdx: number, flipped: boolean): string => {
+      const key = `${sp.name}:${palIdx}:${flipped ? 1 : 0}`;
+      const hit = tintedCache.get(key);
+      if (hit) return hit;
+      const base = basePlates.get(sp.name);
+      if (!base) return `/sprite/${sp.name}-wings.png`;
+      const p = PALETTES[palIdx];
+      const fore = flipped ? p.hind : p.fore;
+      const hind = flipped ? p.fore : p.hind;
+      const out = new ImageData(new Uint8ClampedArray(base.data), base.width, base.height);
+      const d = out.data;
+      const splitY = Math.round(base.height * 0.52);
+      for (let y = 0; y < base.height; y++) {
+        const ink = y < splitY ? fore : hind;
+        for (let x = 0; x < base.width; x++) {
+          const i = (y * base.width + x) * 4;
+          if (d[i + 3] < 128) continue;
+          const r = d[i], g = d[i + 1], b = d[i + 2];
+          // Preserve INK.espresso (100,56,46) and INK.crema (226,200,185) plates untouched.
+          if (Math.abs(r - 100) + Math.abs(g - 56) + Math.abs(b - 46) < 28) continue;
+          if (Math.abs(r - 226) + Math.abs(g - 200) + Math.abs(b - 185) < 28) continue;
+          d[i] = ink[0];
+          d[i + 1] = ink[1];
+          d[i + 2] = ink[2];
+        }
+      }
+      const c = document.createElement('canvas');
+      c.width = base.width;
+      c.height = base.height;
+      c.getContext('2d')!.putImageData(out, 0, 0);
+      const url = c.toDataURL();
+      tintedCache.set(key, url);
+      return url;
+    };
+    const rand = (a: number, b: number) => a + Math.random() * (b - a);
+
+    type LiveFly = {
+      el: HTMLElement;
+      wingsAnim: Animation;
+      moveAnim: Animation | null;
+      hopTimer: number;
+      lifeTimer: number;
+      x: number;
+      y: number;
+      size: number;
+      bornAt: number;
+      lifeMs: number;
+      exiting: boolean;
+    };
+    const live = new Set<LiveFly>();
+    let tokens = SPAWN.maxTokens;
+    let lastRefill = performance.now();
+    let lastSpawn = 0;
+    let pausedByScroll = false;
+    let downAt: [number, number] | null = null;
+
+    const refill = (now: number) => {
+      const gained = Math.floor((now - lastRefill) / SPAWN.refillMs);
+      if (gained > 0) {
+        tokens = Math.min(SPAWN.maxTokens, tokens + gained);
+        lastRefill += gained * SPAWN.refillMs;
+      }
+      if (tokens >= SPAWN.maxTokens) lastRefill = now;
+    };
+
+    const destroy = (f: LiveFly) => {
+      clearTimeout(f.hopTimer);
+      clearTimeout(f.lifeTimer);
+      f.moveAnim?.cancel();
+      f.wingsAnim.cancel();
+      f.el.remove();
+      live.delete(f);
+    };
+
+    const depart = (f: LiveFly) => {
+      if (f.exiting || !live.has(f)) return;
+      f.exiting = true;
+      clearTimeout(f.hopTimer);
+      clearTimeout(f.lifeTimer);
+      // Capture current visual position so the exit starts right where the butterfly is.
+      const rect = f.el.getBoundingClientRect();
+      const fr = foot.getBoundingClientRect();
+      const cx = rect.left - fr.left + rect.width / 2;
+      const cy = rect.top - fr.top + rect.height / 2;
+      f.moveAnim?.cancel();
+      f.wingsAnim.playbackRate = 1.65;
+      const dx = rand(-70, 70);
+      const endX = Math.max(16, Math.min(foot.clientWidth - 16, cx + dx));
+      const endY = -f.size - 24;
+      const deg = Math.max(-28, Math.min(28, dx * 0.25));
+      const out = f.el.animate(
+        [
+          { transform: `translate3d(${cx - f.size / 2}px, ${cy - f.size / 2}px, 0) rotate(${deg * 0.4}deg) scale(1)`, opacity: 1 },
+          { transform: `translate3d(${endX - f.size / 2}px, ${endY}px, 0) rotate(${deg}deg) scale(0.72)`, opacity: 0 },
+        ],
+        { duration: 1050, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' },
+      );
+      f.moveAnim = out;
+      out.onfinish = () => destroy(f);
+      out.oncancel = () => { if (!live.has(f)) f.el.remove(); };
+    };
+
+    const hop = (f: LiveFly, targetX?: number, targetY?: number, fast = false) => {
+      if (f.exiting || pausedByScroll || document.hidden || !live.has(f)) return;
+      clearTimeout(f.hopTimer);
+      if (!fast && targetX == null && Math.random() < 0.22) {
+        f.wingsAnim.playbackRate = 0.45;
+        f.hopTimer = window.setTimeout(() => hop(f), rand(900, 1500));
+        return;
+      }
+      const fw = Math.max(200, foot.clientWidth);
+      const fh = Math.max(180, foot.clientHeight);
+      const nx = targetX ?? rand(fw * 0.08, fw * 0.92);
+      const ny = targetY ?? rand(fh * 0.1, fh * 0.78);
+      const dx = nx - f.x;
+      const dy = ny - f.y;
+      const dist = Math.hypot(dx, dy);
+      const dur = fast ? Math.max(520, Math.min(900, dist * 4.2)) : Math.max(1200, Math.min(2600, 900 + dist * 4.5));
+      const deg = Math.max(-28, Math.min(28, dx * 0.14));
+      const mx = (f.x + nx) / 2;
+      const my = (f.y + ny) / 2 - Math.min(44, Math.max(14, dist * 0.18));
+      const fromX = f.x, fromY = f.y;
+      f.x = nx;
+      f.y = ny;
+      f.moveAnim?.cancel();
+      f.wingsAnim.playbackRate = fast ? 1.8 : 1.15;
+      const a = f.el.animate(
+        [
+          { transform: `translate3d(${fromX - f.size / 2}px, ${fromY - f.size / 2}px, 0) rotate(${deg * 0.35}deg)` },
+          { transform: `translate3d(${mx - f.size / 2}px, ${my - f.size / 2}px, 0) rotate(${deg}deg)`, offset: 0.52 },
+          { transform: `translate3d(${nx - f.size / 2}px, ${ny - f.size / 2}px, 0) rotate(${deg * 0.25}deg)` },
+        ],
+        { duration: dur, easing: 'cubic-bezier(0.45, 0.05, 0.3, 1)', fill: 'forwards' },
+      );
+      f.moveAnim = a;
+      f.hopTimer = window.setTimeout(() => hop(f), dur + rand(80, 420));
+    };
+
+    const scatterNear = (cx: number, cy: number) => {
+      const fw = foot.clientWidth, fh = foot.clientHeight;
+      for (const f of live) {
+        if (f.exiting) continue;
+        const rect = f.el.getBoundingClientRect();
+        const fr = foot.getBoundingClientRect();
+        const fx = rect.left - fr.left + rect.width / 2;
+        const fy = rect.top - fr.top + rect.height / 2;
+        const dx = fx - cx, dy = fy - cy;
+        const d = Math.hypot(dx, dy);
+        if (d < SPAWN.scatterRadius) {
+          f.x = fx;
+          f.y = fy;
+          const ang = d > 1 ? Math.atan2(dy, dx) : rand(-Math.PI, Math.PI);
+          const push = rand(90, 160);
+          const tx2 = Math.max(24, Math.min(fw - 24, fx + Math.cos(ang) * push));
+          const ty2 = Math.max(20, Math.min(fh * 0.82, fy + Math.sin(ang) * push - 26));
+          hop(f, tx2, ty2, true);
+        }
+      }
+    };
+
+    let liveMotes = 0;
+    const MAX_MOTES = 24;
+    const motes = (cx: number, cy: number, color: RGB, count: number) => {
+      for (let i = 0; i < count && liveMotes < MAX_MOTES; i++) {
+        liveMotes++;
+        const dot = document.createElement('span');
+        dot.setAttribute('data-spawn-mote', '');
+        const sz = rand(2.5, 5.5);
+        const warm = i % 2 === 0;
+        dot.style.width = `${sz.toFixed(1)}px`;
+        dot.style.height = `${sz.toFixed(1)}px`;
+        dot.style.backgroundColor = warm ? 'rgb(255 247 224)' : `rgb(${color[0]} ${color[1]} ${color[2]})`;
+        spawnLayer.append(dot);
+        const dx = rand(-56, 56);
+        const dy = rand(-88, -28);
+        const dur = Math.round(rand(700, 1150));
+        const a = dot.animate(
+          [
+            { transform: `translate3d(${cx}px, ${cy}px, 0) scale(0.6)`, opacity: 0 },
+            { transform: `translate3d(${cx + dx * 0.35}px, ${cy + dy * 0.35}px, 0) scale(1)`, opacity: warm ? 0.9 : 0.78, offset: 0.22 },
+            { transform: `translate3d(${cx + dx}px, ${cy + dy}px, 0) scale(0.4)`, opacity: 0 },
+          ],
+          { duration: dur, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' },
+        );
+        a.onfinish = a.oncancel = () => {
+          dot.remove();
+          liveMotes = Math.max(0, liveMotes - 1);
+        };
+      }
+    };
+
+    const puff = (cx: number, cy: number, color: RGB) => {
+      const ring = document.createElement('span');
+      ring.setAttribute('data-spawn-puff', '');
+      ring.style.borderColor = `rgb(${color[0]} ${color[1]} ${color[2]} / 0.9)`;
+      ring.style.boxShadow = '0 0 0 1px rgb(255 252 249 / 0.55)';
+      ring.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
+      spawnLayer.append(ring);
+      const a = ring.animate(
+        [
+          { transform: `translate3d(${cx}px, ${cy}px, 0) scale(0.45)`, opacity: 0.9 },
+          { transform: `translate3d(${cx}px, ${cy}px, 0) scale(1.65)`, opacity: 0 },
+        ],
+        { duration: 340, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' },
+      );
+      a.onfinish = () => ring.remove();
+      motes(cx, cy, color, 5);
+    };
+
+    const spawn = (cx: number, cy: number) => {
+      loadPlates();
+      const active = [...live].filter((f) => !f.exiting);
+      if (active.length >= SPAWN.maxLive) depart(active[0]);
+      if (live.size >= SPAWN.hardCap) return;
+
+      const sp = pickSprite();
+      const palIdx = pickPalette();
+      const pal = PALETTES[palIdx];
+      const flipped = !!pal.swap && Math.random() < 0.35;
+      const size = Math.round(rand(25, 34));
+      const el = document.createElement('span');
+      el.setAttribute('data-spawn-fly', '');
+      el.dataset.sprite = sp.name;
+      el.dataset.palette = String(palIdx);
+      el.style.width = `${size}px`;
+      el.style.height = `${size}px`;
+
+      const wImg = document.createElement('img');
+      wImg.src = tintedWings(sp, palIdx, flipped);
+      wImg.alt = '';
+      wImg.decoding = 'async';
+      wImg.setAttribute('data-spawn-wings', '');
+      const bImg = document.createElement('img');
+      bImg.src = `/sprite/${sp.name}-body.png`;
+      bImg.alt = '';
+      bImg.decoding = 'async';
+      el.append(wImg, bImg);
+      spawnLayer.append(el);
+
+      const wingsAnim = wImg.animate([{ scale: '1 1' }, { scale: '0.28 1' }], {
+        duration: Math.round(rand(120, 165)),
+        iterations: Infinity,
+        direction: 'alternate',
+        easing: 'ease-in-out',
+      });
+
+      // Launch outward and upward from the click so consecutive clicks fan out cleanly.
+      const fw = Math.max(200, foot.clientWidth);
+      const fh = Math.max(180, foot.clientHeight);
+      const angle = rand(-Math.PI * 0.85, -Math.PI * 0.15);
+      const dist = rand(65, 130);
+      const nx = Math.max(24, Math.min(fw - 24, cx + Math.cos(angle) * dist));
+      const ny = Math.max(20, Math.min(fh * 0.8, cy + Math.sin(angle) * dist));
+      const deg = Math.max(-28, Math.min(28, (nx - cx) * 0.25));
+      const lifeMs = Math.round(rand(SPAWN.lifeMs[0], SPAWN.lifeMs[1]));
+
+      const fly: LiveFly = { el, wingsAnim, moveAnim: null, hopTimer: 0, lifeTimer: 0, x: nx, y: ny, size, bornAt: performance.now(), lifeMs, exiting: false };
+      live.add(fly);
+
+      const launch = el.animate(
+        [
+          { transform: `translate3d(${cx - size / 2}px, ${cy - size / 2}px, 0) rotate(${-deg * 0.4}deg) scale(0.38)`, opacity: 0 },
+          { transform: `translate3d(${(cx + nx) / 2 - size / 2}px, ${(cy + ny) / 2 - 18 - size / 2}px, 0) rotate(${deg}deg) scale(1.06)`, opacity: 1, offset: 0.45 },
+          { transform: `translate3d(${nx - size / 2}px, ${ny - size / 2}px, 0) rotate(${deg * 0.3}deg) scale(1)`, opacity: 1 },
+        ],
+        { duration: 540, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' },
+      );
+      fly.moveAnim = launch;
+      fly.hopTimer = window.setTimeout(() => hop(fly), 580);
+      fly.lifeTimer = window.setTimeout(() => depart(fly), lifeMs);
+      puff(cx, cy, flipped ? pal.hind : pal.fore);
+    };
+
+    foot.addEventListener('pointerdown', (e) => {
+      downAt = e.button === 0 ? [e.clientX, e.clientY] : null;
+    });
+    foot.addEventListener('click', (e) => {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+      if ((e.target as HTMLElement).closest('a, button, summary, input, textarea, [role="button"]')) return;
+      if (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) >= SPAWN.dragPx) return;
+      if (window.getSelection()?.toString().trim()) return;
+      if (footShown < 0.5) return;
+
+      const fr = foot.getBoundingClientRect();
+      const cx = e.clientX - fr.left;
+      const cy = e.clientY - fr.top;
+      if (cx < 0 || cy < 0 || cx > fr.width || cy > fr.height) return;
+
+      const now = performance.now();
+      refill(now);
+      if (now - lastSpawn < SPAWN.cooldownMs || tokens < 1) {
+        // Spam-capped: acknowledge with a quick cursor flutter, tiny dust stir, and scatter nearby butterflies.
+        pulsePeak = 1.1;
+        pulseUntil = now + 220;
+        motes(cx, cy, [240, 134, 176], 2);
+        scatterNear(cx, cy);
+        return;
+      }
+
+      tokens -= 1;
+      lastSpawn = now;
+      pulsePeak = 1.2;
+      pulseUntil = now + 240;
+      spawn(cx, cy);
+    });
+
+    // Pause while the foot is covered back under the page, and resume cleanly when uncovered.
+    addEventListener('foot-shown', (e) => {
+      const shown = (e as CustomEvent<number>).detail;
+      if (shown >= 0.4) loadPlates();
+      const hidden = shown < 0.15;
+      if (hidden === pausedByScroll) return;
+      pausedByScroll = hidden;
+      const now = performance.now();
+      for (const f of live) {
+        if (hidden) {
+          clearTimeout(f.hopTimer);
+          clearTimeout(f.lifeTimer);
+          f.wingsAnim.pause();
+          f.moveAnim?.pause();
+        } else if (!f.exiting) {
+          f.wingsAnim.play();
+          f.moveAnim?.play();
+          const left = Math.max(400, f.bornAt + f.lifeMs - now);
+          f.lifeTimer = window.setTimeout(() => depart(f), left);
+          f.hopTimer = window.setTimeout(() => hop(f), rand(300, 900));
+        }
+      }
+    });
+
+    // Background tab safety: never pile up timers while hidden; cleanly expire old butterflies on return.
+    document.addEventListener('visibilitychange', () => {
+      const now = performance.now();
+      if (document.hidden) {
+        for (const f of live) {
+          clearTimeout(f.hopTimer);
+          clearTimeout(f.lifeTimer);
+          f.wingsAnim.pause();
+          f.moveAnim?.pause();
+        }
+      } else {
+        for (const f of [...live]) {
+          if (f.exiting || now - f.bornAt >= f.lifeMs) destroy(f);
+          else if (!pausedByScroll) {
+            f.wingsAnim.play();
+            f.moveAnim?.play();
+            f.lifeTimer = window.setTimeout(() => depart(f), f.bornAt + f.lifeMs - now);
+            f.hopTimer = window.setTimeout(() => hop(f), rand(300, 900));
+          }
+        }
+      }
+    });
+  }
 }
 
 // ── ⌃ ⌥ G on the page (PressPanel in Page.tsx, drawn by Panel.tsx) ─────────────────────

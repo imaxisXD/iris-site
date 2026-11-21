@@ -81,7 +81,7 @@ const s = stylex.create({
   row: { display: 'flex', alignItems: 'center', flexWrap: 'wrap' },
   body: { fontSize: { default: 15, [MOBILE]: 14 }, lineHeight: { default: 1.7, [MOBILE]: 1.65 }, color: ink.i11, margin: 0, maxWidth: '52ch' },
   meta: { fontSize: 12.5, lineHeight: 1.6, color: ink.i10, margin: 0 },
-  srOnly: { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)', whiteSpace: 'nowrap' },
+  srOnly: { position: 'absolute', top: 0, left: 0, width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)', whiteSpace: 'nowrap' },
   // Hidden until the first Tab lands on it, then a paper slip over the cover's corner.
   skip: {
     ':focus': { position: 'fixed', zIndex: 10, top: 12, left: 12, width: 'auto', height: 'auto', overflow: 'visible', clipPath: 'none', paddingBlock: 10, paddingInline: 14, backgroundColor: ink.paper, color: ink.i12, fontSize: 13, boxShadow: '0 6px 16px -6px rgb(42 26 22 / 0.35)' },

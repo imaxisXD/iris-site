@@ -168,6 +168,7 @@ const f = stylex.create({
     bottom: 0,
     zIndex: 0,
     overflow: 'clip',
+    paddingBottom: 'env(safe-area-inset-bottom, 0px)',
     backgroundColor: ink.sky,
     backgroundImage: `${tex.screen}, ${tex.streaks}`,
     backgroundSize: '96px 96px, 128px 128px',
@@ -176,6 +177,8 @@ const f = stylex.create({
   // As it's uncovered (--reveal 0 → 1, client.ts) it comes forward: up, to full size, out of
   // the page's shade.
   depth: {
+    position: 'relative',
+    zIndex: 2,
     transformOrigin: '50% 100%',
     translate: `0 calc((1 - var(--reveal, 1)) * ${REVEAL.rise}px)`,
     scale: `calc(1 - (1 - var(--reveal, 1)) * ${REVEAL.shrink})`,
@@ -401,12 +404,11 @@ export function Footer() {
           <span {...stylex.props(f.twinkle)}>✻</span>
         </span>
       ))}
-      {/* The air in the day sky, behind everything (About's meadow, Atmosphere.tsx): it comes out
-          with the day as the page lifts off, and follows the scroll. No clouds: the sky here is
-          the sun's, with its rings. */}
-      <div aria-hidden data-air="foot" style={{ zIndex: 0 }}>
-        <Dust seed={41} count={26} area={[44, 100, 8, 80]} />
-        <Petals seed={57} count={5} band={[10, 48]} />
+      {/* The air in the day sky (About's meadow, Atmosphere.tsx): wakes with the day as the
+          page lifts off, then drifts continuously like the cover's sky. */}
+      <div aria-hidden data-air="foot" data-air-sky style={{ zIndex: 0 }}>
+        <Dust seed={41} count={52} area={[3, 98, 12, 94]} />
+        <Petals seed={57} count={9} band={[6, 76]} />
       </div>
       <div {...stylex.props(f.wrap, f.depth)}>
         <div {...stylex.props(f.call)}>
@@ -446,6 +448,8 @@ export function Footer() {
           </span>
         </span>
       </div>
+      {/* Butterflies released by clicking in the foot's sky (client.ts). */}
+      <div aria-hidden data-spawn-layer style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 1 }} />
       {/* The pointer, as a butterfly, while it's over the foot (client.ts). */}
       <span aria-hidden data-cursor-fly hidden style={{ position: 'fixed', left: 0, top: 0, width: 34, height: 34, pointerEvents: 'none', zIndex: 40 }}>
         <img data-cursor-wings src="/sprite/rose-wings.png" alt="" loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
