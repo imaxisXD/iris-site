@@ -74,10 +74,10 @@ export const month = (iso: string) => {
 export const pressTones = ['Professional', 'Friendly', 'Shorter', 'Funny'] as const;
 export const pageTones: Record<string, Record<(typeof pressTones)[number], string>> = {
   lede: {
-    Professional: 'Grammar correction and tone adjustment right inside every Mac application, without copying and pasting.',
-    Friendly: 'Clean up your writing right inside any app on your Mac, with no copy-pasting.',
-    Shorter: 'Works in every app on your Mac. No copy-pasting.',
-    Funny: 'Works inside every app on your Mac. Yes, even that one. No copy-pasting.',
+    Professional: 'Runs 100% locally and stays free forever. No cloud connection required, works offline.',
+    Friendly: '100% local on your Mac and free forever, with no cloud needed and full offline support.',
+    Shorter: '100% local. Free forever. Works offline.',
+    Funny: '100% local, free forever, zero cloud, zero Wi-Fi needed. Your words never leave the building.',
   },
 
 

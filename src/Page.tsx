@@ -8,7 +8,6 @@ import {
   GetIris,
   GhostWord,
   HandWord,
-  InkLabel,
   KeyRow,
   Marked,
   OnMac,
@@ -22,6 +21,7 @@ import {
   RunningHead,
   SectionHead,
   StackedFigure,
+  stamped,
   Tape,
   Wordmark,
 } from './parts';
@@ -103,11 +103,16 @@ const s = stylex.create({
   navLink: { color: ink.i12, textDecoration: 'none', paddingBlock: 6, backgroundImage: 'linear-gradient(rgb(42 26 22 / 0.0), rgb(42 26 22 / 0.0))', textDecorationLine: { default: 'none', [HOVER]: { default: 'none', ':hover': 'underline' } }, textDecorationThickness: '1.5px', textUnderlineOffset: '5px' },
   coverBody: { paddingTop: { default: 'clamp(48px, 7vw, 104px)', [MOBILE]: 22 }, display: 'flex', flexDirection: 'column', gap: { default: 28, [MOBILE]: 16 }, position: 'relative', zIndex: 2, maxWidth: 'min(1000px, 72%)', [NARROW]: { maxWidth: '100%' } },
   coverTitle: { fontSize: { default: 'clamp(40px, 5.5vw, 92px)', [MOBILE]: 'clamp(26px, 7.6vw, 38px)' }, whiteSpace: { default: 'nowrap', [MOBILE]: 'normal' } },
-  promise: { margin: 0, marginTop: { default: -12, [MOBILE]: -4 }, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: { default: '8px 18px', [MOBILE]: '6px 12px' }, fontSize: { default: 14, [MOBILE]: 12.5 }, color: ink.i12 },
-  promiseItem: { display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' },
-  lede: { fontSize: { default: 'clamp(15px, 1.4vw, 17px)', [MOBILE]: 14 }, lineHeight: { default: 1.6, [MOBILE]: 1.5 }, color: ink.i12, margin: 0, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px 14px' },
-  cta: { display: 'flex', flexWrap: 'wrap', alignItems: { default: 'center', [MOBILE]: 'flex-start' }, flexDirection: { default: 'row', [MOBILE]: 'column' }, gap: { default: '18px 28px', [MOBILE]: 10 } },
-  ctaMeta: { fontSize: { default: 12.5, [MOBILE]: 11.5 }, lineHeight: { default: 1.5, [MOBILE]: 1.45 }, color: ink.i12 },
+  lede: { fontSize: { default: 'clamp(14.5px, 1.3vw, 16px)', [MOBILE]: 13 }, lineHeight: { default: 1.5, [MOBILE]: 1.45 }, color: ink.i12, margin: 0, marginTop: { default: -4, [MOBILE]: -2 } },
+  promiseRow: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: { default: '6px 10px', [MOBILE]: '5px 8px' } },
+  promiseItem: { display: 'inline-flex', alignItems: 'center', gap: { default: 7, [MOBILE]: 5 }, whiteSpace: 'nowrap' },
+  promiseIcon: { display: 'block', flex: 'none', width: { default: 24, [MOBILE]: 19 }, height: { default: 24, [MOBILE]: 19 }, imageRendering: 'pixelated' },
+  promiseStrong: { fontWeight: 560 },
+  promiseDot: { opacity: 0.55, userSelect: 'none' },
+  promiseDotDesktop: { [MOBILE]: { display: 'none' } },
+  promisePlain: { color: ink.i12, opacity: 0.92, [MOBILE]: { flexBasis: '100%', fontSize: 12.5, opacity: 0.88 } },
+  cta: { display: 'flex', flexWrap: 'wrap', alignItems: { default: 'center', [MOBILE]: 'flex-start' }, flexDirection: { default: 'row', [MOBILE]: 'column' }, gap: { default: '18px 24px', [MOBILE]: 10 }, marginTop: { default: 8, [MOBILE]: 4 } },
+  ctaMeta: { display: 'flex', flexDirection: 'column', gap: 3, fontSize: { default: 12.5, [MOBILE]: 11.5 }, lineHeight: { default: 1.4, [MOBILE]: 1.4 }, color: ink.i12 },
   keysNote: { display: 'flex', alignItems: { default: 'flex-end', [MOBILE]: 'center' }, gap: { default: 14, [MOBILE]: '8px 12px' }, flexWrap: 'wrap' },
   keysWords: { fontFamily: font.brush, fontSize: { default: 22, [MOBILE]: 18 }, lineHeight: 1, color: ink.i12, paddingBottom: { default: 6, [MOBILE]: 0 } },
   // Butterflies may loop past the plate's right edge: cut them there, never widen the page.
@@ -618,31 +623,37 @@ function Cover() {
           </div>
           <div {...stylex.props(s.coverBody)}>
             <PageTitle level={1} lines={['Fix your grammar', 'Change your tone']} xstyle={s.coverTitle} attrs={ENTER.title} starAttrs={ENTER.star} />
+            {/* The promise, on one clean line: small riso pins + pink marker highlights. */}
             <p {...stylex.props(s.lede)} {...ENTER.lede}>
-              <span data-tones="lede">Works right inside any app on your Mac. No copy-pasting.</span>
-            </p>
-            {/* The promise, said plainly: Iris has no server to send anything to. */}
-            <p {...stylex.props(s.promise)} {...ENTER.promise}>
-              <span {...ENTER.promiseStamp}>
-                <InkLabel>100% on your Mac</InkLabel>
-              </span>
-              {['No cloud', 'No sign-up', 'Works offline'].map((t) => (
-                <span key={t} {...stylex.props(s.promiseItem)}>
-                  <HandTick size={15} color="rgb(42 26 22)" /> {t}
+              <span data-tones="lede" {...stylex.props(s.promiseRow)}>
+                <span {...stylex.props(s.promiseItem)}>
+                  <img src={stamped('/privacy/mac.png')} alt="" width={24} height={24} decoding="async" {...stylex.props(s.promiseIcon)} />
+                  <span {...stylex.props(s.promiseStrong)}>
+                    <Marked seed={41}>100% local</Marked>
+                  </span>
                 </span>
-              ))}
+                <span aria-hidden {...stylex.props(s.promiseDot)}> · </span>
+                <span {...stylex.props(s.promiseItem)}>
+                  <img src={stamped('/privacy/free.png')} alt="" width={24} height={24} decoding="async" {...stylex.props(s.promiseIcon)} />
+                  <span {...stylex.props(s.promiseStrong)}>
+                    <Marked seed={42}>Free forever</Marked>
+                  </span>
+                </span>
+                <span aria-hidden {...stylex.props(s.promiseDot, s.promiseDotDesktop)}> · </span>
+                <span {...stylex.props(s.promisePlain)}>No cloud, works offline</span>
+              </span>
             </p>
             <div {...stylex.props(s.cta)} {...ENTER.cta}>
               <GetIris />
               <span {...stylex.props(s.ctaMeta)} {...ENTER.ctaMeta}>
-                <Platforms />
+                <Platforms showPrice={false} compact />
               </span>
             </div>
             <div {...stylex.props(s.keysNote)} {...ENTER.keys}>
               <KeyRow keys={['⌃', '⌥', 'G']} labeled />
               <span {...stylex.props(s.keysWords)} {...ENTER.keysWords}>
-                <OnMac>in any text box</OnMac>
-                <OnTouch>on your Mac, in any text box</OnTouch>
+                <OnMac>in any app</OnMac>
+                <OnTouch>on your Mac, in any app</OnTouch>
               </span>
             </div>
           </div>

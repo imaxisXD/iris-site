@@ -18,13 +18,14 @@ const SCALE = 5, DOTS = 64;
 const INK = {
   espresso: [100, 56, 46], crema: [226, 200, 185], paper: [255, 252, 249],
   sky: [120, 162, 220], pink: [240, 134, 176], sunflower: [255, 190, 40], orange: [255, 116, 60], tan: [196, 157, 122],
+  mint: [88, 206, 120], green: [30, 140, 85],
 };
 /* Each pin's two inks, its outer band and its core, per palette. */
 export const PALETTES = {
-  garden: { cloud: { outer: INK.sky, core: INK.sunflower }, card: { outer: INK.sunflower, core: INK.orange }, wifi: { outer: INK.orange, core: INK.sky }, mac: { outer: INK.pink, core: INK.sky }, kept: { outer: INK.pink, core: INK.sky }, book: { outer: INK.sky, core: INK.pink }, globe: { outer: INK.sky, core: INK.sunflower }, bolt: { outer: INK.sunflower, core: INK.orange } },
-  cool:   { cloud: { outer: INK.sky, core: INK.pink }, card: { outer: INK.sky, core: INK.pink }, wifi: { outer: INK.sky, core: INK.pink }, mac: { outer: INK.sky, core: INK.pink }, kept: { outer: INK.pink, core: INK.sky }, book: { outer: INK.sky, core: INK.pink }, globe: { outer: INK.sky, core: INK.sunflower }, bolt: { outer: INK.sunflower, core: INK.orange } },
-  warm:   { cloud: { outer: INK.sunflower, core: INK.orange }, card: { outer: INK.orange, core: INK.sunflower }, wifi: { outer: INK.sunflower, core: INK.orange }, mac: { outer: INK.orange, core: INK.sunflower }, kept: { outer: INK.pink, core: INK.sky }, book: { outer: INK.sky, core: INK.pink }, globe: { outer: INK.sky, core: INK.sunflower }, bolt: { outer: INK.sunflower, core: INK.orange } },
-  mixed:  { cloud: { outer: INK.sky, core: INK.orange }, card: { outer: INK.sunflower, core: INK.sky }, wifi: { outer: INK.sky, core: INK.sunflower }, mac: { outer: INK.sunflower, core: INK.sky }, kept: { outer: INK.pink, core: INK.sky }, book: { outer: INK.sky, core: INK.pink }, globe: { outer: INK.sky, core: INK.sunflower }, bolt: { outer: INK.sunflower, core: INK.orange } },
+  garden: { cloud: { outer: INK.sky, core: INK.sunflower }, card: { outer: INK.sunflower, core: INK.orange }, wifi: { outer: INK.orange, core: INK.sky }, mac: { outer: INK.pink, core: INK.sky }, free: { outer: INK.mint, core: INK.green }, kept: { outer: INK.pink, core: INK.sky }, book: { outer: INK.sky, core: INK.pink }, globe: { outer: INK.sky, core: INK.sunflower }, bolt: { outer: INK.sunflower, core: INK.orange } },
+  cool:   { cloud: { outer: INK.sky, core: INK.pink }, card: { outer: INK.sky, core: INK.pink }, wifi: { outer: INK.sky, core: INK.pink }, mac: { outer: INK.sky, core: INK.pink }, free: { outer: INK.mint, core: INK.green }, kept: { outer: INK.pink, core: INK.sky }, book: { outer: INK.sky, core: INK.pink }, globe: { outer: INK.sky, core: INK.sunflower }, bolt: { outer: INK.sunflower, core: INK.orange } },
+  warm:   { cloud: { outer: INK.sunflower, core: INK.orange }, card: { outer: INK.orange, core: INK.sunflower }, wifi: { outer: INK.sunflower, core: INK.orange }, mac: { outer: INK.orange, core: INK.sunflower }, free: { outer: INK.mint, core: INK.green }, kept: { outer: INK.pink, core: INK.sky }, book: { outer: INK.sky, core: INK.pink }, globe: { outer: INK.sky, core: INK.sunflower }, bolt: { outer: INK.sunflower, core: INK.orange } },
+  mixed:  { cloud: { outer: INK.sky, core: INK.orange }, card: { outer: INK.sunflower, core: INK.sky }, wifi: { outer: INK.sky, core: INK.sunflower }, mac: { outer: INK.sunflower, core: INK.sky }, free: { outer: INK.mint, core: INK.green }, kept: { outer: INK.pink, core: INK.sky }, book: { outer: INK.sky, core: INK.pink }, globe: { outer: INK.sky, core: INK.sunflower }, bolt: { outer: INK.sunflower, core: INK.orange } },
 };
 
 const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
@@ -155,7 +156,32 @@ function bolt(c) {
   return pin({ shadow: d, rim: d, slash: false, glint: pen('M40,14L34,24', 3),
     bands: [[c.outer, fill(d)], [c.core, fillT(d, about(40, 40, 0.45))]] });
 }
-const PICTURES = { cloud, card, wifi, mac };
+/** "Free forever": a chunky money-green $ scratched out with quick red pen strokes. */
+function free(c) {
+  // Open-counter S + protruding top/bottom bars so the $ silhouette stays crisp even at 22px.
+  const sCurve = 'M54,23C52,16.5 46,14.5 39,14.5C29.5,14.5 24,18.8 24,25.5C24,32.5 30,36 40,38.5C50,41 56,45 56,53C56,60.5 49.5,65 39.5,65C31.5,65 25.5,62 23.5,56.5';
+  const topPost = 'M40,6L40,17';
+  const botPost = 'M40,63L40,74';
+  const body = (sw, pw, grey = 20) =>
+    `<path d="${topPost}" fill="none" stroke="${g(grey)}" stroke-width="${pw}" stroke-linecap="round"/>` +
+    `<path d="${botPost}" fill="none" stroke="${g(grey)}" stroke-width="${pw}" stroke-linecap="round"/>` +
+    `<path d="${sCurve}" fill="none" stroke="${g(grey)}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  // Hand-drawn diagonal red scratch-out scribbles across the $.
+  const scratch =
+    stroke(131, [[13, 55], [63, 12]], 1.0) +
+    stroke(132, [[63, 12], [15, 68]], 1.0) +
+    stroke(133, [[15, 68], [67, 25]], 1.0);
+  return [
+    { ink: INK.crema, dx: 2, dy: 3, svg: body(16.5, 11.5, 145) },
+    { ink: INK.espresso, svg: body(16.5, 11.5, 18), noise: 0.06 },
+    { ink: INK.espresso, dx: 1, svg: body(16.5, 11.5, 70), noise: 0.4 },
+    { ink: c.outer, svg: body(10, 6.2, 24), noise: 0.05 },
+    { ink: c.core, dx: 1, dy: 1, svg: body(7.5, 4.5, 130), noise: 0.14 },
+    { ink: INK.paper, svg: '<path d="M27,23.5C28,19.5 32,17.5 37,17.5" fill="none" stroke="rgb(20,20,20)" stroke-width="2.4" stroke-linecap="round"/>', noise: 0.04 },
+    { ink: RED, svg: `<path d="${scratch}" fill="none" stroke="rgb(18,18,18)" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>`, noise: 0.06 },
+  ];
+}
+const PICTURES = { cloud, card, wifi, mac, free };
 
 async function draw(palette) {
   const out = {};

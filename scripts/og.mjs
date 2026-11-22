@@ -78,8 +78,8 @@ await page.evaluate(({ panel, W, H }) => {
   title.style.margin = '0';
   put(title, 'left:60px;top:132px;font-size:62px;width:760px;line-height:1.04');
   put(el(`<p>Grammar and tone in every app on your Mac.</p>`), `left:62px;top:300px;margin:0;font-family:Martian Mono;font-size:19px;color:${INK}`);
-  put(h1.parentElement.querySelectorAll('p')[1].cloneNode(true), 'left:62px;top:348px;margin:0');
-  const keys = [...header.querySelectorAll('span')].find((s) => s.textContent.trim() === 'in any text box').parentElement.cloneNode(true);
+  put(h1.parentElement.querySelector('p').cloneNode(true), 'left:62px;top:348px;margin:0');
+  const keys = header.querySelector('[data-enter-grandkids="keys"]').cloneNode(true);
   put(keys, 'left:62px;top:424px;transform:scale(1.12);transform-origin:left top');
 
   for (const part of ['rays', 'face', 'glints']) img(`/sprite/sun-${part}.png`, 'right:52px;top:26px;width:170px');

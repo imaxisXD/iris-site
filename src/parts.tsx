@@ -572,25 +572,26 @@ const os = stylex.create({
  *  Start. Decoration beside the computer's name, so screen readers skip it. */
 // /app/* is cached for a week, so each picture's address carries a stamp of its contents: a
 // redrawn computer shows at once instead of the old one from the cache.
-const stamped = (file: string) =>
+export const stamped = (file: string) =>
   `${file}?v=${createHash('sha1').update(readFileSync(path.resolve(import.meta.dirname ?? '.', '../public', file.slice(1)))).digest('hex').slice(0, 8)}`;
 export function OsIcon({ os: name, size = 22 }: { os: 'mac' | 'windows'; size?: number }) {
   return <img src={stamped(`/app/${name}.png`)} alt="" width={size} height={size} decoding="async" {...stylex.props(os.icon)} />;
 }
 /** What's said beside every Download Iris: the price, then which computers. The button gets the
  *  Mac's app, so the Mac line says so; Windows is coming. */
-export function Platforms() {
+export function Platforms({ showPrice = true, compact = false }: { showPrice?: boolean; compact?: boolean } = {}) {
+  const size = compact ? 20 : 22;
   return (
     <>
-      <span {...stylex.props(pf.line)}>Free forever</span>
+      {showPrice && <span {...stylex.props(pf.line)}>Free forever</span>}
       <span {...stylex.props(pf.os)}>
-        <OsIcon os="mac" />
-        <span {...stylex.props(pf.words)}>For Mac (M1 or newer · macOS 15+)</span>
+        <OsIcon os="mac" size={size} />
+        <span {...stylex.props(pf.words)}>{compact ? 'Mac M1+ (macOS 15+)' : 'For Mac (M1 or newer · macOS 15+)'}</span>
       </span>
       <span {...stylex.props(pf.os)}>
-        <OsIcon os="windows" />
+        <OsIcon os="windows" size={size} />
         <span {...stylex.props(pf.words)}>
-          Windows <BetaStamp /> {windows.status}
+          Windows <BetaStamp /> {compact ? 'soon' : windows.status}
         </span>
       </span>
     </>
