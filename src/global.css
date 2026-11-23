@@ -46,6 +46,19 @@
   }
 }
 
+/* Which computer you're on (render.tsx's head script sets <html data-os> before the page
+   draws, so nothing swaps after it shows). Words and keys that differ come in both versions,
+   the Mac's showing unless it's Windows; the download shows the Mac's unless it's Windows, and
+   says which when the computer isn't known (Linux, no script). */
+[data-os-only="mac"] { display: contents; }
+[data-os-only="windows"] { display: none; }
+html[data-os="windows"] [data-os-only="windows"] { display: contents; }
+html[data-os="windows"] [data-os-only="mac"] { display: none; }
+[data-os-known] { display: contents; }
+[data-os-unknown] { display: none; }
+html:not([data-os="mac"]):not([data-os="windows"]) [data-os-known] { display: none; }
+html:not([data-os="mac"]):not([data-os="windows"]) [data-os-unknown] { display: contents; }
+
 /* Over the foot the pointer is a butterfly (client.ts sets this only on fine pointers, and not
    under Reduce Motion); links and buttons keep the real pointer. */
 [data-fly-cursor] { cursor: none; }

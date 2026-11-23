@@ -10,6 +10,7 @@ import {
   HandWord,
   KeyRow,
   Marked,
+  ForOs,
   OnMac,
   OsIcon,
   OnTouch,
@@ -26,7 +27,7 @@ import {
   Wordmark,
 } from './parts';
 import { Footer } from './Footer';
-import { FactStage, type FactLook, MacCorner, PanelScene } from './Backdrop';
+import { FactStage, type FactLook, MacCorner, PanelScene, WinCorner } from './Backdrop';
 import { Bud, CHAPTERS, Desk, doneCss, Flight, FLOWER_PX, ON_FOOT, SHUT_MS, WALL } from './Desk';
 import { DONE, LANDS, SaysNote } from './Done';
 import { Pattern } from './Patterns';
@@ -199,6 +200,10 @@ const s = stylex.create({
   light: { width: 9, height: 9, borderRadius: '50%', borderWidth: 1.3, borderStyle: 'solid', borderColor: ink.i8 },
   winTitle: { flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'safe center', gap: 6, marginLeft: 8, marginRight: 31, fontSize: 11, color: ink.i10, whiteSpace: 'nowrap' },
   winBody: { position: 'relative', padding: '12px 14px 14px', display: 'grid', gap: 10 },
+  // A Windows window's bar: its title on the left, minimise, maximise and close drawn on the right.
+  winTitleLeft: { flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: ink.i10, whiteSpace: 'nowrap' },
+  winControls: { display: 'flex', gap: 12, fontSize: 11, lineHeight: 1, color: ink.i8 },
+  smartLink: { position: 'relative', justifySelf: 'start', fontSize: 10.5, color: ink.i12, textDecoration: 'underline', textUnderlineOffset: 2, paddingInline: 4, isolation: 'isolate' },
   chatPrev: { margin: 0, fontSize: 12, color: ink.i10 },
   chatWho: { color: ink.i12, fontWeight: 600, marginRight: 6 },
   // The text box being written in.
@@ -380,6 +385,8 @@ const s = stylex.create({
     alignSelf: 'stretch', containerType: 'size', [NARROW]: { containerType: 'normal' }, clipPath: 'polygon(0.6% 1.4%, 24% 0.2%, 52% 1.6%, 79% 0%, 99.4% 1%, 100% 34%, 99.2% 68%, 100% 99%, 72% 99.8%, 44% 98.6%, 18% 100%, 0.4% 98.8%, 1.2% 64%, 0% 30%)', justifySelf: 'stretch' },
   menuNote: { position: 'absolute', zIndex: 1, left: 'calc(40cqw - 14px)', bottom: 'calc(100% + 3px)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'flex-start', gap: 4, fontFamily: font.brush, fontSize: { default: 22, [MOBILE]: 18 }, lineHeight: 1, color: ink.i12, transformOrigin: '0 100%', transform: 'rotate(-4deg)' },
   menuImg: { width: '100%', height: 'auto' },
+  // On Windows the note sits on the screen, over the taskbar, its arrow down to the flower.
+  menuNoteWin: { display: 'flex', alignItems: 'flex-start', gap: 4, whiteSpace: 'nowrap', fontFamily: font.brush, fontSize: { default: 22, [MOBILE]: 18 }, lineHeight: 1, color: ink.i12, transform: 'rotate(-4deg)' },
   setupList: { listStyle: 'none', margin: 0, padding: 0 },
   setupItem: { display: 'flex', flexDirection: 'column', gap: 4, paddingBlock: { default: 14, [MOBILE]: 10 } },
   setupTitle: { fontFamily: font.brush, fontSize: { default: 24, [MOBILE]: 21 }, lineHeight: 1.1, color: ink.i12 },
@@ -653,7 +660,7 @@ function Cover() {
               <KeyRow keys={['⌃', '⌥', 'G']} labeled />
               <span {...stylex.props(s.keysWords)} {...ENTER.keysWords}>
                 <OnMac>in any app</OnMac>
-                <OnTouch>on your Mac, in any app</OnTouch>
+                <OnTouch>on your computer, in any app</OnTouch>
               </span>
             </div>
           </div>
@@ -711,7 +718,11 @@ const MOMENT_STEPS: { title: string; keys?: string[]; text: React.ReactNode }[] 
     keys: ['⌃', '⌥', 'G'],
     text: (
       <>
-        In any app: <AppName app="slack" />, <AppName app="mail" />, <AppName app="messages" />, <AppName app="notes" />, <AppName app="chrome" />, <AppName app="safari" />, and more. Highlight text to fix just that part.
+        <ForOs
+          mac={<>In any app: <AppName app="slack" />, <AppName app="mail" />, <AppName app="messages" />, <AppName app="notes" />, <AppName app="chrome" />, <AppName app="safari" />, and more.</>}
+          windows={<>In any app: <AppName app="slack" />, <AppName app="chrome" />, Outlook, Word, Notepad, and more.</>}
+        />{' '}
+        Highlight text to fix just that part.
       </>
     ),
   },
@@ -914,6 +925,24 @@ function MacWindow({ title, icon, children }: { title: string; icon?: string; ch
   );
 }
 
+/** A Windows window, small: its title on the left, the three controls on the right, and a body. */
+function WinWindow({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div {...stylex.props(panel.sheet, s.win)} style={{ borderRadius: 6 }}>
+      <span {...stylex.props(panel.grain)} />
+      <div {...stylex.props(s.winBar)}>
+        <span {...stylex.props(s.winTitleLeft)}>{title}</span>
+        <span aria-hidden {...stylex.props(s.winControls)}>
+          <span>&#8212;</span>
+          <span>&#9633;</span>
+          <span>&#10005;</span>
+        </span>
+      </div>
+      <div {...stylex.props(s.winBody)}>{children}</div>
+    </div>
+  );
+}
+
 /** One of Iris's notes by the text box, as the app draws it: paper, a brush line, mono under it. */
 function IrisNote({ icon, title, line, end }: { icon: React.ReactNode; title: React.ReactNode; line?: React.ReactNode; end?: React.ReactNode }) {
   return (
@@ -1060,11 +1089,11 @@ function Private() {
       <GhostWord lines={['PRIVATE', '']} tone="pink" style={{ backgroundImage: 'url(/tex/streaks.png), linear-gradient(rgb(255 252 249), rgb(255 252 249))', opacity: 0.85, left: 'calc(-0.08em + 5px)', top: '50%', fontSize: 'clamp(110px, 13vw, 200px)', transformOrigin: '0 0', transform: 'rotate(-90deg) translate(-50%, 0)' }} />
       </span>
       <div {...stylex.props(s.wrap)} style={{ paddingBlock: 'clamp(48px, 9vw, 120px)' }}>
-        <PageTitle id="private-title" lines={['Your words stay', 'on your Mac']} xstyle={s.onPink} />
+        <PageTitle id="private-title" lines={['Your words stay', <ForOs key="os" mac="on your Mac" windows="on your PC" />]} xstyle={s.onPink} />
         <div {...stylex.props(s.privateBody)}>
           <div {...stylex.props(s.stack)} style={{ gap: 20 }}>
             <p {...stylex.props(s.pinkBody)} data-tones="private">
-              Iris runs its AI directly on your Mac. No cloud, no account, and no tracking. After a one-time download during setup, nothing you type ever leaves your computer, and it works without Wi-Fi.
+              Iris runs its AI directly on your computer. No cloud, no account, and no tracking. After a one-time download during setup, nothing you type ever leaves your computer, and it works without Wi-Fi.
             </p>
             <p {...stylex.props(s.pinkBody)} style={{ fontSize: '0.84375rem' }}>
               Automatically ignores password fields and password managers.
@@ -1087,7 +1116,7 @@ const STICKERS = [
   { label: 'no cloud', picture: 'cloud', crossed: true, tilt: -2.5, seed: 61 },
   { label: 'no sign-up', picture: 'card', crossed: true, tilt: 2, seed: 62 },
   { label: 'works offline', picture: 'wifi', crossed: true, tilt: 1.5, seed: 63 },
-  { label: 'stays on your Mac', picture: 'mac', crossed: false, tilt: -1.5, seed: 64 },
+  { label: 'stays on your computer', picture: 'mac', crossed: false, tilt: -1.5, seed: 64 },
 ] as const;
 
 /** A sticker: Iris's pin for it, printed by scripts/privacy-icons.mjs, our red brush X on what
@@ -1191,55 +1220,83 @@ function Yours() {
 
 // ── 07 Menu bar and setup ─────────────────────────────────────────────────────────────
 function MenuBar() {
-  const steps = [
-    ['Allow access', 'Give Iris permission to fix your text. Your Mac asks just once.'],
-    ['One-time offline download', 'Downloads the built-in AI once, so Iris works privately without internet.'],
-    ['Try it', 'Fix a practice sentence, and you’re set.'],
-  ];
+  // Windows has no permission to give (Iris for Windows' setup is two steps).
+  const download = ['One-time offline download', 'Downloads the built-in AI once, so Iris works privately without internet.'];
+  const tryIt = ['Try it', 'Fix a practice sentence, and you’re set.'];
+  const macSteps = [['Allow access', 'Give Iris permission to fix your text. Your Mac asks just once.'], download, tryIt];
+  const winSteps = [download, tryIt];
+  const list = (steps: string[][], seed: number) => (
+    <ol {...stylex.props(s.setupList)}>
+      {steps.map(([t, d], i) => (
+        <li key={t}>
+          <div {...stylex.props(s.setupItem)}>
+            <span {...stylex.props(s.setupTitle)}>{t}</span>
+            <span {...stylex.props(s.methodText)}>{d}</span>
+          </div>
+          {i < steps.length - 1 && <PenRule seed={seed + i} />}
+        </li>
+      ))}
+    </ol>
+  );
   return (
     <section id="menu" aria-labelledby="menu-title" {...stylex.props(s.spread)} style={{ paddingTop: 0 }}>
       <div {...stylex.props(s.wrap, s.stack, s.spreadGap64)}>
-        <RunningHead seed={71} cols={['Menu bar', 'Out of your way', '5-minute setup']} />
+        <RunningHead seed={71} cols={[<ForOs key="os" mac="Menu bar" windows="Taskbar" />, 'Out of your way', '5-minute setup']} />
         <div {...stylex.props(s.menuGrid)}>
           <div {...stylex.props(s.macStage)}>
           <Pattern kind="ripples" color="rgb(210 177 146)" seed={71} at={[0.5, 0.2]} scale={1.3} />
-          <MacCorner
-            note={
-              <span {...stylex.props(s.menuNote)} aria-hidden>
-                <HandArrow width={44} height={40} flip seed={2} />
-                <span style={{ paddingTop: 2 }}>find me up here</span>
-              </span>
+          <ForOs
+            block
+            mac={
+              <MacCorner
+                note={
+                  <span {...stylex.props(s.menuNote)} aria-hidden>
+                    <HandArrow width={44} height={40} flip seed={2} />
+                    <span style={{ paddingTop: 2 }}>find me up here</span>
+                  </span>
+                }
+                menu={
+                  <Picture
+                    name="menu"
+                    width={400}
+                    sizes="(max-width: 760px) 46vw, 294px"
+                    alt="The Iris menu, open under its flower in the menu bar: a printed sky band with a flower, then Check text, Quick Fix, Free model memory, Setup, Settings, Check for Updates and Quit."
+                    xstyle={s.menuImg}
+                  />
+                }
+              />
             }
-            menu={
-              <Picture
-                name="menu"
-                width={400}
-                sizes="(max-width: 760px) 46vw, 294px"
-                alt="The Iris menu, open under its flower in the menu bar: a printed sky band with a flower, then Check text, Quick Fix, Free model memory, Setup, Settings, Check for Updates and Quit."
-                xstyle={s.menuImg}
+            windows={
+              <WinCorner
+                note={
+                  <span {...stylex.props(s.menuNoteWin)} aria-hidden>
+                    <span style={{ paddingTop: 2 }}>find me down here</span>
+                    <HandArrow width={44} height={40} seed={2} />
+                  </span>
+                }
               />
             }
           />
           </div>
           <div {...stylex.props(s.stack, s.menuIntro)}>
-            <PageTitle id="menu-title" lines={['Lives in your', 'menu bar']} small />
-            <p {...stylex.props(s.body)} data-tones="menu">
-              Iris sits quietly as a little flower at the top of your screen, with no cluttered window or Dock icon. It only runs when you call it, then goes to sleep automatically so it won’t slow your Mac down.
-            </p>
+            <PageTitle id="menu-title" lines={[<ForOs key="a" mac="Lives in your" windows="Lives by your" />, <ForOs key="b" mac="menu bar" windows="clock" />]} small />
+            <ForOs
+              block
+              mac={
+                <p {...stylex.props(s.body)} data-tones="menu">
+                  Iris sits quietly as a little flower at the top of your screen, with no cluttered window or Dock icon. It only runs when you call it, then goes to sleep automatically so it won’t slow your Mac down.
+                </p>
+              }
+              windows={
+                <p {...stylex.props(s.body)} data-tones="menuWin">
+                  Iris sits quietly as a little flower by the clock in your taskbar, with no window in your way. Click it for Settings. It only runs when you call it, then goes to sleep automatically so it won’t slow your PC down.
+                </p>
+              }
+            />
           </div>
           <div style={{ gridArea: 'steps' }}>
             <SectionHead title="First time you open Iris" seed={73} />
-            <ol {...stylex.props(s.setupList)}>
-              {steps.map(([t, d], i) => (
-                <li key={t}>
-                  <div {...stylex.props(s.setupItem)}>
-                    <span {...stylex.props(s.setupTitle)}>{t}</span>
-                    <span {...stylex.props(s.methodText)}>{d}</span>
-                  </div>
-                  {i < steps.length - 1 && <PenRule seed={74 + i} />}
-                </li>
-              ))}
-            </ol>
+            <ForOs block mac={list(macSteps, 74)} windows={list(winSteps, 77)} />
           </div>
         </div>
       </div>
@@ -1278,19 +1335,34 @@ function Install() {
         {/* Three steps, each on its own small collage; swipeable rail on phones. */}
         <div {...stylex.props(s.railWrap)} data-rail="install">
           <ol {...stylex.props(s.installSteps)} data-scrolls data-rail-track>
-            {INSTALL_STEPS.map((st, i) => (
-              <li key={st.title} {...stylex.props(s.fact)} data-rail-slide>
-                <FactStage look={st.look} seed={86 + i * 7}>
-                  <div inert aria-hidden {...stylex.props(s.factArt)}>
-                    {st.art}
-                  </div>
-                  <p {...stylex.props(s.srOnly)}>{st.alt}</p>
-                </FactStage>
-                <SectionHead title={st.title} seed={96 + i}>
-                  {st.text}
-                </SectionHead>
-              </li>
-            ))}
+            {INSTALL_STEPS.map((st, i) => {
+              const w = INSTALL_STEPS_WINDOWS[i];
+              return (
+                <li key={st.title} {...stylex.props(s.fact)} data-rail-slide>
+                  <FactStage look={st.look} seed={86 + i * 7}>
+                    <div inert aria-hidden {...stylex.props(s.factArt)}>
+                      <ForOs block mac={st.art} windows={w.art} />
+                    </div>
+                    <p {...stylex.props(s.srOnly)}>
+                      <ForOs mac={st.alt} windows={w.alt} />
+                    </p>
+                  </FactStage>
+                  <ForOs
+                    block
+                    mac={
+                      <SectionHead title={st.title} seed={96 + i}>
+                        {st.text}
+                      </SectionHead>
+                    }
+                    windows={
+                      <SectionHead title={w.title} seed={96 + i}>
+                        {w.text}
+                      </SectionHead>
+                    }
+                  />
+                </li>
+              );
+            })}
           </ol>
           <RailControls count={INSTALL_STEPS.length} label="Install steps" seed={99} />
         </div>
@@ -1321,10 +1393,22 @@ function Install() {
           <div {...stylex.props(panel.sheet, s.why)}>
             <span {...stylex.props(panel.grain)} />
             <Tape style={{ left: '50%', top: -12, width: 96, height: 24, transform: 'translateX(-50%) rotate(-3deg)' }} />
-            <span {...stylex.props(s.whyTitle)}>Why does macOS ask?</span>
-            <p {...stylex.props(s.whyText)} data-tones="why">
-              Apple charges developers a yearly fee to remove that first-time warning. Since Iris is completely free, we skip the fee. Your Mac asks you to confirm just once and remembers through future updates. Our code is public so anyone can check it’s safe.
-            </p>
+            <span {...stylex.props(s.whyTitle)}>
+              <ForOs mac="Why does macOS ask?" windows="Why does Windows warn?" />
+            </span>
+            <ForOs
+              block
+              mac={
+                <p {...stylex.props(s.whyText)} data-tones="why">
+                  Apple charges developers a yearly fee to remove that first-time warning. Since Iris is completely free, we skip the fee. Your Mac asks you to confirm just once and remembers through future updates. Our code is public so anyone can check it’s safe.
+                </p>
+              }
+              windows={
+                <p {...stylex.props(s.whyText)} data-tones="whyWin">
+                  Windows warns about apps without a paid code-signing certificate, and this free beta doesn’t have one yet. Confirm it once; after that, updates install from inside Iris, checked against Iris’s own signature. Our code is public so anyone can check it’s safe.
+                </p>
+              }
+            />
             <span style={{ position: 'relative' }}>
               <PenLink href={links.code}>See the public code</PenLink>
             </span>
@@ -1457,6 +1541,61 @@ const INSTALL_STEPS: { title: string; look: FactLook; art: React.ReactNode; alt:
           </MacWindow>
         </div>
       </div>
+    ),
+  },
+];
+
+// The same three steps on Windows: the installer downloaded, the one time Windows asks
+// (SmartScreen's own words), and Setup. Each click ringed in pink, as on the Mac's.
+const INSTALL_STEPS_WINDOWS: typeof INSTALL_STEPS = [
+  {
+    title: 'Download',
+    look: 'step1',
+    alt: 'Your Downloads: Iris-Setup-x64.exe, Iris’s installer.',
+    text: 'Download Iris-Setup-x64.exe. If your browser says it isn’t commonly downloaded, keep it (in Edge: ••• › Keep › Keep anyway). Open it: it installs just for you, with no administrator needed.',
+    art: (
+      <WinWindow title="Downloads">
+        <div {...stylex.props(s.finderRow)}>
+          <FinderItem icon={<IrisIcon size={58} />} name="Iris-Setup-x64.exe" />
+        </div>
+      </WinWindow>
+    ),
+  },
+  {
+    title: 'Open it, once',
+    look: 'step2',
+    alt: 'Windows says “Windows protected your PC”, with More info ringed, then Run anyway ringed.',
+    text: 'The first time, Windows may say “Windows protected your PC”. Click More info, then Run anyway. After that, it opens normally.',
+    art: (
+      <WinWindow title="Windows protected your PC">
+        <span {...stylex.props(s.dialogLine)} style={{ textAlign: 'start' }}>Microsoft Defender SmartScreen prevented an unrecognized app from starting.</span>
+        <span {...stylex.props(s.smartLink)}>
+          <span {...stylex.props(s.macRing)}>
+            <Printed mask={ringMask(104)} color="pink" />
+          </span>
+          <span style={{ position: 'relative' }}>More info</span>
+        </span>
+        <span {...stylex.props(s.dialogButtons)} style={{ justifySelf: 'end' }}>
+          <MacButton ring seed={105}>Run anyway</MacButton>
+          <MacButton seed={106}>Don’t run</MacButton>
+        </span>
+      </WinWindow>
+    ),
+  },
+  {
+    title: 'Install',
+    look: 'step3',
+    alt: 'Setup – Iris, Ready to Install, with Install ringed.',
+    text: 'Click Install, then Finish. Iris opens and sets itself up, and lives by your clock from then on.',
+    art: (
+      <WinWindow title="Setup – Iris">
+        <span {...stylex.props(s.secLabel)}>Ready to Install</span>
+        <span {...stylex.props(s.dialogLine)} style={{ textAlign: 'start' }}>Setup is now ready to begin installing Iris on your computer.</span>
+        <span {...stylex.props(s.dialogButtons)} style={{ justifySelf: 'end' }}>
+          <MacButton ring seed={107}>Install</MacButton>
+          <MacButton seed={108}>Cancel</MacButton>
+        </span>
+      </WinWindow>
     ),
   },
 ];
@@ -1679,12 +1818,16 @@ const QUESTIONS: { q: string; lead: string; a: React.ReactNode }[] = [
   {
     q: 'Does what I write leave my computer?',
     lead: 'never. i live on your computer',
-    a: 'Never. Everything runs directly on your Mac. Nothing goes to the cloud, nobody tracks you, and it works without Wi-Fi.',
+    a: 'Never. Everything runs directly on your computer. Nothing goes to the cloud, nobody tracks you, and it works without Wi-Fi.',
   },
   {
     q: 'Which apps does it work in?',
     lead: 'anywhere you can type',
-    a: 'Slack, Mail, Messages, Notes, Chrome, Safari, and any other app with a text box. No browser extension or plugin needed. Highlight text to fix just that part.',
+    a: (
+      <>
+        <ForOs mac="Slack, Mail, Messages, Notes, Chrome, Safari," windows="Slack, Outlook, Word, Notepad, Chrome, Edge," /> and any other app with a text box. No browser extension or plugin needed. Highlight text to fix just that part.
+      </>
+    ),
   },
   {
     q: 'Will it change how I sound?',
@@ -1703,19 +1846,24 @@ const QUESTIONS: { q: string; lead: string; a: React.ReactNode }[] = [
   {
     q: 'Will it slow my computer down?',
     lead: 'not while you’re not using me',
-    a: 'Nope. Iris only runs when you use it, then goes to sleep automatically when you step away so your Mac stays fast. You can adjust how soon in Settings.',
+    a: 'Nope. Iris only runs when you use it, then goes to sleep automatically when you step away so your computer stays fast. You can adjust how soon in Settings.',
   },
   {
     q: 'How do I get updates?',
-    lead: 'one click, from the menu bar',
-    a: 'Click the Iris flower in your top menu bar and choose Check for Updates… Iris downloads the new version and reopens itself.',
+    lead: 'one click, from my flower',
+    a: (
+      <ForOs
+        mac="Click the Iris flower in your top menu bar and choose Check for Updates… Iris downloads the new version and reopens itself."
+        windows="Click the Iris flower by your clock, go to Updates and press Check for updates, then Update & reopen. Iris downloads the new version, checks it really is Iris, and reopens itself."
+      />
+    ),
   },
   {
     q: 'Is there a Windows version?',
-    lead: 'not yet. it’s on its way',
+    lead: 'yes, as a beta',
     a: (
       <>
-        It’s on the way. You can check what a PC will need under <a href="#install">Install</a>, or <a href={links.code}>follow progress here</a>.
+        Yes. Iris for Windows is out as a beta, for Windows 10 or 11 (64-bit): the same panel and tones, from a flower by your clock. <a href={links.downloadWindows}>Download it here</a>, or see what a PC needs under <a href="#install">Install</a>.
       </>
     ),
   },
@@ -1912,7 +2060,9 @@ function PressPanel() {
       </div>
       <span data-press-said role="status" {...stylex.props(s.srOnly)} />
       <div data-press-psst hidden aria-hidden {...stylex.props(s.psst)}>
-        <span data-psst-keys>psst: try pressing ⌃ ⌥ G right now</span>
+        <span data-psst-keys>
+          psst: try pressing <ForOs mac="⌃ ⌥ G" windows="Ctrl Win G" /> right now
+        </span>
       </div>
     </>
   );

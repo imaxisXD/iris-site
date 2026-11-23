@@ -264,7 +264,7 @@ for (const reduce of [false, true]) {
   ok((await page.locator('[data-press-tab][aria-selected="true"]').textContent()).includes('Funny'), 'Tab moves through the tones to Funny');
   await page.keyboard.press('Enter');
   await page.waitForTimeout(reduce ? 200 : 600);
-  const said = await page.locator('[data-says]').evaluate((el) => [...el.querySelectorAll('[data-says-lead], [data-says-detail], [data-says-keys]:not([hidden])')].map((e) => e.textContent).join(' '));
+  const said = await page.locator('[data-says]').evaluate((el) => [...el.querySelectorAll('[data-says-lead], [data-says-detail], [data-says-keys]:not([hidden])')].map((el) => { const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let t = ''; for (let n; (n = w.nextNode()); ) { const o = n.parentElement.closest('[data-os-only]'); if (!o || getComputedStyle(o).display !== 'none') t += n.textContent; } return t; }).join(' '));
   ok((await lede.textContent()) !== ledeWas && !(await panelOpen()), 'Return puts the tone on the page, and the panel goes at once');
   ok(said === 'replaced Undo with ⌘Z', `and Iris says what the app's does by it ("${said}")`);
   if (!reduce) ok((await at()).includes('done'), 'and plays the app\'s Done: the stamp and the flower sinking');
@@ -359,7 +359,7 @@ for (const width of [320, 390]) {
       const g = document.querySelector('[data-garden]');
       for (const a of g.getAnimations({ subtree: true })) (a.pause(), (a.currentTime = ms));
       const cs = (sel) => getComputedStyle(g.querySelector(sel));
-      return { panel: +cs('[inert]').opacity, note: +cs('[data-done-note]').opacity, stamp: cs('[data-done-stamp]').scale, words: g.querySelector('[data-done-note]').textContent };
+      return { panel: +cs('[inert]').opacity, note: +cs('[data-done-note]').opacity, stamp: cs('[data-done-stamp]').scale, words: ((el) => { const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let t = ''; for (let n; (n = w.nextNode()); ) { const o = n.parentElement.closest('[data-os-only]'); if (!o || getComputedStyle(o).display !== 'none') t += n.textContent; } return t; })(g.querySelector('[data-done-note]')) };
     }, ms);
   const open = await at(6000), done = await at(8700), later = await at(11500), rest = await at(0);
   ok(open.panel === 1 && open.note === 0 && rest.stamp === '0', 'the cover shows Iris\'s panel, and no note or stamp before Return');
@@ -506,7 +506,7 @@ for (const mode of ['shares', 'closed', 'none']) {
   await page.goto(url + '#install', { waitUntil: 'load' });
   if (mode === 'shares') {
     ok(!(await page.getByRole('link', { name: 'Download Iris' }).count()), 'on a phone there is no Download Iris button');
-    ok((await page.getByRole('link', { name: 'Send to my Mac' }).count()) === 3, 'but Send to my Mac, on the cover, at Install and at the foot');
+    ok((await page.getByRole('link', { name: 'Send to my computer' }).count()) === 3, 'but Send to my computer, on the cover, at Install and at the foot');
     ok((await page.getByRole('link', { name: 'Download it here instead' }).first().getAttribute('href'))?.endsWith('/Iris.zip'), 'and Download it here instead still gets the zip');
     const sun = await page.evaluate(() => document.querySelector('img[src="/sprite/sun-face.png"]').getBoundingClientRect().right);
     ok(sun <= 390, `the cover's sun is all on the screen (its right edge at ${Math.round(sun)}px)`);
@@ -519,7 +519,7 @@ for (const mode of ['shares', 'closed', 'none']) {
     await new Promise((r) => setTimeout(r, 300));
     return { prevented, shared: window.__shared, href: a.getAttribute('href') };
   });
-  if (mode === 'shares') ok(res.prevented && res.shared.length === 1 && res.shared[0].url === new URL(url).origin + new URL(url).pathname, `Send to my Mac shares the page, without the #install ("${res.shared[0]?.url}")`);
+  if (mode === 'shares') ok(res.prevented && res.shared.length === 1 && res.shared[0].url === new URL(url).origin + new URL(url).pathname, `Send to my computer shares the page, without the #install ("${res.shared[0]?.url}")`);
   if (mode === 'closed') ok(res.prevented && res.shared.length === 1, 'closing the share sheet does nothing more');
   if (mode === 'none') ok(!res.prevented && res.href.startsWith('mailto:'), 'with no share sheet, it writes an email to yourself');
   await ctx.close();
@@ -540,7 +540,7 @@ for (const reduce of [false, true]) {
         panel: +cs(app.querySelector('[data-desk-panel]')).opacity,
         stamp: cs(desk.querySelector('[data-desk-done] [data-dd="stamp"]')).scale,
         note: +cs(desk.querySelector('[data-desk-done] [data-done-note]')).opacity,
-        words: desk.querySelector('[data-desk-done] [data-done-note]').textContent,
+        words: ((el) => { const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let t = ''; for (let n; (n = w.nextNode()); ) { const o = n.parentElement.closest('[data-os-only]'); if (!o || getComputedStyle(o).display !== 'none') t += n.textContent; } return t; })(desk.querySelector('[data-desk-done] [data-done-note]')),
         fixed: cs(app.querySelector('[data-desk-fixed]')).visibility,
         noteBox: desk.querySelector('[data-desk-done] [data-done-note]').getBoundingClientRect(),
         box: app.querySelector('[data-desk-box]').getBoundingClientRect(),

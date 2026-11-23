@@ -323,3 +323,101 @@ export function MacCorner({ menu, note }: { menu: ReactNode; note?: ReactNode })
   );
 }
 
+
+// ── The Windows PC's corner ───────────────────────────────────────────────────────────
+// The same screen as the Mac's (its bezel, its desk), with Windows' taskbar along the bottom:
+// the hidden icons' ^, Iris's flower, Wi-Fi, the battery and the clock, as Windows 11 lays its
+// corner out. Over the flower, what a right-click on it opens in Iris for Windows (tray.rs):
+// Open Iris and Quit Iris; a click opens Settings.
+const TASKBAR = 7.6; // the taskbar's height, in % of the corner's width
+const TRAY_FLOWER_AT = 28; // the flower's centre, in % from the screen's right edge
+const wc = stylex.create({
+  bezel: { paddingBottom: '2.4cqw' },
+  screen: { borderBottomRightRadius: '1.2cqw' },
+  taskbar: {
+    position: 'absolute',
+    insetInline: 0,
+    bottom: 0,
+    height: `${TASKBAR}cqw`,
+    backgroundColor: 'rgb(243 243 243 / 0.78)',
+    backdropFilter: 'blur(14px) saturate(1.4)',
+    WebkitBackdropFilter: 'blur(14px) saturate(1.4)',
+    borderTop: '1px solid rgb(0 0 0 / 0.06)',
+    color: 'rgb(0 0 0 / 0.85)',
+    fontFamily: 'system-ui, "Segoe UI", sans-serif',
+    fontSize: '2.2cqw',
+    fontWeight: 400,
+  },
+  clock: { position: 'absolute', right: '2.8cqw', top: '50%', transform: 'translateY(-50%)', display: 'grid', justifyItems: 'end', lineHeight: 1.3, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' },
+  chevron: { fontSize: '2.6cqw', lineHeight: 1 },
+  menu: {
+    position: 'absolute',
+    bottom: `${TASKBAR + 1.4}cqw`,
+    right: '2.4cqw',
+    width: '23cqw',
+    display: 'grid',
+    padding: '0.8cqw',
+    borderRadius: '1.4cqw',
+    backgroundColor: 'rgb(249 249 249)',
+    border: '1px solid rgb(0 0 0 / 0.08)',
+    boxShadow: '0 1.6cqw 4cqw rgb(0 0 0 / 0.22)',
+    color: 'rgb(0 0 0 / 0.88)',
+    fontFamily: 'system-ui, "Segoe UI", sans-serif',
+    fontSize: '2.5cqw',
+  },
+  menuItem: { paddingBlock: '1.3cqw', paddingInline: '2.4cqw', borderRadius: '0.8cqw' },
+  menuFirst: { backgroundColor: 'rgb(0 0 0 / 0.05)' },
+  // Its arrow's tip just over the flower.
+  note: { position: 'absolute', zIndex: 1, right: `${TRAY_FLOWER_AT - 1.2}cqw`, bottom: `${TASKBAR + 0.6}cqw` },
+});
+const winSys = {
+  battery: (
+    <svg viewBox="0 0 22 12" style={{ width: '3.6cqw', display: 'block' }} fill="none" stroke="currentColor">
+      <rect x="0.6" y="0.6" width="18.6" height="10.8" rx="2.4" strokeWidth="1.1" />
+      <rect x="2.2" y="2.2" width="12.6" height="7.6" rx="1.2" fill="currentColor" stroke="none" />
+      <path d="M20.8 4.2v3.6" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  wifi: (
+    <svg viewBox="0 0 18 14" style={{ width: '3cqw', display: 'block' }} fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.6">
+      <path d="M1.2 5.2a11 11 0 0 1 15.6 0" />
+      <path d="M4 8.2a7 7 0 0 1 10 0" />
+      <path d="M6.8 11.1a3 3 0 0 1 4.4 0" />
+    </svg>
+  ),
+};
+export function WinCorner({ note }: { note?: ReactNode }) {
+  const items: [ReactNode, number][] = [
+    [<span {...stylex.props(wc.chevron)}>^</span>, TRAY_FLOWER_AT + 4.6],
+    [<MenuBarFlower size="3.7cqw" />, TRAY_FLOWER_AT],
+    [winSys.wifi, 22.4],
+    [winSys.battery, 18],
+  ];
+  return (
+    <div {...stylex.props(mc.box)}>
+      <div {...stylex.props(mc.bezel, wc.bezel)}>
+        <div {...stylex.props(mc.screen, wc.screen)}>
+          <span aria-hidden {...stylex.props(mc.desk)}>
+            <Art name="corner" sizes="(max-width: 760px) 100vw, 560px" />
+          </span>
+          {note && <span {...stylex.props(wc.note)}>{note}</span>}
+          <div aria-hidden {...stylex.props(wc.menu)}>
+            <span {...stylex.props(wc.menuItem, wc.menuFirst)}>Open Iris</span>
+            <span {...stylex.props(wc.menuItem)}>Quit Iris</span>
+          </div>
+          <div aria-hidden {...stylex.props(wc.taskbar)}>
+            {items.map(([icon, right], i) => (
+              <span key={i} {...stylex.props(mc.item)} style={{ right: `${right}cqw` }}>
+                {icon}
+              </span>
+            ))}
+            <span {...stylex.props(wc.clock)}>
+              <span>9:41</span>
+              <span>13/11/2026</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

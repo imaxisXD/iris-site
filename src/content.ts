@@ -4,30 +4,31 @@ import path from 'node:path';
 
 export const links = {
   download: 'https://github.com/imaxisXD/iris/releases/latest/download/Iris.zip',
+  /** Windows' installer, from the same release (the app's update_win.rs checks its signature). */
+  downloadWindows: 'https://github.com/imaxisXD/iris/releases/latest/download/Iris-Setup-x64.exe',
   code: 'https://github.com/imaxisXD/iris',
   problem: 'https://github.com/imaxisXD/iris/issues/new',
   source: 'https://github.com/imaxisXD/iris#install',
 };
 
 // ── Windows ───────────────────────────────────────────────────────────────────────────
-// Iris's interface is being rebuilt in GPUI so it can run on Windows, and its models come as
-// GGUF for Windows too (Hugging Face, ImAXISOG/iris-gemma-4-*-it-gguf), but there's no Windows
-// download yet. So the page says Windows is coming, as a beta, and what it will need: the memory
-// is the models' own rule (Best quality on 16 GB, Lighter on 8 GB, as on a Mac); Windows 10 or
-// 11, 64-bit, is what GPUI runs on; Intel or AMD only until an Arm build has been tried.
-// Everything about Windows lives here, so it changes in one place when the beta is out.
+// Iris for Windows is out as a beta (0.5.0): the same panel and tones, from the taskbar, with
+// the models as GGUF. What a PC needs is the installer's own rule (Windows 10 1809 or later,
+// 64-bit; Arm PCs run it through Windows' emulation) and the models' (Best quality on 16 GB,
+// Lighter on 8 GB, as on a Mac; about 2.8 GB to download). Everything about Windows lives
+// here, so it changes in one place.
 export const windows = {
   /** Said after "Windows" and its beta stamp, by every Download Iris. */
-  status: 'coming soon',
+  status: '10 or 11',
   /** What a Windows PC needs. Empty says "to be announced". */
   requirements: [
     ['Windows', '10 or 11 (64-bit)'],
-    ['Processor', 'Intel or AMD'],
+    ['Processor', 'Intel, AMD or Arm'],
     ['Memory', '8 GB works, 16 GB+ for best quality'],
-    ['Storage', 'About 5 GB of free space'],
+    ['Storage', 'About 3 GB of free space'],
   ] as [string, string][],
   /** The Windows action under its requirements; null leaves it out. Never a second brush button. */
-  action: { label: 'Follow Windows updates', href: links.code } as { label: string; href: string } | null,
+  action: null as { label: string; href: string } | null,
 };
 
 // ── The panel's example ───────────────────────────────────────────────────────────────
@@ -75,7 +76,7 @@ export const pressTones = ['Professional', 'Friendly', 'Shorter', 'Funny'] as co
 export const pageTones: Record<string, Record<(typeof pressTones)[number], string>> = {
   lede: {
     Professional: 'Runs 100% locally and stays free forever. No cloud connection required, works offline.',
-    Friendly: '100% local on your Mac and free forever, with no cloud needed and full offline support.',
+    Friendly: '100% local on your computer and free forever, with no cloud needed and full offline support.',
     Shorter: '100% local. Free forever. Works offline.',
     Funny: '100% local, free forever, zero cloud, zero Wi-Fi needed. Your words never leave the building.',
   },
@@ -83,16 +84,28 @@ export const pageTones: Record<string, Record<(typeof pressTones)[number], strin
 
 
   private: {
-    Professional: 'Iris runs its AI directly on your Mac. Your text is never transmitted: there is no cloud service, no account, and no tracking. After a one-time setup download, it also works without Wi-Fi.',
-    Friendly: 'Everything happens right on your Mac, with no cloud, no account, and no tracking. After one quick download during setup, your words stay put and it works without Wi-Fi too.',
-    Shorter: 'Runs directly on your Mac. No cloud, no account, no tracking, and it works offline.',
-    Funny: 'Iris lives on your Mac and never leaves the house. No cloud, no account, no tracking. Turn off the Wi-Fi and it will not even notice.',
+    Professional: 'Iris runs its AI directly on your computer. Your text is never transmitted: there is no cloud service, no account, and no tracking. After a one-time setup download, it also works without Wi-Fi.',
+    Friendly: 'Everything happens right on your computer, with no cloud, no account, and no tracking. After one quick download during setup, your words stay put and it works without Wi-Fi too.',
+    Shorter: 'Runs directly on your computer. No cloud, no account, no tracking, and it works offline.',
+    Funny: 'Iris lives on your computer and never leaves the house. No cloud, no account, no tracking. Turn off the Wi-Fi and it will not even notice.',
   },
   menu: {
     Professional: 'Iris sits quietly in your menu bar without a window or Dock icon. It runs only when called and sleeps automatically when idle to keep your Mac fast.',
     Friendly: 'Keep an eye on the little flower at the top of your screen. It only wakes up when you need it, then goes back to sleep so your Mac stays fast.',
     Shorter: 'A quiet flower in your menu bar. Runs when you call it, sleeps when you do not.',
     Funny: 'The flower in your menu bar is Iris’s mood ring. It wakes up when you need it, and naps so your Mac stays speedy when you do not.',
+  },
+  menuWin: {
+    Professional: 'Iris sits quietly by the clock in your taskbar, with no window in your way; click it for Settings. It runs only when called and sleeps automatically when idle to keep your PC fast.',
+    Friendly: 'Look for the little flower by the clock in your taskbar, and click it for Settings. It only wakes up when you need it, then goes back to sleep so your PC stays fast.',
+    Shorter: 'A quiet flower by your clock. Runs when you call it, sleeps when you do not.',
+    Funny: 'The flower by your clock is Iris’s mood ring. Click it for Settings. It wakes up when you need it, and naps so your PC stays speedy when you do not.',
+  },
+  whyWin: {
+    Professional: 'Windows warns about apps without a paid code-signing certificate, and this free beta does not have one yet. Confirm Iris once; updates then install from inside Iris, checked against its own signature. The source code is public for anyone to verify.',
+    Friendly: 'Windows is cautious about apps without a paid certificate, and this free beta skips it for now. Confirm it once, and updates install from inside Iris after that, checked by its own signature. The code is all public if you want a look.',
+    Shorter: 'No paid certificate yet, so Windows asks once. Updates install from inside Iris, checked by its own signature. The code is public.',
+    Funny: 'Windows likes apps with a paid certificate. Iris is free, so it asks you once instead. After that, updates check their own signature at the door. The code is public, if you like reading receipts.',
   },
   why: {
     Professional: 'Apple charges an annual fee to remove the first-time security prompt. Because Iris is completely free, we skip that fee. Confirm Iris once and your Mac remembers through future updates. The source code is public for anyone to verify.',

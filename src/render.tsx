@@ -4,8 +4,12 @@ import assets from './assets.json';
 import { Page } from './Page';
 
 const title = 'Iris: fix your grammar, change your tone';
+// Which computer this is, on <html data-os="mac|windows|other"> before anything draws (global.css
+// swaps the words and the download on it). ?os=mac|windows|other overrides it, to look at each.
+// An iPhone or iPad says Mac; the page's touch rules take those over.
+const OS_SCRIPT = `(function(){var d=document.documentElement,q=/[?&]os=(mac|windows|other)\\b/.exec(location.search),o=q&&q[1];if(!o){var n=navigator,p=((n.userAgentData&&n.userAgentData.platform)||n.platform||'')+' '+(n.userAgent||'');o=/Win/.test(p)?'windows':/Mac|iPhone|iPad/.test(p)?'mac':'other'}d.setAttribute('data-os',o)})()`;
 const description =
-  'A free, private Grammarly alternative for Mac. Fix grammar and change tone in any app with one shortcut. Works offline and never sends your writing to the cloud.';
+  'A free, private Grammarly alternative for Mac and Windows. Fix grammar and change tone in any app with one shortcut. Works offline and never sends your writing to the cloud.';
 // What the share card shows, for people who can't see it.
 const cardAlt =
   'Iris: fix your grammar, change your tone. Iris’s panel fixes “cant”, “tmrw” and “their” in a note, under a sun and butterflies.';
@@ -48,16 +52,17 @@ ${origin ? `<meta property="og:url" content="${origin}/">` : ''}
 ${fonts.map((f) => `<link rel="preload" href="/fonts/${f}.woff2" as="font" type="font/woff2" crossorigin>`).join('\n')}
 <link rel="preload" as="image" href="/fable/flower.webp" fetchpriority="high">
 <link rel="preload" href="/tex/screen.png" as="image">
+<script>${OS_SCRIPT}</script>
 <style>${css}</style>
 <script type="application/ld+json">${JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     name: 'Iris',
-    operatingSystem: 'macOS 15 or later',
+    operatingSystem: 'macOS 15 or later; Windows 10 or 11 (64-bit, beta)',
     applicationCategory: 'UtilitiesApplication',
     description,
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-    downloadUrl: 'https://github.com/imaxisXD/iris/releases/latest/download/Iris.zip',
+    downloadUrl: 'https://github.com/imaxisXD/iris/releases/latest',
   })}</script>
 </head>
 <body>

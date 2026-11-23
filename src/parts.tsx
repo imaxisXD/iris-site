@@ -197,7 +197,7 @@ const pt = stylex.create({
  *  "Fix ✻ or change / the tone". `attrs` and `starAttrs` go onto the heading and the ✻ (the
  *  cover's entry, Entry.ts). */
 type Attrs = Record<string, unknown> & { style?: React.CSSProperties };
-export function PageTitle({ lines, lead, small = false, id, level = 2, xstyle, attrs, starAttrs }: { lines: [string, string]; lead?: string; small?: boolean; id?: string; level?: 1 | 2; xstyle?: stylex.StyleXStyles; attrs?: Attrs; starAttrs?: Attrs }) {
+export function PageTitle({ lines, lead, small = false, id, level = 2, xstyle, attrs, starAttrs }: { lines: [ReactNode, ReactNode]; lead?: string; small?: boolean; id?: string; level?: 1 | 2; xstyle?: stylex.StyleXStyles; attrs?: Attrs; starAttrs?: Attrs }) {
   const H = level === 1 ? 'h1' : 'h2';
   const star = <span aria-hidden {...starAttrs} {...stylex.props(pt.star, lead != null && lines[0] !== '' && pt.starInline)} style={starAttrs?.style}>✻</span>;
   return (
@@ -233,7 +233,7 @@ const rh = stylex.create({
 });
 /** The zine's strip of small columns over a page: where you are, what's on it, one fact. */
 /** Only what helps a reader: the section's name, then at most two facts not said elsewhere. */
-export function RunningHead({ cols, seed }: { cols: string[]; seed: number }) {
+export function RunningHead({ cols, seed }: { cols: ReactNode[]; seed: number }) {
   return (
     <div {...stylex.props(rh.head)}>
       {cols.map((c, i) => (
@@ -323,15 +323,49 @@ export function Keycap({ k, word, labeled = false, seed }: { k: string; word?: s
   );
 }
 const KEYWORDS: Record<string, string> = { '⌃': 'control', '⌥': 'option', '⌘': 'command', '⇧': 'shift', '↵': 'return', '⇥': 'tab' };
-/** Keys to press, as separate caps, read out in words. */
+/** The same keys on Windows, as Iris for Windows writes them (the app's keys.rs): a shortcut
+ *  that works everywhere is Ctrl+Win(+Shift)+G (⌃⌥G turned over is the Xbox Game Bar's), and a
+ *  command inside Iris takes Ctrl where the Mac takes ⌘. */
+export function windowsKeys(keys: string[]): string[] {
+  const everywhere = keys.includes('⌃') && keys.includes('⌥');
+  if (everywhere) return ['Ctrl', 'Win', ...keys.filter((k) => k !== '⌃' && k !== '⌥').map((k) => (k === '⇧' ? 'Shift' : k))];
+  const win: Record<string, string> = { '⌘': 'Ctrl', '⌃': 'Ctrl', '⌥': 'Alt', '⇧': 'Shift', '↵': 'Enter', '⇥': 'Tab' };
+  return keys.map((k) => win[k] ?? k);
+}
+/** Keys to press, as separate caps, read out in words: the Mac's, or on Windows Windows' own
+ *  (global.css shows the one for this computer). */
 export function KeyRow({ keys, labeled = false }: { keys: string[]; labeled?: boolean }) {
-  const spoken = keys.map((k) => KEYWORDS[k] ?? k).join(' ');
-  return (
-    <span {...stylex.props(kc.row)} role="img" aria-label={spoken}>
-      {keys.map((k, i) => (
-        <Keycap key={i} k={k} word={labeled ? KEYWORDS[k] : undefined} labeled={labeled} seed={i * 7 + k.charCodeAt(0)} />
-      ))}
+  const caps = (list: string[], os: 'mac' | 'windows') => (
+    <span data-os-only={os} key={os}>
+      <span {...stylex.props(kc.row)} role="img" aria-label={list.map((k) => (os === 'mac' ? KEYWORDS[k] ?? k : k)).join(' ')}>
+        {list.map((k, i) =>
+          os === 'mac' ? (
+            <Keycap key={i} k={k} word={labeled ? KEYWORDS[k] : undefined} labeled={labeled} seed={i * 7 + k.charCodeAt(0)} />
+          ) : (
+            // Windows' keys carry their names (Ctrl, Win): labeled, the name sits where the
+            // Mac's word does, with no symbol over it.
+            <Keycap key={i} k={labeled && k.length > 1 ? '' : k} word={labeled && k.length > 1 ? k.toLowerCase() : undefined} labeled={labeled} seed={i * 7 + k.charCodeAt(0)} />
+          ),
+        )}
+      </span>
     </span>
+  );
+  return (
+    <>
+      {caps(keys, 'mac')}
+      {caps(windowsKeys(keys), 'windows')}
+    </>
+  );
+}
+
+/** Words that differ by computer: the Mac's, or Windows' on Windows (global.css). */
+export function ForOs({ mac, windows: win, block = false }: { mac: ReactNode; windows: ReactNode; block?: boolean }) {
+  const Tag = block ? 'div' : 'span';
+  return (
+    <>
+      <Tag data-os-only="mac">{mac}</Tag>
+      <Tag data-os-only="windows">{win}</Tag>
+    </>
   );
 }
 
@@ -466,34 +500,50 @@ export function BrushButton({ href, children, hint, id, download, data }: { href
 }
 
 // ── Getting Iris ──────────────────────────────────────────────────────────────────────
-// Iris runs on a Mac, so a phone or tablet can't use the download. Where there's no pointer
-// that hovers (the same test as the foot's "psst"), Download Iris becomes Send to my Mac: the
-// share sheet (AirDrop, Messages, Mail), or with no share sheet or no script an email to
-// yourself. The swap is CSS, so nothing changes after the page shows, and the hidden one is
-// out of reach.
+// Iris runs on a Mac or a Windows PC, so a phone or tablet can't use the download. Where there's
+// no pointer that hovers (the same test as the foot's "psst"), Download Iris becomes Send to my
+// computer: the share sheet (AirDrop, Messages, Mail), or with no share sheet or no script an
+// email to yourself with both downloads. The swap is CSS, so nothing changes after the page
+// shows, and the hidden one is out of reach. On a computer the button downloads its own Iris
+// (global.css, on the head script's data-os); where the computer isn't known it says it's the
+// Mac's, and the Windows line beside it downloads the other.
 const TOUCH = '@media not all and (hover: hover) and (pointer: fine)';
 const gi = stylex.create({
   mac: { display: { default: 'contents', [TOUCH]: 'none' } },
   touch: { display: { default: 'none', [TOUCH]: 'contents' } },
 });
-/** Shown on a Mac, or anything with a mouse or trackpad. */
+/** Shown on a computer: anything with a mouse or trackpad. */
 export const OnMac = ({ children }: { children: ReactNode }) => <span {...stylex.props(gi.mac)}>{children}</span>;
 /** Shown on a phone or tablet. */
 export const OnTouch = ({ children }: { children: ReactNode }) => <span {...stylex.props(gi.touch)}>{children}</span>;
-const sendToMac = `mailto:?subject=${encodeURIComponent('Iris, for my Mac')}&body=${encodeURIComponent(`Download Iris on your Mac: ${links.download}\n\nMore about Iris: ${links.code}`)}`;
-/** The page's one action: Download Iris on a Mac, Send to my Mac on a phone or tablet. `ribbon`
- *  underlines Download it here instead, as the links beside it are. */
+const sendToComputer = `mailto:?subject=${encodeURIComponent('Iris, for my computer')}&body=${encodeURIComponent(`Download Iris on your computer:\n\nMac: ${links.download}\nWindows (beta): ${links.downloadWindows}\n\nMore about Iris: ${links.code}`)}`;
+/** The page's one action: Download Iris for this computer, Send to my computer on a phone or
+ *  tablet. `ribbon` underlines Download it here instead, as the links beside it are. */
 export function GetIris({ ribbon }: { ribbon?: InkName }) {
   return (
     <>
       <OnMac>
-        <BrushButton href={links.download} download>
-          Download Iris
-        </BrushButton>
+        <span data-os-only="mac">
+          <span data-os-known>
+            <BrushButton href={links.download} download>
+              Download Iris
+            </BrushButton>
+          </span>
+          <span data-os-unknown>
+            <BrushButton href={links.download} download>
+              Download for Mac
+            </BrushButton>
+          </span>
+        </span>
+        <span data-os-only="windows">
+          <BrushButton href={links.downloadWindows} download>
+            Download Iris
+          </BrushButton>
+        </span>
       </OnMac>
       <OnTouch>
-        <BrushButton href={sendToMac} data={{ 'data-send-to-mac': '' }}>
-          Send to my Mac
+        <BrushButton href={sendToComputer} data={{ 'data-send-to-mac': '' }}>
+          Send to my computer
         </BrushButton>
         <PenLink href={links.download} out={false} ribbon={ribbon}>
           Download it here instead
@@ -563,6 +613,8 @@ const pf = stylex.create({
   // never under it.
   os: { display: 'flex', alignItems: 'center', gap: 7 },
   words: { minWidth: 0 },
+  // A computer's line is its download: no underline, the ink of the words round it.
+  link: { color: 'inherit', textDecoration: 'none' },
 });
 const os = stylex.create({
   icon: { display: 'inline-block', flex: 'none', verticalAlign: 'middle' },
@@ -577,23 +629,23 @@ export const stamped = (file: string) =>
 export function OsIcon({ os: name, size = 22 }: { os: 'mac' | 'windows'; size?: number }) {
   return <img src={stamped(`/app/${name}.png`)} alt="" width={size} height={size} decoding="async" {...stylex.props(os.icon)} />;
 }
-/** What's said beside every Download Iris: the price, then which computers. The button gets the
- *  Mac's app, so the Mac line says so; Windows is coming. */
+/** What's said beside every Download Iris: the price, then which computers. Each computer's
+ *  line downloads its own Iris, so the one the button isn't for is a click away. */
 export function Platforms({ showPrice = true, compact = false }: { showPrice?: boolean; compact?: boolean } = {}) {
   const size = compact ? 20 : 22;
   return (
     <>
       {showPrice && <span {...stylex.props(pf.line)}>Free forever</span>}
-      <span {...stylex.props(pf.os)}>
+      <a href={links.download} download {...stylex.props(pf.os, pf.link)}>
         <OsIcon os="mac" size={size} />
         <span {...stylex.props(pf.words)}>{compact ? 'Mac M1+ (macOS 15+)' : 'For Mac (M1 or newer · macOS 15+)'}</span>
-      </span>
-      <span {...stylex.props(pf.os)}>
+      </a>
+      <a href={links.downloadWindows} download {...stylex.props(pf.os, pf.link)}>
         <OsIcon os="windows" size={size} />
         <span {...stylex.props(pf.words)}>
-          Windows <BetaStamp /> {compact ? 'soon' : windows.status}
+          Windows <BetaStamp /> {windows.status}
         </span>
-      </span>
+      </a>
     </>
   );
 }

@@ -128,7 +128,8 @@ const irisSays = (m: Says, at: { box?: DOMRect; foot?: [number, number]; point?:
   y = Math.max(EDGE_NOTE, Math.min(y, innerHeight - EDGE_NOTE - h));
   saysAt.style.left = `${x + scrollX}px`;
   saysAt.style.top = `${y + scrollY}px`;
-  irisSaid(`Iris: ${m.lead}. ${m.detail}${m.keys === 'undo' ? ' command Z' : m.keys === 'open' ? ' control option G' : ''}`);
+  const win = document.documentElement.dataset.os === 'windows';
+  irisSaid(`Iris: ${m.lead}. ${m.detail}${m.keys === 'undo' ? (win ? ' Ctrl Z' : ' command Z') : m.keys === 'open' ? (win ? ' Ctrl Win G' : ' control option G') : ''}`);
   const gone = () => (saysAt.hidden = true);
   if (still) {
     saysNote.style.opacity = '1';
@@ -547,7 +548,8 @@ const isEntry = (a: Animation) => (a as CSSAnimation).animationName?.startsWith(
 if (note && !still && 'getAnimations' in note) {
   const loop = Number(note.dataset.loop);
   const [press, gap, up] = note.dataset.keys!.split(',').map(Number);
-  const caps = $$<HTMLElement>('[role="img"] kbd', note.closest('header')!).filter((k) => !note.contains(k)); // the cover's keys, not the panel's
+  // The cover's keys, not the panel's, and only this computer's (the other's are there, hidden).
+  const caps = $$<HTMLElement>('[role="img"] kbd', note.closest('header')!).filter((k) => !note.contains(k) && k.getClientRects().length > 0);
   let keys: Animation[] = [];
   let seen = true;
   // The garden waits at rest for the cover's entry, then wakes (data-wake, Entry.ts's TIMING).
@@ -1291,7 +1293,7 @@ if (press && pressJson && iris) {
   const undo: { el: HTMLElement; html: string }[] = [];
 
   // Every ⌃ ⌥ G on screen goes down with your fingers.
-  const capRows = $$<HTMLElement>('[role="img"][aria-label="control option G"]');
+  const capRows = $$<HTMLElement>('[role="img"][aria-label="control option G"], [role="img"][aria-label="Ctrl Win G"]');
   const pressKeys = () => {
     if (still) return;
     for (const row of capRows) {
@@ -1483,9 +1485,13 @@ if (press && pressJson && iris) {
     row.addEventListener('click', () => go(false));
   }
 
+  const onWindows = document.documentElement.dataset.os === 'windows';
   addEventListener('keydown', (e) => {
     const field = (e.target as HTMLElement).closest?.('input, textarea, select, [contenteditable=""], [contenteditable="true"]');
-    if (e.ctrlKey && e.altKey && !e.metaKey && e.code === 'KeyG') {
+    // ⌃⌥G on a Mac; on Windows Ctrl+Win+G, as Iris for Windows (Ctrl+Alt+G too, in case
+    // Windows keeps the Win key to itself).
+    const shortcut = e.code === 'KeyG' && e.ctrlKey && (onWindows ? e.metaKey || e.altKey : e.altKey && !e.metaKey);
+    if (shortcut) {
       if (field) return; // someone's text box: leave it to them (and to Iris, if it's there)
       e.preventDefault();
       go(e.shiftKey);
@@ -1504,8 +1510,8 @@ if (press && pressJson && iris) {
       }
       return;
     }
-    // ⌘Z in "your app" (the page) takes the paste back, as your app's own Undo does: Iris says nothing.
-    if (e.metaKey && !e.shiftKey && e.key.toLowerCase() === 'z' && !field && undo.length) {
+    // ⌘Z (Ctrl+Z on Windows) in "your app" (the page) takes the paste back, as your app's own Undo does: Iris says nothing.
+    if ((onWindows ? e.ctrlKey && !e.metaKey : e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z' && !field && undo.length) {
       e.preventDefault();
       const u = undo.pop()!;
       u.el.innerHTML = u.html;
@@ -1589,9 +1595,9 @@ if (!still) {
   }
 }
 
-// ── Send to my Mac (parts.tsx, GetIris) ───────────────────────────────────────────────
+// ── Send to my computer (parts.tsx, GetIris) ───────────────────────────────────────────────
 // On a phone or tablet the button hands this page to the share sheet, so it can go to a Mac
-// by AirDrop, Messages or Mail. Called straight from the tap, as the share sheet needs. If
+// computer by AirDrop, Messages or Mail. Called straight from the tap, as the share sheet needs. If
 // the person closes the sheet, nothing more happens; if there's no share sheet, or it can't
 // open, the link's own email to yourself does.
 for (const send of document.querySelectorAll<HTMLAnchorElement>('[data-send-to-mac]')) {
@@ -1599,7 +1605,7 @@ for (const send of document.querySelectorAll<HTMLAnchorElement>('[data-send-to-m
     if (!navigator.share) return;
     e.preventDefault();
     navigator
-      .share({ title: 'Iris', text: 'Iris fixes your grammar and changes your tone, on your Mac.', url: location.origin + location.pathname })
+      .share({ title: 'Iris', text: 'Iris fixes your grammar and changes your tone, on your Mac or Windows PC.', url: location.origin + location.pathname })
       .catch((err: DOMException) => {
         if (err.name !== 'AbortError') location.href = send.href;
       });
